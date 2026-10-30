@@ -1,0 +1,120 @@
+{
+  "langName": "English",
+  "profiles": {
+    "welcome": "Learn to code by building your own game!",
+    "who": "Who is playing?",
+    "newPlayer": "New player",
+    "nicknamePlaceholder": "Your nickname",
+    "create": "Start",
+    "remove": "Remove",
+    "removeConfirm": "Remove {name} and all their progress?",
+    "savedIn": "Progress is saved in:",
+    "savedInBrowser": "this browser (test mode)"
+  },
+  "home": {
+    "hello": "Hi, {name}!",
+    "switchPlayer": "Switch player",
+    "basics": "1. The basics",
+    "basicsIntro": "Learn the building blocks of code with Bit the robot.",
+    "games": "2. Build a game",
+    "gamesIntro": "Pick a game and build it step by step.",
+    "lessons": "{done} of {total} done",
+    "locked": "Finish the basics first",
+    "comingSoon": "Coming soon",
+    "difficulty": "Difficulty"
+  },
+  "lesson": {
+    "back": "Back",
+    "run": "Run",
+    "stop": "Stop",
+    "reset": "Reset",
+    "hint": "Hint",
+    "showCode": "Show code",
+    "hideCode": "Hide code",
+    "codeTitle": "Your blocks as real code (JavaScript)",
+    "goal": "Goal",
+    "score": "Score",
+    "test": "Test {n} of {total}",
+    "useArrows": "Use the arrow keys on your keyboard!",
+    "blocksLeft": "Blocks left: {n}",
+    "next": "Next lesson",
+    "toHome": "Back to the map",
+    "again": "Try again",
+    "diploma": "Get your diploma"
+  },
+  "msg": {
+    "success": "Great job!",
+    "successSub": "You solved it!",
+    "gameDone": "You built Snake!",
+    "gameDoneSub": "You made a real game with code. Well done!",
+    "noStart": "Put your blocks inside \"when Run is clicked\".",
+    "noKeys": "Add \"when key … is pressed\" blocks so you can steer.",
+    "bump": "Ouch! Bit bumped into a wall.",
+    "notAtFlag": "Not quite! Bit stopped before the flag.",
+    "coinsLeft": "Almost! {n} coin(s) are still lying there.",
+    "scoreWrong": "The score is {score}, but it should be {want}.",
+    "loop": "Your code ran too many times. Is a repeat block too big?",
+    "tooManySteps": "Bit walked too many steps and got tired.",
+    "error": "Something went wrong: {error}",
+    "gameOver": "Game over! Score: {score}",
+    "gameOverNotWall": "Game over, but not by the wall. Try steering into the wall!",
+    "gameOverNotSelf": "Game over, but the snake did not bite itself. Make it long and turn into itself!",
+    "scoreGoal": "Game over! You got {score}. Try to get {want} points!",
+    "snakeLeft": "The snake slithered off the screen!",
+    "snakeLeftHint": "The snake slithered off the screen! Add a rule: if the snake hits the wall, then game over.",
+    "noFood": "Tip: use \"place food\" so the snake has something to eat."
+  },
+  "diploma": {
+    "title": "Diploma",
+    "line1": "This is to say that",
+    "line2": "built the game",
+    "line3": "with code in Code Quest.",
+    "date": "Date",
+    "print": "Print",
+    "close": "Close"
+  },
+  "games": {
+    "snake": "Snake",
+    "minesweeper": "Minesweeper",
+    "garden": "Garden defence",
+    "tower": "Tower defence"
+  },
+  "blocks": {
+    "eventStart": "when ▶ Run is clicked",
+    "eventTick": "every game tick",
+    "eventKey": "when %1 key is pressed",
+    "move": "move %1",
+    "pickUp": "pick up coin",
+    "onCoin": "standing on a coin?",
+    "changeScore": "change score by %1",
+    "snakeMove": "move snake forward",
+    "snakeTurn": "turn snake %1",
+    "snakeGrow": "make snake longer",
+    "placeFood": "place food somewhere",
+    "onFood": "snake is on the food?",
+    "hitsWall": "snake hits the wall?",
+    "hitsSelf": "snake bites itself?",
+    "gameOver": "game over",
+    "speedUp": "make the game faster",
+    "snakeColor": "snake colour %1",
+    "dir": {
+      "up": "↑ up",
+      "down": "↓ down",
+      "left": "← left",
+      "right": "→ right"
+    },
+    "key": {
+      "up": "↑ up",
+      "down": "↓ down",
+      "left": "← left",
+      "right": "→ right"
+    },
+    "colour": {
+      "green": "green",
+      "blue": "blue",
+      "purple": "purple",
+      "orange": "orange",
+      "pink": "pink"
+    }
+  }
+}

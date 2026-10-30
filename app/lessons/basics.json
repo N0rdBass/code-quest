@@ -1,0 +1,240 @@
+{
+  "id": "basics",
+  "world": "robot",
+  "lessons": [
+    {
+      "id": "basics-1",
+      "title": {
+        "en": "Your first steps",
+        "no": "Dine første skritt"
+      },
+      "story": {
+        "en": "Hi! I'm Bit, a little robot. I can only do what code tells me. Help me walk to the flag!",
+        "no": "Hei! Jeg er Bit, en liten robot. Jeg gjør bare det koden sier. Hjelp meg å gå til flagget!"
+      },
+      "task": {
+        "en": "Drag \"move → right\" blocks into \"when ▶ Run is clicked\". Then press Run.",
+        "no": "Dra «gå → høyre»-klosser inn i «når ▶ Kjør trykkes». Trykk så på Kjør."
+      },
+      "hint": {
+        "en": "Count the squares between Bit and the flag. That's how many \"move\" blocks you need.",
+        "no": "Tell rutene mellom Bit og flagget. Så mange «gå»-klosser trenger du."
+      },
+      "concept": {
+        "en": "Code is a list of steps, done in order.",
+        "no": "Kode er en liste med steg som gjøres i rekkefølge."
+      },
+      "maps": [
+        [
+          "S...F"
+        ]
+      ],
+      "goal": {
+        "reach": true
+      },
+      "toolbox": [
+        "bit_move"
+      ],
+      "starter": [
+        {
+          "type": "event_start",
+          "x": 30,
+          "y": 30
+        }
+      ]
+    },
+    {
+      "id": "basics-2",
+      "title": {
+        "en": "Repeat!",
+        "no": "Gjenta!"
+      },
+      "story": {
+        "en": "These stairs are long. Writing the same blocks again and again is boring. Computers are great at repeating!",
+        "no": "Denne trappen er lang. Det er kjedelig å legge de samme klossene igjen og igjen. Datamaskiner er flinke til å gjenta!"
+      },
+      "task": {
+        "en": "Use \"repeat\" to walk down the stairs. You only have 4 blocks, so you must repeat!",
+        "no": "Bruk «gjenta» for å gå ned trappen. Du har bare 4 klosser, så du må gjenta!"
+      },
+      "hint": {
+        "en": "One step of the stairs is: move right, then move down. Put those two inside \"repeat\". How many steps are there?",
+        "no": "Ett trappetrinn er: gå høyre, så gå ned. Legg de to inni «gjenta». Hvor mange trinn er det?"
+      },
+      "concept": {
+        "en": "A loop repeats the blocks inside it.",
+        "no": "En løkke gjentar klossene inni seg."
+      },
+      "maps": [
+        [
+          "S.####",
+          "#..###",
+          "##..##",
+          "###..#",
+          "####F#"
+        ]
+      ],
+      "goal": {
+        "reach": true
+      },
+      "maxBlocks": 4,
+      "toolbox": [
+        "bit_move",
+        "repeat"
+      ],
+      "starter": [
+        {
+          "type": "event_start",
+          "x": 30,
+          "y": 30
+        }
+      ]
+    },
+    {
+      "id": "basics-3",
+      "title": {
+        "en": "Keep score",
+        "no": "Tell poeng"
+      },
+      "story": {
+        "en": "Coins! But nobody is counting them. The score is a variable: a box with a number that can change.",
+        "no": "Mynter! Men ingen teller dem. Poengsummen er en variabel: en boks med et tall som kan endre seg."
+      },
+      "task": {
+        "en": "Pick up all 3 coins. Every time you pick one up, change the score by 1.",
+        "no": "Plukk opp alle 3 myntene. Hver gang du plukker opp en, endre poeng med 1."
+      },
+      "hint": {
+        "en": "The coins are 2 steps apart. Repeat 3 times: move, move, pick up coin, change score by 1.",
+        "no": "Myntene ligger 2 steg fra hverandre. Gjenta 3 ganger: gå, gå, plukk opp mynt, endre poeng med 1."
+      },
+      "concept": {
+        "en": "A variable remembers a value, like the score.",
+        "no": "En variabel husker en verdi, for eksempel poengsummen."
+      },
+      "maps": [
+        [
+          "S.C.C.C"
+        ]
+      ],
+      "goal": {
+        "collectAll": true,
+        "score": 3
+      },
+      "toolbox": [
+        "bit_move",
+        "bit_pickup",
+        "score_change",
+        "repeat"
+      ],
+      "starter": [
+        {
+          "type": "event_start",
+          "x": 30,
+          "y": 30
+        }
+      ]
+    },
+    {
+      "id": "basics-4",
+      "title": {
+        "en": "If this, then that",
+        "no": "Hvis dette, så det"
+      },
+      "story": {
+        "en": "Tricky! The coins move every time. Your code is tested on two different paths. Bit has to look before picking up.",
+        "no": "Lurt! Myntene flytter seg hver gang. Koden din testes på to forskjellige veier. Bit må se etter før han plukker opp."
+      },
+      "task": {
+        "en": "Walk to the flag. On each square: IF Bit is standing on a coin, pick it up and add 1 point. Each path has 3 coins, so you need exactly 3 points.",
+        "no": "Gå til flagget. På hver rute: HVIS Bit står på en mynt, plukk den opp og legg til 1 poeng. Hver vei har 3 mynter, så du trenger nøyaktig 3 poeng."
+      },
+      "hint": {
+        "en": "Repeat 7 times: move right, then \"if standing on a coin?\" → pick up coin and change score by 1.",
+        "no": "Gjenta 7 ganger: gå høyre, så «hvis står på en mynt?» → plukk opp mynt og endre poeng med 1."
+      },
+      "concept": {
+        "en": "\"If\" lets code make choices.",
+        "no": "«Hvis» lar koden ta valg."
+      },
+      "maps": [
+        [
+          "S.C.CC.F"
+        ],
+        [
+          "SCC...CF"
+        ]
+      ],
+      "goal": {
+        "reach": true,
+        "collectAll": true,
+        "score": 3
+      },
+      "toolbox": [
+        "bit_move",
+        "repeat",
+        "if",
+        "bit_on_coin",
+        "bit_pickup",
+        "score_change"
+      ],
+      "starter": [
+        {
+          "type": "event_start",
+          "x": 30,
+          "y": 30
+        }
+      ]
+    },
+    {
+      "id": "basics-5",
+      "title": {
+        "en": "You're in control",
+        "no": "Du styrer"
+      },
+      "story": {
+        "en": "Now YOU steer Bit with the keyboard. Code can wait for something to happen, like a key press. That's called an event.",
+        "no": "Nå styrer DU Bit med tastaturet. Kode kan vente på at noe skjer, som et tastetrykk. Det kalles en hendelse."
+      },
+      "task": {
+        "en": "Make one \"when key is pressed\" block for each arrow key, with the right \"move\" inside. Press Run, then drive Bit through the maze to the flag.",
+        "no": "Lag én «når tasten trykkes»-kloss for hver piltast, med riktig «gå» inni. Trykk Kjør, og styr Bit gjennom labyrinten til flagget."
+      },
+      "hint": {
+        "en": "You need 4 blocks: up arrow → move up, down arrow → move down, left arrow → move left, right arrow → move right.",
+        "no": "Du trenger 4 klosser: pil opp → gå opp, pil ned → gå ned, pil venstre → gå venstre, pil høyre → gå høyre."
+      },
+      "concept": {
+        "en": "Events run code when something happens.",
+        "no": "Hendelser kjører kode når noe skjer."
+      },
+      "mode": "play",
+      "maps": [
+        [
+          "S..#....",
+          "##.#.##.",
+          "...#..#.",
+          ".###.##.",
+          "......#F"
+        ]
+      ],
+      "goal": {
+        "reach": true
+      },
+      "toolbox": [
+        "event_key",
+        "bit_move"
+      ],
+      "starter": [
+        {
+          "type": "event_key",
+          "x": 30,
+          "y": 30,
+          "fields": {
+            "KEY": "right"
+          }
+        }
+      ]
+    }
+  ]
+}

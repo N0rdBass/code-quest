@@ -1,0 +1,120 @@
+{
+  "langName": "Norsk",
+  "profiles": {
+    "welcome": "Lær å kode ved å lage ditt eget spill!",
+    "who": "Hvem spiller?",
+    "newPlayer": "Ny spiller",
+    "nicknamePlaceholder": "Kallenavnet ditt",
+    "create": "Start",
+    "remove": "Fjern",
+    "removeConfirm": "Fjerne {name} og alt de har gjort?",
+    "savedIn": "Fremgangen lagres i:",
+    "savedInBrowser": "denne nettleseren (testmodus)"
+  },
+  "home": {
+    "hello": "Hei, {name}!",
+    "switchPlayer": "Bytt spiller",
+    "basics": "1. Det grunnleggende",
+    "basicsIntro": "Lær byggeklossene i koding sammen med roboten Bit.",
+    "games": "2. Lag et spill",
+    "gamesIntro": "Velg et spill og bygg det steg for steg.",
+    "lessons": "{done} av {total} ferdig",
+    "locked": "Gjør ferdig det grunnleggende først",
+    "comingSoon": "Kommer snart",
+    "difficulty": "Vanskelighet"
+  },
+  "lesson": {
+    "back": "Tilbake",
+    "run": "Kjør",
+    "stop": "Stopp",
+    "reset": "Start på nytt",
+    "hint": "Hint",
+    "showCode": "Vis kode",
+    "hideCode": "Skjul kode",
+    "codeTitle": "Klossene dine som ekte kode (JavaScript)",
+    "goal": "Mål",
+    "score": "Poeng",
+    "test": "Test {n} av {total}",
+    "useArrows": "Bruk piltastene på tastaturet!",
+    "blocksLeft": "Klosser igjen: {n}",
+    "next": "Neste oppgave",
+    "toHome": "Tilbake til kartet",
+    "again": "Prøv igjen",
+    "diploma": "Hent diplomet ditt"
+  },
+  "msg": {
+    "success": "Bra jobba!",
+    "successSub": "Du klarte det!",
+    "gameDone": "Du har laget Snake!",
+    "gameDoneSub": "Du har laget et ekte spill med kode. Kjempebra!",
+    "noStart": "Legg klossene dine inni «når ▶ Kjør trykkes».",
+    "noKeys": "Legg til «når tasten … trykkes»-klosser så du kan styre.",
+    "bump": "Au! Bit gikk inn i en vegg.",
+    "notAtFlag": "Nesten! Bit stoppet før flagget.",
+    "coinsLeft": "Nesten! {n} mynt(er) ligger der fortsatt.",
+    "scoreWrong": "Poengsummen er {score}, men den skal være {want}.",
+    "loop": "Koden din kjørte altfor mange ganger. Er en gjenta-kloss for stor?",
+    "tooManySteps": "Bit gikk altfor mange skritt og ble sliten.",
+    "error": "Noe gikk galt: {error}",
+    "gameOver": "Spillet er slutt! Poeng: {score}",
+    "gameOverNotWall": "Spillet er slutt, men ikke på grunn av veggen. Prøv å styre inn i veggen!",
+    "gameOverNotSelf": "Spillet er slutt, men slangen bet ikke seg selv. Gjør den lang og sving inn i deg selv!",
+    "scoreGoal": "Spillet er slutt! Du fikk {score}. Prøv å få {want} poeng!",
+    "snakeLeft": "Slangen krøp ut av skjermen!",
+    "snakeLeftHint": "Slangen krøp ut av skjermen! Lag en regel: hvis slangen treffer veggen, er spillet slutt.",
+    "noFood": "Tips: bruk «legg ut mat» så slangen har noe å spise."
+  },
+  "diploma": {
+    "title": "Diplom",
+    "line1": "Dette viser at",
+    "line2": "har laget spillet",
+    "line3": "med kode i Code Quest.",
+    "date": "Dato",
+    "print": "Skriv ut",
+    "close": "Lukk"
+  },
+  "games": {
+    "snake": "Snake",
+    "minesweeper": "Minesveiper",
+    "garden": "Hageforsvar",
+    "tower": "Tårnforsvar"
+  },
+  "blocks": {
+    "eventStart": "når ▶ Kjør trykkes",
+    "eventTick": "hvert spilltikk",
+    "eventKey": "når %1-tasten trykkes",
+    "move": "gå %1",
+    "pickUp": "plukk opp mynt",
+    "onCoin": "står på en mynt?",
+    "changeScore": "endre poeng med %1",
+    "snakeMove": "flytt slangen fremover",
+    "snakeTurn": "snu slangen %1",
+    "snakeGrow": "gjør slangen lengre",
+    "placeFood": "legg ut mat et sted",
+    "onFood": "slangen er på maten?",
+    "hitsWall": "slangen treffer veggen?",
+    "hitsSelf": "slangen biter seg selv?",
+    "gameOver": "spillet er slutt",
+    "speedUp": "gjør spillet raskere",
+    "snakeColor": "slangefarge %1",
+    "dir": {
+      "up": "↑ opp",
+      "down": "↓ ned",
+      "left": "← venstre",
+      "right": "→ høyre"
+    },
+    "key": {
+      "up": "↑ opp",
+      "down": "↓ ned",
+      "left": "← venstre",
+      "right": "→ høyre"
+    },
+    "colour": {
+      "green": "grønn",
+      "blue": "blå",
+      "purple": "lilla",
+      "orange": "oransje",
+      "pink": "rosa"
+    }
+  }
+}

@@ -1,0 +1,132 @@
+{
+  "id": "snake",
+  "world": "snake",
+  "game": "snake",
+  "stars": 1,
+  "lessons": [
+    {
+      "id": "snake-1",
+      "title": { "en": "Make it move", "no": "Få den til å bevege seg" },
+      "story": {
+        "en": "Let's build Snake! A game runs in \"ticks\": many times every second the game does one small step. Every tick, the snake should move.",
+        "no": "Nå lager vi Snake! Et spill går i «tikk»: mange ganger i sekundet gjør spillet ett lite steg. Hvert tikk skal slangen flytte seg."
+      },
+      "task": {
+        "en": "Put \"place food somewhere\" in \"when ▶ Run is clicked\", and \"move snake forward\" in \"every game tick\". Press Run!",
+        "no": "Legg «legg ut mat et sted» i «når ▶ Kjør trykkes», og «flytt slangen fremover» i «hvert spilltikk». Trykk Kjør!"
+      },
+      "hint": {
+        "en": "Start code runs once. Tick code runs again and again. Moving belongs in the tick.",
+        "no": "Startkode kjører én gang. Tikk-kode kjører igjen og igjen. Flytting hører hjemme i tikket."
+      },
+      "concept": { "en": "A game loop runs the same code many times per second.", "no": "En spill-løkke kjører den samme koden mange ganger i sekundet." },
+      "goal": { "type": "moves", "n": 6 },
+      "toolbox": ["food_place", "snake_move"],
+      "starter": [
+        { "type": "event_start", "x": 30, "y": 30 },
+        { "type": "event_tick", "x": 30, "y": 160 }
+      ]
+    },
+    {
+      "id": "snake-2",
+      "title": { "en": "Steering", "no": "Styring" },
+      "story": {
+        "en": "A snake that only goes right is not much fun. Remember events from the basics? Let's use the arrow keys!",
+        "no": "En slange som bare går til høyre er ikke så gøy. Husker du hendelser fra det grunnleggende? Nå bruker vi piltastene!"
+      },
+      "task": {
+        "en": "Add a \"when key is pressed\" block for each arrow key, with \"turn snake\" inside. Then steer the snake up, down, left and right.",
+        "no": "Legg til en «når tasten trykkes»-kloss for hver piltast, med «snu slangen» inni. Styr så slangen opp, ned, venstre og høyre."
+      },
+      "hint": {
+        "en": "Up arrow → turn snake up. Do the same for down, left and right. A snake can't turn straight back into itself.",
+        "no": "Pil opp → snu slangen opp. Gjør det samme for ned, venstre og høyre. En slange kan ikke snu rett tilbake inn i seg selv."
+      },
+      "concept": { "en": "Events let the player control the game.", "no": "Hendelser lar spilleren styre spillet." },
+      "goal": { "type": "turns" },
+      "carryFrom": "snake-1",
+      "toolbox": ["event_key", "snake_turn", "food_place", "snake_move"]
+    },
+    {
+      "id": "snake-3",
+      "title": { "en": "Yum!", "no": "Nam!" },
+      "story": {
+        "en": "The snake is hungry. When it reaches the food, it should grow, new food should appear, and you get a point.",
+        "no": "Slangen er sulten. Når den når maten, skal den vokse, ny mat skal dukke opp, og du får et poeng."
+      },
+      "task": {
+        "en": "In \"every game tick\", after moving: IF the snake is on the food, make it longer, place new food and change score by 1. Eat 3 times!",
+        "no": "I «hvert spilltikk», etter flyttingen: HVIS slangen er på maten, gjør den lengre, legg ut ny mat og endre poeng med 1. Spis 3 ganger!"
+      },
+      "hint": {
+        "en": "Put an \"if\" block under \"move snake forward\". Use \"snake is on the food?\" as the question, and put three blocks inside.",
+        "no": "Legg en «hvis»-kloss under «flytt slangen fremover». Bruk «slangen er på maten?» som spørsmål, og legg tre klosser inni."
+      },
+      "concept": { "en": "If + variables = game rules.", "no": "Hvis + variabler = spillregler." },
+      "goal": { "type": "score", "n": 3 },
+      "carryFrom": "snake-2",
+      "toolbox": ["if", "snake_on_food", "snake_grow", "food_place", "score_change", "snake_move", "snake_turn", "event_key"]
+    },
+    {
+      "id": "snake-4",
+      "title": { "en": "Watch out for walls", "no": "Pass på veggene" },
+      "story": {
+        "en": "Right now the snake can slither right off the screen. In Snake, hitting the wall ends the game.",
+        "no": "Akkurat nå kan slangen krype rett ut av skjermen. I Snake er spillet slutt hvis du treffer veggen."
+      },
+      "task": {
+        "en": "Add a rule to the tick: IF the snake hits the wall, then game over. Test it by steering into a wall!",
+        "no": "Legg til en regel i tikket: HVIS slangen treffer veggen, er spillet slutt. Test det ved å styre inn i en vegg!"
+      },
+      "hint": {
+        "en": "Another \"if\" block, with \"snake hits the wall?\" and \"game over\" inside. Put it after \"move snake forward\".",
+        "no": "En ny «hvis»-kloss, med «slangen treffer veggen?» og «spillet er slutt» inni. Legg den etter «flytt slangen fremover»."
+      },
+      "concept": { "en": "Games need rules for winning and losing.", "no": "Spill trenger regler for å vinne og tape." },
+      "goal": { "type": "gameOver", "reason": "wall" },
+      "carryFrom": "snake-3",
+      "toolbox": ["if", "snake_hits_wall", "game_over", "snake_on_food", "snake_grow", "food_place", "score_change", "snake_move", "snake_turn", "event_key"]
+    },
+    {
+      "id": "snake-5",
+      "title": { "en": "Don't bite yourself", "no": "Ikke bit deg selv" },
+      "story": {
+        "en": "The last rule of Snake: if the snake bites its own tail, the game is over.",
+        "no": "Den siste regelen i Snake: hvis slangen biter seg selv i halen, er spillet slutt."
+      },
+      "task": {
+        "en": "Add: IF the snake bites itself, then game over. Eat a few times so the snake gets long, then turn into yourself to test it.",
+        "no": "Legg til: HVIS slangen biter seg selv, er spillet slutt. Spis noen ganger så slangen blir lang, og sving inn i deg selv for å teste."
+      },
+      "hint": {
+        "en": "Just like the wall rule, but with \"snake bites itself?\". The snake needs to be at least 5 long to bite itself.",
+        "no": "Akkurat som vegg-regelen, men med «slangen biter seg selv?». Slangen må være minst 5 lang for å bite seg selv."
+      },
+      "concept": { "en": "Many small rules make a whole game.", "no": "Mange små regler blir til et helt spill." },
+      "goal": { "type": "gameOver", "reason": "self" },
+      "carryFrom": "snake-4",
+      "toolbox": ["if", "snake_hits_self", "snake_hits_wall", "game_over", "snake_on_food", "snake_grow", "food_place", "score_change", "snake_move", "snake_turn", "event_key"]
+    },
+    {
+      "id": "snake-6",
+      "title": { "en": "Make it yours", "no": "Gjør det til ditt" },
+      "story": {
+        "en": "Your Snake game works! Now make it your own: pick a colour, and make the game faster every time the snake eats.",
+        "no": "Snake-spillet ditt virker! Nå kan du gjøre det til ditt eget: velg en farge, og gjør spillet raskere hver gang slangen spiser."
+      },
+      "task": {
+        "en": "Choose a snake colour when the game starts. Make the game faster when the snake eats. Then play and get 5 points!",
+        "no": "Velg en slangefarge når spillet starter. Gjør spillet raskere når slangen spiser. Spill så og få 5 poeng!"
+      },
+      "hint": {
+        "en": "\"snake colour\" goes in \"when ▶ Run is clicked\". \"make the game faster\" goes inside the food rule.",
+        "no": "«slangefarge» hører hjemme i «når ▶ Kjør trykkes». «gjør spillet raskere» skal inni mat-regelen."
+      },
+      "concept": { "en": "You are a game maker now!", "no": "Nå er du en spillutvikler!" },
+      "goal": { "type": "score", "n": 5 },
+      "final": true,
+      "carryFrom": "snake-5",
+      "toolbox": ["snake_color", "speed_up", "if", "snake_hits_self", "snake_hits_wall", "game_over", "snake_on_food", "snake_grow", "food_place", "score_change", "snake_move", "snake_turn", "event_key"]
+    }
+  ]
+}

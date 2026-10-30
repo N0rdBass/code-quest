@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="nb">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Code Quest</title>
+    <link rel="stylesheet" href="ui/css/style.css" />
+    <!-- Blockly (Apache 2.0), stored in vendor/ so the app works fully offline -->
+    <script src="vendor/blockly/blockly_compressed.js"></script>
+    <script src="vendor/blockly/blocks_compressed.js"></script>
+    <script src="vendor/blockly/javascript_compressed.js"></script>
+    <!-- Load both languages and keep a copy of each (see msg-snap.js) -->
+    <script src="vendor/blockly/msg/nb.js"></script>
+    <script src="ui/js/msg-snap.js" data-lang="no"></script>
+    <script src="vendor/blockly/msg/en.js"></script>
+    <script src="ui/js/msg-snap.js" data-lang="en"></script>
+    <script type="module" src="ui/js/app.js"></script>
+  </head>
+  <body>
+    <div id="app"></div>
+  </body>
+</html>
