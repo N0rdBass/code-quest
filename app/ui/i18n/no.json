@@ -116,5 +116,9 @@
       "orange": "oransje",
       "pink": "rosa"
     }
+  },
+  "blockNames": {
+    "controls_repeat_ext": "gjenta",
+    "bit_move": "gå"
   }
 }

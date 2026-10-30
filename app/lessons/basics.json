@@ -54,8 +54,8 @@
         "no": "Denne trappen er lang. Det er kjedelig å legge de samme klossene igjen og igjen. Datamaskiner er flinke til å gjenta!"
       },
       "task": {
-        "en": "Use \"repeat\" to walk down the stairs. You only have 4 blocks, so you must repeat!",
-        "no": "Bruk «gjenta» for å gå ned trappen. Du har bare 4 klosser, så du må gjenta!"
+        "en": "Use \"repeat\" to walk down the stairs. You only get 1 repeat block and 2 move blocks, so you must repeat!",
+        "no": "Bruk «gjenta» for å gå ned trappen. Du får bare 1 gjenta-kloss og 2 gå-klosser, så du må gjenta!"
       },
       "hint": {
         "en": "One step of the stairs is: move right, then move down. Put those two inside \"repeat\". How many steps are there?",
@@ -77,7 +77,6 @@
       "goal": {
         "reach": true
       },
-      "maxBlocks": 4,
       "toolbox": [
         "bit_move",
         "repeat"
@@ -88,7 +87,11 @@
           "x": 30,
           "y": 30
         }
-      ]
+      ],
+      "limits": {
+        "controls_repeat_ext": 1,
+        "bit_move": 2
+      }
     },
     {
       "id": "basics-3",

@@ -91,6 +91,9 @@ Lessons are JSON in `app/lessons/`. Each has `title`, `story`, `task`, `hint` an
 `concept` in both `en` and `no`, a `toolbox` (block names), a `goal`, and either
 `starter` blocks or `carryFrom` (start from the kid's blocks in another lesson).
 Robot maps are rows of characters: `S` start, `F` flag, `C` coin, `#` wall, `.` floor.
+To limit blocks, use `"limits": { "bit_move": 2, "controls_repeat_ext": 1 }` (per block type).
+Don't use Blockly's overall `maxBlocks`: it also counts the event block and the number
+bubble inside "repeat", so kids get fewer blocks than the lesson says.
 
 ## Next steps
 

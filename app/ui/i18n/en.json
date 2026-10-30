@@ -116,5 +116,9 @@
       "orange": "orange",
       "pink": "pink"
     }
+  },
+  "blockNames": {
+    "controls_repeat_ext": "repeat",
+    "bit_move": "move"
   }
 }

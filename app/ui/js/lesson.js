@@ -110,8 +110,9 @@ class LessonController {
       toolbox: toolboxFor(L.toolbox),
       renderer: 'zelos',
       media: 'vendor/blockly/media/',
-      maxBlocks: L.maxBlocks ?? Infinity,
-      maxInstances: { event_start: 1, event_tick: 1 },
+      // Limits are per kind of block (e.g. 1 repeat + 2 move). Blockly's overall
+      // maxBlocks would also count event blocks and number bubbles, which kids can't see as blocks.
+      maxInstances: { event_start: 1, event_tick: 1, ...(L.limits || {}) },
       trashcan: true,
       sounds: true,
       grid: { spacing: 24, length: 2, colour: '#dfe6ee', snap: true },
@@ -158,8 +159,14 @@ class LessonController {
   }
 
   refreshCode() {
-    const left = this.ws.remainingCapacity();
-    this.capacityEl.textContent = Number.isFinite(left) ? t('lesson.blocksLeft', { n: left }) : '';
+    const limits = Object.entries(this.lesson.limits || {});
+    this.capacityEl.textContent = limits.length
+      ? t('lesson.blocksLeft', {
+          n: limits
+            .map(([type, max]) => `${Math.max(0, max - this.ws.getBlocksByType(type, false).length)} × ${t(`blockNames.${type}`)}`)
+            .join(', '),
+        })
+      : '';
     if (!this.showCode) return;
     this.codeEl.textContent = workspaceCode(this.ws, { display: true }).trim();
   }
