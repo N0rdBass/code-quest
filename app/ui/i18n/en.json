@@ -78,7 +78,9 @@
     "wrongNumber": "Column {x}, row {y} shows {shown}, but the right number is {real}. Check your counting!",
     "boom": "Boom! You opened a mine. Press Run to play again.",
     "mineNoRule": "You opened a mine, but the game goes on! Add the rule: if there is a mine, game over.",
-    "mineNoRuleYet": "That was a mine, but nothing happened. We'll fix that in the next lesson!"
+    "mineNoRuleYet": "That was a mine, but nothing happened. We'll fix that in the next lesson!",
+    "wrongNumberLow": "Column {x}, row {y} shows {shown}, but the right number is {real}. The count was too low when the square was opened: is count = count + 1 inside the if? And is field.reveal below the loop, after counting is done?",
+    "wrongNumberHigh": "Column {x}, row {y} shows {shown}, but the right number is {real}. The count was too high: does count start at 0, and do you add 1 only when there is a mine?"
   },
   "diploma": {
     "title": "Diploma",
@@ -218,7 +220,9 @@
       "noCommand": "{name} is not a command. Check the spelling, or look in the Commands list for what {obj} can do.",
       "wrongCase": "{name} should be written {want}. Capital letters matter!",
       "needParens": "{name} needs ( ) after it, or it won't run: {name}()",
-      "badWord": "{name} doesn't know '{word}'. Use one of: {list}."
+      "badWord": "{name} doesn't know '{word}'. Use one of: {list}.",
+      "unusedQuestion": "{name}(…) asks a question, but nothing uses the answer, so this line does nothing. Put it inside if ( … ) { } and put what should happen inside the { }.",
+      "revealInLoop": "This opens the square while the loop is still counting, so the number is not finished yet. Move it below the } on line {line}, where the loop ends."
     },
     "symbols": "Symbols",
     "symbolsTip": "Click on any symbol or word in your code to see what it means there.",

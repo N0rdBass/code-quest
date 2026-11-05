@@ -310,6 +310,51 @@ function checkApi(sig, world) {
   return problems;
 }
 
+// Commands that ask a question (they answer true/false or give a list).
+// Alone on a line they do nothing: the answer is thrown away.
+const QUESTIONS = new Set([
+  'bit.isOnCoin', 'snake.isOnFood', 'snake.hitsWall', 'snake.bitesItself',
+  'field.hasMine', 'field.hasFlag', 'field.allSafeOpen', 'field.neighbours',
+]);
+
+/** Is this use of an object the start of a command (not part of a bigger expression)? */
+function startsCommand(sig, u) {
+  const before = sig[u.j - 1];
+  const newLine = before && before.line < u.obj.line && /[\w$)\]'"`]$/.test(before.value);
+  return !before || ['{', '}', ';'].includes(before.value) || newLine;
+}
+
+/**
+ * Mistakes that run without crashing but make the game wrong:
+ *  - a question alone on a line: field.hasMine(x, y); (should be inside an if)
+ *  - opening the square inside the counting loop, before counting is done
+ */
+function checkLogic(sig) {
+  const problems = [];
+  const uses = apiUses(sig);
+  for (const u of uses) {
+    const name = `${u.obj.value}.${u.member.value}`;
+    if (u.close < 0 || !QUESTIONS.has(name) || !startsCommand(sig, u)) continue;
+    const after = sig[u.close + 1];
+    if (after && ![';', '}'].includes(after.value) && after.line === sig[u.close].line) continue;
+    problems.push(new CodeProblem('code.err.unusedQuestion', { name }, u.obj.line, u.obj.start, sig[u.close].end));
+  }
+  // for (const square of field.neighbours(...)) { ... field.reveal(...) ... }
+  for (let j = 0; j < sig.length; j++) {
+    if (!isKeyword(sig, j, 'for') || sig[j + 1]?.value !== '(' || sig[j + 4]?.value !== 'of') continue;
+    const headClose = matching(sig, j + 1);
+    if (sig[headClose + 1]?.value !== '{' || !sig.slice(j + 5, headClose).some((t) => t.value === 'neighbours')) continue;
+    const bodyOpen = headClose + 1;
+    const bodyClose = matching(sig, bodyOpen);
+    for (const u of uses) {
+      if (u.j > bodyOpen && u.j < bodyClose && u.obj.value === 'field' && u.member.value === 'reveal') {
+        problems.push(new CodeProblem('code.err.revealInLoop', { line: sig[bodyClose].line }, u.obj.line, u.obj.start, u.end));
+      }
+    }
+  }
+  return problems;
+}
+
 /**
  * Gentle warnings for a command without ; at the end. JavaScript doesn't
  * need it, but the lessons teach that every command ends with ;.
@@ -318,12 +363,8 @@ function checkSemicolons(sig) {
   const problems = [];
   for (const u of apiUses(sig)) {
     if (u.close < 0) continue;
-    const before = sig[u.j - 1];
-    // A new line starts a new command, unless the line above ends in an operator, ( or ,
-    const newLine = before && before.line < u.obj.line && /[\w$)\]'"`]$/.test(before.value);
-    const statementStart = !before || ['{', '}', ';'].includes(before.value) || newLine;
     const after = sig[u.close + 1];
-    if (!statementStart || [';', '.', ')', ','].includes(after?.value)) continue;
+    if (!startsCommand(sig, u) || [';', '.', ')', ','].includes(after?.value)) continue;
     const close = sig[u.close];
     problems.push(new CodeProblem('code.warn.semicolon', {}, close.line, close.start, close.end, 'warning'));
   }
@@ -377,6 +418,7 @@ export function diagnose(code, { world } = {}) {
   }
   const apiProblems = checkApi(sig, world);
   problems.push(...apiProblems);
+  if (structureOk) problems.push(...checkLogic(sig));
   if (structureOk && !apiProblems.length) {
     try {
       make(code);

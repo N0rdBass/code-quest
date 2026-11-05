@@ -552,6 +552,13 @@ class LessonController {
     this.showScore(0);
     const { ev, api } = this.makeEvents();
     const { field, game } = w.api();
+    // Remember which field.reveal(...) showed a wrong number, so it can be underlined.
+    const reveal = field.reveal;
+    field.reveal = (...args) => {
+      const before = w.stats.wrongNumber;
+      reveal(...args);
+      if (!before && w.stats.wrongNumber) w.stats.wrongNumber.place = this.typed?.lastPlace?.() ?? null;
+    };
     try {
       fn(api, null, null, game, field);
       for (const handler of ev.start) handler();
@@ -591,7 +598,11 @@ class LessonController {
     const goal = this.lesson.goal || {};
     const w = this.world;
     const s = w.stats;
-    if (s.wrongNumber) return this.fail('msg.wrongNumber', s.wrongNumber);
+    if (s.wrongNumber) {
+      const { place, ...vars } = s.wrongNumber;
+      const key = vars.shown < vars.real ? 'msg.wrongNumberLow' : 'msg.wrongNumberHigh';
+      return this.failAt(place?.line ?? null, key, vars, place);
+    }
     const won =
       (goal.type === 'opened' && w.safeOpened() >= goal.n) ||
       (goal.type === 'gameOver' && w.over && w.overReason === goal.reason) ||
