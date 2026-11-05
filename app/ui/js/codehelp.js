@@ -40,3 +40,28 @@ export function commandsFor(lesson, world) {
       return { name, code, label, help: t(help).replace(/%\d/g, '…') };
     });
 }
+
+// "bit.move" → the help text key for it, for the explain bar.
+const MEMBER_HELP = { 'console.log': 'code.help.log' };
+for (const { code, help } of Object.values(SNIPPETS)) {
+  const m = code.match(/^(\w+)\.(\w+)\(/);
+  if (m) MEMBER_HELP[`${m[1]}.${m[2]}`] = help;
+}
+
+export function memberHelpKey(obj, name) {
+  return MEMBER_HELP[`${obj}.${name}`] || null;
+}
+
+// The symbols list under the commands: what each symbol means.
+export const SYMBOLS = [
+  ['{ }', 'glossary.braces'],
+  ['( )', 'glossary.parens'],
+  ["' '", 'glossary.quotes'],
+  [';', 'glossary.semicolon'],
+  ['.', 'glossary.dot'],
+  ['=', 'glossary.assign'],
+  ['<  >', 'glossary.compare'],
+  ['===', 'glossary.equals'],
+  ['i++', 'glossary.plusPlus'],
+  ['//', 'glossary.comment'],
+];

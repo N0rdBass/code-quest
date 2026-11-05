@@ -18,7 +18,7 @@ function indentFromAbove(text, lineStart, restOfLine) {
   return indent;
 }
 
-export function createEditor({ value = '', label = '', onChange, onRun }) {
+export function createEditor({ value = '', label = '', onChange, onRun, onCursor }) {
   const input = h('textarea', {
     class: 'ce-input',
     spellcheck: 'false',
@@ -72,6 +72,10 @@ export function createEditor({ value = '', label = '', onChange, onRun }) {
     refresh();
     onChange?.(input.value);
   });
+
+  // Tell the lesson where the cursor is, so it can explain the symbol there.
+  const cursorMoved = () => onCursor?.(input.value, input.selectionStart);
+  for (const ev of ['keyup', 'mouseup', 'input', 'focus']) input.addEventListener(ev, cursorMoved);
 
   input.addEventListener('keydown', (e) => {
     if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {

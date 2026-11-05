@@ -11,7 +11,8 @@ import * as storage from './storage.js';
 import { defineBlocks, toolboxFor, workspaceCode, codeFromBlocks } from './blocks.js';
 import { compileTyped, countUses, explainJsError, errorLine, CodeProblem } from './kidcode.js';
 import { createEditor } from './editor.js';
-import { commandsFor } from './codehelp.js';
+import { commandsFor, SYMBOLS } from './codehelp.js';
+import { explainAt } from './explain.js';
 import { RobotWorld } from './worlds/robot.js';
 import { SnakeWorld } from './worlds/snake.js';
 import { StopSignal, GameOverSignal, LoopError, KidError } from './errors.js';
@@ -235,7 +236,10 @@ class LessonController {
         this.refreshCapacity();
       },
       onRun: () => this.run(),
+      onCursor: (code, pos) => this.explain(code, pos),
     });
+    this.explainEl = h('div', { class: 'explain', 'aria-live': 'polite' });
+    this.explain('', 0);
     const commands = commandsFor(this.lesson, this.course.world).map((c) =>
       h(
         'button',
@@ -247,7 +251,16 @@ class LessonController {
     return h(
       'section',
       { class: 'workspace code-mode' },
-      h('div', { class: 'commands' }, h('h3', {}, t('code.commands')), h('p', { class: 'commands-tip' }, t('code.commandsTip')), ...commands),
+      h(
+        'div',
+        { class: 'commands' },
+        h('h3', {}, t('code.commands')),
+        h('p', { class: 'commands-tip' }, t('code.commandsTip')),
+        ...commands,
+        h('h3', { class: 'symbols-title' }, t('code.symbols')),
+        h('p', { class: 'commands-tip' }, t('code.symbolsTip')),
+        h('dl', { class: 'symbols' }, SYMBOLS.flatMap(([sym, key]) => [h('dt', {}, h('code', {}, sym)), h('dd', {}, t(key))])),
+      ),
       h(
         'div',
         { class: 'code-main' },
@@ -259,6 +272,7 @@ class LessonController {
           h('button', { class: 'btn small ghost', onclick: () => this.restartCode() }, `↺ ${t('code.startOver')}`),
         ),
         this.editor.el,
+        this.explainEl,
         this.outputEl,
       ),
     );
@@ -316,6 +330,19 @@ class LessonController {
         .map(([type, max]) => `${Math.max(0, max - used[type])} × ${t(`codeNames.${type}`)}`)
         .join(', '),
     });
+  }
+
+  /** Explain the symbol or word at the cursor, in the bar under the editor. */
+  explain(code, pos) {
+    const found = code ? explainAt(code, pos) : null;
+    if (!found) {
+      this.explainEl.replaceChildren(h('span', { class: 'explain-idle' }, `💡 ${t('explain.idle')}`));
+      return;
+    }
+    const vars = { ...found.vars };
+    if (vars.helpKey) vars.help = t(vars.helpKey).replace(/%\d/g, '…');
+    if (vars.key) vars.key = t(`blocks.key.${vars.key}`);
+    this.explainEl.replaceChildren(`💡 ${t(found.key, vars)}`);
   }
 
   /** console.log and alert print here, so kids can see what their code is doing. */

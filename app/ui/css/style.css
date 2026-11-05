@@ -185,6 +185,8 @@ p { margin: 0 0 0.6em; line-height: 1.45; }
   min-height: 0;
   display: grid;
   grid-template-columns: minmax(0, 1fr) clamp(380px, 36vw, 540px);
+  /* One row, exactly as tall as the window: long panels scroll instead of growing the page. */
+  grid-template-rows: minmax(0, 1fr);
 }
 .side {
   overflow-y: auto;
@@ -215,7 +217,7 @@ p { margin: 0 0 0.6em; line-height: 1.45; }
 .concept { color: var(--muted); font-style: italic; }
 .hint { background: #f1ecfe; border-radius: 14px; padding: 0.7em 0.9em; }
 
-.workspace { position: relative; min-width: 0; display: flex; flex-direction: column; }
+.workspace { position: relative; min-width: 0; min-height: 0; display: flex; flex-direction: column; }
 .blockly { flex: 1; min-height: 0; }
 .capacity {
   position: absolute;
@@ -438,3 +440,21 @@ canvas.world {
   .bubble .avatar { width: 40px; }
   .bubble p, .task p { font-size: 0.92rem; }
 }
+
+/* ---- code mode: what does this symbol mean? ---- */
+
+.explain {
+  flex: none;
+  min-height: 2.6em;
+  padding: 0.55rem 1rem;
+  background: #1e293b;
+  color: #fde68a;
+  border-top: 1px solid #334155;
+  font-size: 0.95rem;
+  line-height: 1.4;
+}
+.explain-idle { color: #94a3b8; }
+.symbols-title { margin-top: 0.8rem !important; }
+.symbols { margin: 0; display: grid; grid-template-columns: auto 1fr; gap: 0.35rem 0.6rem; align-items: baseline; }
+.symbols dt code { font: 700 0.95rem var(--mono); color: #c4b5fd; white-space: pre; }
+.symbols dd { margin: 0; font-size: 0.8rem; color: #cbd5e1; line-height: 1.35; }
