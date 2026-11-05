@@ -20,10 +20,10 @@ const OP_KEYS = {
 const WORD_KEYS = {
   function: 'function', for: 'for', while: 'while', do: 'do', if: 'if', else: 'else', let: 'let', const: 'const',
   var: 'let', return: 'return', true: 'true', false: 'false', break: 'break', continue: 'continue',
-  null: 'nothing', undefined: 'nothing',
+  null: 'nothing', undefined: 'nothing', of: 'of',
 };
 
-const OBJECT_KEYS = { bit: 'bit', snake: 'snake', game: 'game', console: 'console', Math: 'math' };
+const OBJECT_KEYS = { bit: 'bit', snake: 'snake', game: 'game', console: 'console', Math: 'math', field: 'field' };
 const SKIP = new Set(['ws', 'nl']);
 
 export function explainAt(code, pos) {
@@ -97,7 +97,7 @@ function explainParen(sig, open) {
   if (open < 0) return { key: 'explain.paren' };
   const o = owner(sig, open);
   if (o.kind === 'if') return { key: 'explain.parenIf' };
-  if (o.kind === 'for') return { key: 'explain.parenFor' };
+  if (o.kind === 'for') return { key: sig[open + 3]?.value === 'of' ? 'explain.parenForOf' : 'explain.parenFor' };
   if (o.kind === 'while') return { key: 'explain.parenWhile' };
   if (o.kind === 'function') return { key: 'explain.parenFunction', vars: { name: o.name } };
   if (o.kind === 'call') {
@@ -138,22 +138,31 @@ function explainWord(sig, j) {
   const prev = sig[j - 1];
   if (prev?.value === '.') {
     const obj = sig[j - 2]?.value ?? '';
+    if (obj === 'square' && (word === 'x' || word === 'y')) return { key: `explain.square_${word}` };
     const help = memberHelpKey(obj, word);
     return help ? { key: 'explain.member', vars: { name: `${obj}.${word}`, helpKey: help } } : { key: 'explain.memberUnknown', vars: { name: `${obj}.${word}`, obj } };
   }
   if (WORD_KEYS[word]) return { key: `explain.${WORD_KEYS[word]}` };
   if (word in EVENT_FUNCS) {
     const ev = EVENT_FUNCS[word];
-    return ev === 'start' || ev === 'tick' ? { key: `explain.event_${ev}`, vars: { name: word } } : { key: 'explain.event_key', vars: { name: word, key: ev } };
+    if (['start', 'tick', 'click', 'rightClick'].includes(ev)) return { key: `explain.event_${ev}`, vars: { name: word } };
+    return { key: 'explain.event_key', vars: { name: word, key: ev } };
   }
   if (OBJECT_KEYS[word]) return { key: `explain.${OBJECT_KEYS[word]}` };
   if (prev?.value === 'function') return { key: 'explain.ownFunction', vars: { name: word } };
+  if (word === 'x' || word === 'y') return { key: `explain.coord_${word}` };
+  if (isLoopItem(sig, word)) return { key: 'explain.loopItem', vars: { name: word } };
   if (isLoopCounter(sig, word)) return { key: 'explain.counter', vars: { name: word } };
   if (prev?.value === 'let' || prev?.value === 'const' || prev?.value === 'var') return { key: 'explain.newVariable', vars: { name: word } };
   return { key: 'explain.name', vars: { name: word } };
 }
 
+/** Is `word` declared as `for (const word of ...`? */
+function isLoopItem(sig, word) {
+  return sig.some((t, i) => t.value === 'for' && sig[i + 1]?.value === '(' && sig[i + 3]?.value === word && sig[i + 4]?.value === 'of');
+}
+
 /** Is `word` declared as `for (let word = ...`? */
 function isLoopCounter(sig, word) {
-  return sig.some((t, i) => t.value === 'for' && sig[i + 1]?.value === '(' && sig[i + 3]?.value === word);
+  return sig.some((t, i) => t.value === 'for' && sig[i + 1]?.value === '(' && sig[i + 3]?.value === word && sig[i + 4]?.value === '=');
 }

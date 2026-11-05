@@ -1,0 +1,319 @@
+{
+  "id": "minesweeper",
+  "world": "minesweeper",
+  "game": "minesweeper",
+  "stars": 2,
+  "lessons": [
+    {
+      "id": "minesweeper-1",
+      "title": {
+        "en": "The minefield",
+        "no": "Minefeltet"
+      },
+      "story": {
+        "en": "Let's build Minesweeper! The field is a grid: columns go across (x) and rows go down (y), so every square has an address, like column 3, row 5. Some squares hide a mine…",
+        "no": "Nå lager vi Minesveiper! Feltet er et rutenett: kolonner går bortover (x) og rader går nedover (y), så hver rute har en adresse, som kolonne 3, rad 5. Under noen ruter ligger det en mine …"
+      },
+      "task": {
+        "en": "Put \"place 10 mines\" in \"when ▶ Run is clicked\", and \"open square at column x row y\" in \"when a square is clicked\". Press Run, then open 10 squares.",
+        "no": "Legg «legg ut 10 miner» i «når ▶ Kjør trykkes», og «åpne ruten i kolonne x rad y» i «når en rute klikkes». Trykk Kjør, og åpne 10 ruter."
+      },
+      "hint": {
+        "en": "When you click a square, x and y tell your code which square it was. Move the mouse over the field to see each square's column and row.",
+        "no": "Når du klikker på en rute, forteller x og y koden din hvilken rute det var. Beveg musen over feltet for å se kolonnen og raden til hver rute."
+      },
+      "taskCode": {
+        "en": "Write field.placeMines(10); in whenRunClicked(), and field.reveal(x, y); in whenSquareClicked(x, y). Press Run, then open 10 squares.",
+        "no": "Skriv field.placeMines(10); i whenRunClicked(), og field.reveal(x, y); i whenSquareClicked(x, y). Trykk Kjør, og åpne 10 ruter."
+      },
+      "hintCode": {
+        "en": "x and y are the column and row of the square that was clicked. Your code gets them in the ( ) of whenSquareClicked(x, y).",
+        "no": "x og y er kolonnen og raden til ruten som ble klikket. Koden din får dem i ( ) til whenSquareClicked(x, y)."
+      },
+      "concept": {
+        "en": "A grid has columns (x) and rows (y), so every square has an address.",
+        "no": "Et rutenett har kolonner (x) og rader (y), så hver rute har en adresse."
+      },
+      "goal": {
+        "type": "opened",
+        "n": 10
+      },
+      "toolbox": [
+        "field_place_mines",
+        "field_reveal"
+      ],
+      "starter": [
+        {
+          "type": "event_start",
+          "x": 30,
+          "y": 30
+        },
+        {
+          "type": "event_click",
+          "x": 30,
+          "y": 170
+        }
+      ]
+    },
+    {
+      "id": "minesweeper-2",
+      "title": {
+        "en": "Boom!",
+        "no": "Bom!"
+      },
+      "story": {
+        "en": "Did you open a mine? Nothing happened! In Minesweeper, opening a mine ends the game.",
+        "no": "Åpnet du en mine? Ingenting skjedde! I Minesveiper er spillet slutt hvis du åpner en mine."
+      },
+      "task": {
+        "en": "In the click block, before opening: IF there is a mine at column x row y, show all mines and then game over. Test it: find a mine!",
+        "no": "I klikk-klossen, før du åpner: HVIS det er en mine i kolonne x rad y, vis alle minene og så spillet er slutt. Test det: finn en mine!"
+      },
+      "hint": {
+        "en": "Use \"if\" with \"mine at column x row y?\". Inside it: \"show all mines\" and \"game over\". Put the if above \"open square\".",
+        "no": "Bruk «hvis» med «mine i kolonne x rad y?». Inni den: «vis alle minene» og «spillet er slutt». Legg hvis-klossen over «åpne ruten»."
+      },
+      "taskCode": {
+        "en": "In whenSquareClicked, before field.reveal: if (field.hasMine(x, y)) { … }. Inside, show the mines with field.showMines(); and end with game.over();. Then find a mine!",
+        "no": "I whenSquareClicked, før field.reveal: if (field.hasMine(x, y)) { … }. Inni viser du minene med field.showMines(); og avslutter med game.over();. Finn så en mine!"
+      },
+      "hintCode": {
+        "en": "if (field.hasMine(x, y)) { field.showMines(); game.over(); } goes above field.reveal(x, y);",
+        "no": "if (field.hasMine(x, y)) { field.showMines(); game.over(); } skal over field.reveal(x, y);"
+      },
+      "concept": {
+        "en": "If + game over = a rule for losing.",
+        "no": "Hvis + spillet er slutt = en regel for å tape."
+      },
+      "goal": {
+        "type": "gameOver",
+        "reason": "mine"
+      },
+      "carryFrom": "minesweeper-1",
+      "toolbox": [
+        "if",
+        "field_has_mine",
+        "field_show_mines",
+        "game_over",
+        "field_place_mines",
+        "field_reveal"
+      ]
+    },
+    {
+      "id": "minesweeper-3",
+      "title": {
+        "en": "How many mines?",
+        "no": "Hvor mange miner?"
+      },
+      "story": {
+        "en": "Real Minesweeper shows a number on every open square: how many mines hide in the 8 squares around it. Let's count them!",
+        "no": "Ekte Minesveiper viser et tall på hver åpne rute: hvor mange miner som gjemmer seg i de 8 rutene rundt. Nå teller vi dem!"
+      },
+      "task": {
+        "en": "Before opening: \"set count to 0\". Then \"for each square around column x row y\": IF there is a mine on that square, \"add 1 to count\". Last, swap \"open square\" for \"open square … showing count\". Open 5 squares with the right numbers.",
+        "no": "Før du åpner: «sett antall til 0». Så «for hver rute rundt kolonne x rad y»: HVIS det er en mine på den ruten, «legg 1 til antall». Til slutt bytter du «åpne ruten» med «åpne ruten … og vis antall». Åpne 5 ruter med riktige tall."
+      },
+      "hint": {
+        "en": "Inside the loop, use \"mine at …?\" with \"that square's column\" and \"that square's row\". The loop visits the 8 squares around, one at a time.",
+        "no": "Inni løkken bruker du «mine i …?» med «den rutens kolonne» og «den rutens rad». Løkken besøker de 8 rutene rundt, én om gangen."
+      },
+      "taskCode": {
+        "en": "Before field.reveal: let count = 0; then a loop for (const square of field.neighbours(x, y)) { } that adds 1 to count if field.hasMine(square.x, square.y). Then open with field.reveal(x, y, count);. Open 5 squares with the right numbers.",
+        "no": "Før field.reveal: let count = 0; så en løkke for (const square of field.neighbours(x, y)) { } som legger 1 til count hvis field.hasMine(square.x, square.y). Åpne så med field.reveal(x, y, count);. Åpne 5 ruter med riktige tall."
+      },
+      "hintCode": {
+        "en": "let count = 0; for (const square of field.neighbours(x, y)) { if (field.hasMine(square.x, square.y)) { count = count + 1; } } field.reveal(x, y, count);",
+        "no": "let count = 0; for (const square of field.neighbours(x, y)) { if (field.hasMine(square.x, square.y)) { count = count + 1; } } field.reveal(x, y, count);"
+      },
+      "concept": {
+        "en": "A loop can visit every neighbour, and a variable can count.",
+        "no": "En løkke kan besøke alle naboene, og en variabel kan telle."
+      },
+      "goal": {
+        "type": "numbers",
+        "n": 5
+      },
+      "carryFrom": "minesweeper-2",
+      "limits": {
+        "count_set": 1
+      },
+      "toolbox": [
+        "count_set",
+        "for_neighbours",
+        "has_mine_square",
+        "count_add",
+        "field_reveal_n",
+        "if",
+        "field_has_mine",
+        "field_show_mines",
+        "game_over",
+        "field_place_mines"
+      ]
+    },
+    {
+      "id": "minesweeper-4",
+      "title": {
+        "en": "Flags",
+        "no": "Flagg"
+      },
+      "story": {
+        "en": "When you are sure a square hides a mine, put a flag on it, so you don't click it by accident. Players use the right mouse button for flags.",
+        "no": "Når du er sikker på at en rute skjuler en mine, setter du et flagg på den, så du ikke klikker på den ved et uhell. Spillere bruker høyre museknapp til flagg."
+      },
+      "task": {
+        "en": "Add a \"when a square is right-clicked\" block with \"flag or unflag column x row y\" inside. Then place 3 flags.",
+        "no": "Legg til en «når en rute høyreklikkes»-kloss med «sett eller fjern flagg i kolonne x rad y» inni. Sett så ut 3 flagg."
+      },
+      "hint": {
+        "en": "Right-click is a new event, just like the arrow keys in Snake. Right-click a flag again to take it away.",
+        "no": "Høyreklikk er en ny hendelse, akkurat som piltastene i Snake. Høyreklikk på et flagg igjen for å fjerne det."
+      },
+      "taskCode": {
+        "en": "Add function whenSquareRightClicked(x, y) { field.toggleFlag(x, y); }. Then place 3 flags with the right mouse button.",
+        "no": "Legg til function whenSquareRightClicked(x, y) { field.toggleFlag(x, y); }. Sett så ut 3 flagg med høyre museknapp."
+      },
+      "hintCode": {
+        "en": "Write the new function next to whenSquareClicked, not inside it.",
+        "no": "Skriv den nye funksjonen ved siden av whenSquareClicked, ikke inni den."
+      },
+      "concept": {
+        "en": "Each event can have its own code.",
+        "no": "Hver hendelse kan ha sin egen kode."
+      },
+      "goal": {
+        "type": "flags",
+        "n": 3
+      },
+      "carryFrom": "minesweeper-3",
+      "limits": {
+        "count_set": 1
+      },
+      "toolbox": [
+        "event_rightclick",
+        "field_flag",
+        "count_set",
+        "for_neighbours",
+        "has_mine_square",
+        "count_add",
+        "field_reveal_n",
+        "if",
+        "field_has_mine",
+        "field_show_mines",
+        "game_over",
+        "field_place_mines"
+      ]
+    },
+    {
+      "id": "minesweeper-5",
+      "title": {
+        "en": "Open the empty areas",
+        "no": "Åpne de tomme områdene"
+      },
+      "story": {
+        "en": "Clicking squares with 0 mines around one by one is boring. Real Minesweeper opens all squares around a 0 by itself, and if one of those is a 0 too, it opens around that one, and so on!",
+        "no": "Det er kjedelig å klikke på ruter med 0 miner rundt én etter én. Ekte Minesveiper åpner alle rutene rundt en 0 av seg selv, og hvis en av dem også er 0, åpner den rundt den også, og så videre!"
+      },
+      "task": {
+        "en": "After opening: IF count = 0, \"click all squares around column x row y\". Then find an empty area: one click should open at least 10 squares.",
+        "no": "Etter at du har åpnet: HVIS antall = 0, «klikk alle rutene rundt kolonne x rad y». Finn så et tomt område: ett klikk skal åpne minst 10 ruter."
+      },
+      "hint": {
+        "en": "\"click all squares around\" runs your click code again for every closed square around. That code may click around again: code that starts itself is called recursion.",
+        "no": "«klikk alle rutene rundt» kjører klikk-koden din på nytt for hver lukket rute rundt. Den koden kan klikke rundt igjen: kode som starter seg selv kalles rekursjon."
+      },
+      "taskCode": {
+        "en": "After field.reveal(x, y, count);: if (count == 0) { field.clickAround(x, y); }. Find an empty area: one click should open at least 10 squares.",
+        "no": "Etter field.reveal(x, y, count);: if (count == 0) { field.clickAround(x, y); }. Finn et tomt område: ett klikk skal åpne minst 10 ruter."
+      },
+      "hintCode": {
+        "en": "field.clickAround(x, y) runs your whenSquareClicked again for every closed square around. == asks \"are these the same?\".",
+        "no": "field.clickAround(x, y) kjører whenSquareClicked på nytt for hver lukket rute rundt. == spør «er disse like?»."
+      },
+      "concept": {
+        "en": "Code that starts itself again is called recursion.",
+        "no": "Kode som starter seg selv igjen kalles rekursjon."
+      },
+      "goal": {
+        "type": "bigOpen",
+        "n": 10
+      },
+      "carryFrom": "minesweeper-4",
+      "limits": {
+        "count_set": 1
+      },
+      "toolbox": [
+        "count_is_zero",
+        "field_click_around",
+        "if",
+        "event_rightclick",
+        "field_flag",
+        "count_set",
+        "for_neighbours",
+        "has_mine_square",
+        "count_add",
+        "field_reveal_n",
+        "field_has_mine",
+        "field_show_mines",
+        "game_over",
+        "field_place_mines"
+      ]
+    },
+    {
+      "id": "minesweeper-6",
+      "title": {
+        "en": "You win!",
+        "no": "Du vant!"
+      },
+      "story": {
+        "en": "One rule is still missing: how do you win? You win when every square without a mine is open.",
+        "no": "Én regel mangler fortsatt: hvordan vinner du? Du vinner når alle rutene uten mine er åpne."
+      },
+      "task": {
+        "en": "At the bottom of the click block: IF all safe squares are open, then \"you win!\". Then win a game! Tip: fewer mines make it easier.",
+        "no": "Nederst i klikk-klossen: HVIS alle trygge ruter er åpne, så «du vant!». Vinn så et spill! Tips: færre miner gjør det lettere."
+      },
+      "hint": {
+        "en": "Use \"if\" with \"all safe squares are open?\" and \"you win!\" inside. Put it at the very bottom of the click block.",
+        "no": "Bruk «hvis» med «alle trygge ruter er åpne?» og «du vant!» inni. Legg den helt nederst i klikk-klossen."
+      },
+      "taskCode": {
+        "en": "At the end of whenSquareClicked: if (field.allSafeOpen()) { game.win(); }. Then win a game! Tip: field.placeMines(5) makes it easier.",
+        "no": "Nederst i whenSquareClicked: if (field.allSafeOpen()) { game.win(); }. Vinn så et spill! Tips: field.placeMines(5) gjør det lettere."
+      },
+      "hintCode": {
+        "en": "if (field.allSafeOpen()) { game.win(); } goes after the count == 0 rule.",
+        "no": "if (field.allSafeOpen()) { game.win(); } skal etter count == 0-regelen."
+      },
+      "concept": {
+        "en": "A game needs a way to win, too.",
+        "no": "Et spill trenger også en måte å vinne på."
+      },
+      "goal": {
+        "type": "win"
+      },
+      "final": true,
+      "carryFrom": "minesweeper-5",
+      "limits": {
+        "count_set": 1
+      },
+      "toolbox": [
+        "field_all_open",
+        "game_win",
+        "if",
+        "count_is_zero",
+        "field_click_around",
+        "event_rightclick",
+        "field_flag",
+        "count_set",
+        "for_neighbours",
+        "has_mine_square",
+        "count_add",
+        "field_reveal_n",
+        "field_has_mine",
+        "field_show_mines",
+        "game_over",
+        "field_place_mines"
+      ]
+    }
+  ]
+}

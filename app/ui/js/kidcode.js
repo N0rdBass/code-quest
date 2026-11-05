@@ -19,13 +19,15 @@ export const EVENT_FUNCS = {
   whenKeyDown: 'down',
   whenKeyLeft: 'left',
   whenKeyRight: 'right',
+  whenSquareClicked: 'click',
+  whenSquareRightClicked: 'rightClick',
 };
 
 const KEYWORDS = new Set([
   'function', 'for', 'while', 'do', 'if', 'else', 'let', 'const', 'var', 'return',
   'true', 'false', 'null', 'undefined', 'break', 'continue', 'new', 'of', 'in', 'typeof',
 ]);
-const OBJECTS = new Set(['bit', 'snake', 'game', 'console', 'Math']);
+const OBJECTS = new Set(['bit', 'snake', 'game', 'console', 'Math', 'field']);
 const PAIRS = { '(': ')', '[': ']', '{': '}' };
 const CLOSERS = new Set([')', ']', '}']);
 
@@ -254,10 +256,11 @@ const COLOURS = ['green', 'blue', 'purple', 'orange', 'pink'];
 const API = {
   bit: { move: DIRECTIONS, pickUpCoin: null, isOnCoin: null },
   snake: { move: null, turn: DIRECTIONS, grow: null, placeFood: null, isOnFood: null, hitsWall: null, bitesItself: null, setColour: COLOURS },
-  game: { changeScore: null, over: null, faster: null },
+  game: { changeScore: null, over: null, faster: null, win: null },
+  field: { placeMines: null, reveal: null, hasMine: null, showMines: null, toggleFlag: null, hasFlag: null, neighbours: null, clickAround: null, allSafeOpen: null },
   console: { log: null, info: null, warn: null, error: null },
 };
-const WORLD_OBJECTS = { robot: ['bit', 'game', 'console'], snake: ['snake', 'game', 'console'] };
+const WORLD_OBJECTS = { robot: ['bit', 'game', 'console'], snake: ['snake', 'game', 'console'], minesweeper: ['field', 'game', 'console'] };
 
 /** Each use of an object, like `bit.move('right')`: where it is and what's in it. */
 function apiUses(sig) {
@@ -395,6 +398,7 @@ export function diagnose(code, { world } = {}) {
 const LIMIT_MATCHERS = {
   bit_move: (sig, j) => sig[j].value === 'bit' && sig[j + 1]?.value === '.' && sig[j + 2]?.value === 'move',
   controls_repeat_ext: (sig, j) => isKeyword(sig, j, 'for') || (isKeyword(sig, j, 'while') && sig[j - 1]?.value !== '}'),
+  count_set: (sig, j) => isKeyword(sig, j, 'let') && sig[j + 1]?.value === 'count',
 };
 
 /** How often each limited command is used: { bit_move: 3, ... } */
@@ -414,7 +418,7 @@ export function countUses(code, limits) {
 // Globals kid code shouldn't reach by accident. Not a real sandbox (kids run
 // their own code on their own computer), but it keeps mistakes harmless.
 const HIDDEN = ['window', 'document', 'globalThis', 'self', 'top', 'parent', 'localStorage', 'sessionStorage', 'fetch', 'prompt', 'confirm', '__TAURI__'];
-const PARAMS = ['__events', 'bit', 'snake', 'game', 'console', '__LoopError', '__trace', 'alert', ...HIDDEN];
+const PARAMS = ['__events', 'bit', 'snake', 'game', 'console', '__LoopError', '__trace', 'alert', 'field', ...HIDDEN];
 
 function wrap(body) {
   const returns = Object.keys(EVENT_FUNCS)
@@ -425,13 +429,15 @@ function wrap(body) {
       const call = `__safe(__kid.${name})`;
       if (ev === 'start') return `if (__kid.${name}) __events.onStart(${call});`;
       if (ev === 'tick') return `if (__kid.${name}) __events.onTick(${call});`;
+      if (ev === 'click') return `if (__kid.${name}) __events.onClick(${call});`;
+      if (ev === 'rightClick') return `if (__kid.${name}) __events.onRightClick(${call});`;
       return `if (__kid.${name}) __events.onKey('${ev}', ${call});`;
     })
     .join('\n');
   return [
     '"use strict";',
     'let __loopGuard = 100000;',
-    'const __safe = (f) => () => { __loopGuard = 100000; return f(); };',
+    'const __safe = (f) => (...args) => { __loopGuard = 100000; return f(...args); };',
     'const __t = (k, o) => ((__trace.at = k), o);',
     'const __kid = (function () {',
     body,
@@ -514,9 +520,9 @@ export function compileTyped(code, { world } = {}) {
   const fn = make(tagged);
   const trace = { at: null };
   return {
-    run(events, bit, snake, game, console, alert) {
+    run(events, bit, snake, game, console, alert, field) {
       trace.at = null;
-      return fn(events, bit, snake, game, console, LoopError, trace, alert);
+      return fn(events, bit, snake, game, console, LoopError, trace, alert, field);
     },
     /** Where the last tagged command was: { line, start, end }, or null. */
     lastPlace: () => (trace.at == null ? null : places[trace.at]),

@@ -38,12 +38,15 @@
     "next": "Next lesson",
     "toHome": "Back to the map",
     "again": "Try again",
-    "diploma": "Get your diploma"
+    "diploma": "Get your diploma",
+    "square": "Column {x}, row {y}",
+    "clickSquares": "Click the squares!",
+    "clickSquaresFlags": "Click the squares! Right-click to place a flag."
   },
   "msg": {
     "success": "Great job!",
     "successSub": "You solved it!",
-    "gameDone": "You built Snake!",
+    "gameDone": "You built {game}!",
     "gameDoneSub": "You made a real game with code. Well done!",
     "noStart": "Put your blocks inside \"when Run is clicked\".",
     "noKeys": "Add \"when key … is pressed\" blocks so you can steer.",
@@ -65,7 +68,17 @@
     "noKeysCode": "Write functions like whenKeyUp() { … } so you can steer.",
     "badDirection": "\"{dir}\" is not a direction. Use 'up', 'down', 'left' or 'right'.",
     "badColour": "\"{colour}\" is not a snake colour. Pick one of: {list}.",
-    "loopCode": "A loop ran far too many times, maybe forever. Check the condition of your loop."
+    "loopCode": "A loop ran far too many times, maybe forever. Check the condition of your loop.",
+    "offField": "There is no square at column {x}, row {y}. Columns go from 0 to {maxX}, and rows from 0 to {maxY}.",
+    "badNumber": "\"{n}\" is not a number of mines. Show a whole number like 0, 1 or 2.",
+    "tooDeep": "The squares kept clicking each other, again and again. Only click around when count is 0.",
+    "noClick": "Put your blocks inside \"when a square is clicked\".",
+    "noClickCode": "Write function whenSquareClicked(x, y) { … } so clicks do something.",
+    "noMines": "Tip: use \"place 10 mines\" when the game starts, or the field is empty. Click the squares!",
+    "wrongNumber": "Column {x}, row {y} shows {shown}, but the right number is {real}. Check your counting!",
+    "boom": "Boom! You opened a mine. Press Run to play again.",
+    "mineNoRule": "You opened a mine, but the game goes on! Add the rule: if there is a mine, game over.",
+    "mineNoRuleYet": "That was a mine, but nothing happened. We'll fix that in the next lesson!"
   },
   "diploma": {
     "title": "Diploma",
@@ -118,11 +131,31 @@
       "purple": "purple",
       "orange": "orange",
       "pink": "pink"
-    }
+    },
+    "eventClick": "when a square is clicked",
+    "eventRightClick": "when a square is right-clicked",
+    "clickX": "column x",
+    "clickY": "row y",
+    "squareX": "that square's column",
+    "squareY": "that square's row",
+    "placeMines": "place %1 mines",
+    "reveal": "open square at column %1 row %2",
+    "revealN": "open square at column %1 row %2 showing %3",
+    "hasMine": "mine at column %1 row %2?",
+    "flag": "flag or unflag column %1 row %2",
+    "clickAround": "click all squares around column %1 row %2",
+    "showMines": "show all mines",
+    "allOpen": "all safe squares are open?",
+    "win": "you win!",
+    "forNeighbours": "for each square around column %1 row %2",
+    "countSet": "set count to 0",
+    "countAdd": "add 1 to count",
+    "countGet": "count"
   },
   "blockNames": {
     "controls_repeat_ext": "repeat",
-    "bit_move": "move"
+    "bit_move": "move",
+    "count_set": "set count to 0"
   },
   "mode": {
     "label": "How do you want to code?",
@@ -152,7 +185,20 @@
       "if": "if the question is true, do what is inside { }",
       "turn": "turn the snake: 'up', 'down', 'left' or 'right'",
       "colour": "snake colour: 'green', 'blue', 'purple', 'orange' or 'pink'",
-      "log": "write a message in the box under your code"
+      "log": "write a message in the box under your code",
+      "click": "when a square is clicked: x is its column, y is its row",
+      "rightClick": "when a square is right-clicked",
+      "placeMines": "hide mines in the field (the number is how many)",
+      "reveal": "open the square at column x, row y",
+      "revealN": "open the square and show a number on it",
+      "hasMine": "is there a mine at column x, row y? (true or false)",
+      "hasMineSquare": "is there a mine on that square?",
+      "flag": "put a flag on the square, or take it away",
+      "clickAround": "click every closed square around it (runs whenSquareClicked again)",
+      "neighbours": "a loop: visit the 8 squares around, one at a time",
+      "countSet": "make a variable called count, starting at 0",
+      "countAdd": "add 1 to count",
+      "countZero": "asks: is count the same as 0?"
     },
     "err": {
       "string": "This text has no closing {q}. Text must start and end with {q}.",
@@ -182,7 +228,8 @@
   },
   "codeNames": {
     "bit_move": "bit.move()",
-    "controls_repeat_ext": "loop"
+    "controls_repeat_ext": "loop",
+    "count_set": "let count"
   },
   "explain": {
     "idle": "Click on any symbol or word in your code, and I'll tell you what it means.",
@@ -255,7 +302,17 @@
     "ownFunction": "{name} is the name of a function you made. Use it by writing {name}();",
     "counter": "{name} is the loop's counter. It counts 0, 1, 2, … one more each time round the loop.",
     "newVariable": "{name} is a new variable: a box with a name that remembers a value.",
-    "name": "{name} is a name, for example a variable you made. If you meant a command, check the spelling: capital letters matter!"
+    "name": "{name} is a name, for example a variable you made. If you meant a command, check the spelling: capital letters matter!",
+    "event_click": "{name} is a special name: its code runs every time a square is clicked. x and y in the ( ) say which square.",
+    "event_rightClick": "{name} is a special name: its code runs every time a square is right-clicked.",
+    "coord_x": "x is the column of the clicked square: 0 is the column on the left. The numbers above the field show the columns.",
+    "coord_y": "y is the row of the clicked square: 0 is the top row. The numbers left of the field show the rows.",
+    "square_x": "square.x is the column of the square the loop is visiting right now.",
+    "square_y": "square.y is the row of the square the loop is visiting right now.",
+    "loopItem": "{name} is each thing in the list, one at a time: each time round the loop it is the next one.",
+    "of": "for (… of …) visits every thing in a list, one at a time.",
+    "parenForOf": "( ) after for say what to visit: for (const square of list) visits each thing in the list, calling it square.",
+    "field": "field is the minefield. Write a dot after it to use one of its commands, like field.reveal."
   },
   "glossary": {
     "braces": "hold a group of code that belongs together: the code of a function, a loop or an if",

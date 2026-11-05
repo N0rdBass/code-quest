@@ -10,7 +10,7 @@
 
 import { t } from './i18n.js';
 
-const COLOUR = { events: 45, robot: 210, snake: 135, score: 25, game: 0 };
+const COLOUR = { events: 45, robot: 210, snake: 135, score: 25, game: 0, field: 195, where: 290, count: 25 };
 
 function dirOptions(group) {
   return ['up', 'down', 'left', 'right'].map((d) => [t(`blocks.${group}.${d}`), d]);
@@ -107,7 +107,76 @@ export function defineBlocks() {
       nextStatement: null,
       colour: COLOUR.snake,
     },
+
+    // ---- Minesweeper ----
+    {
+      type: 'event_click',
+      message0: `${t('blocks.eventClick')} %1 %2`,
+      args0: [{ type: 'input_dummy' }, { type: 'input_statement', name: 'DO' }],
+      colour: COLOUR.events,
+    },
+    {
+      type: 'event_rightclick',
+      message0: `${t('blocks.eventRightClick')} %1 %2`,
+      args0: [{ type: 'input_dummy' }, { type: 'input_statement', name: 'DO' }],
+      colour: COLOUR.events,
+    },
+    reporter('click_x', t('blocks.clickX'), COLOUR.where),
+    reporter('click_y', t('blocks.clickY'), COLOUR.where),
+    reporter('square_x', t('blocks.squareX'), COLOUR.where),
+    reporter('square_y', t('blocks.squareY'), COLOUR.where),
+    {
+      type: 'field_place_mines',
+      message0: t('blocks.placeMines'),
+      args0: [{ type: 'field_number', name: 'N', value: 10, precision: 1, min: 1, max: 40 }],
+      previousStatement: null,
+      nextStatement: null,
+      colour: COLOUR.field,
+    },
+    xyBlock('field_reveal', t('blocks.reveal'), { statement: true }),
+    xyBlock('field_reveal_n', t('blocks.revealN'), { statement: true, extra: [{ type: 'input_value', name: 'N', check: 'Number' }] }),
+    xyBlock('field_has_mine', t('blocks.hasMine'), { output: 'Boolean' }),
+    xyBlock('field_flag', t('blocks.flag'), { statement: true }),
+    xyBlock('field_click_around', t('blocks.clickAround'), { statement: true }),
+    statement('field_show_mines', t('blocks.showMines'), COLOUR.field),
+    question('field_all_open', t('blocks.allOpen'), COLOUR.field),
+    statement('game_win', t('blocks.win'), COLOUR.game, { nextStatement: undefined }),
+    {
+      type: 'for_neighbours',
+      message0: `${t('blocks.forNeighbours')} %3 %4`,
+      args0: [
+        { type: 'input_value', name: 'X', check: 'Number' },
+        { type: 'input_value', name: 'Y', check: 'Number' },
+        { type: 'input_dummy' },
+        { type: 'input_statement', name: 'DO' },
+      ],
+      inputsInline: true,
+      previousStatement: null,
+      nextStatement: null,
+      colour: 120,
+    },
+    statement('count_set', t('blocks.countSet'), COLOUR.count),
+    statement('count_add', t('blocks.countAdd'), COLOUR.count),
+    reporter('count_get', t('blocks.countGet'), COLOUR.count),
   ]);
+}
+
+/** A block with "column [x] row [y]" inputs. */
+function xyBlock(type, label, { statement: isStatement, output, extra = [] }) {
+  const def = {
+    type,
+    message0: label,
+    args0: [{ type: 'input_value', name: 'X', check: 'Number' }, { type: 'input_value', name: 'Y', check: 'Number' }, ...extra],
+    inputsInline: true,
+    colour: COLOUR.field,
+  };
+  if (isStatement) Object.assign(def, { previousStatement: null, nextStatement: null });
+  if (output) def.output = output;
+  return def;
+}
+
+function reporter(type, label, colour) {
+  return { type, message0: label, output: 'Number', colour };
 }
 
 function rightFirst(options) {
@@ -139,10 +208,10 @@ export function defineGenerators() {
   const show = () => gen.cqDisplay === true;
   const guard = '  __loopGuard = 100000;\n';
 
-  const hat = (displayName, register) => (block) => {
+  const hat = (displayName, register, params = '') => (block) => {
     const body = gen.statementToCode(block, 'DO');
-    if (show()) return `function ${displayName(block)}() {\n${body || `${gen.INDENT}// ${t('code.yourCodeHere')}\n`}}\n\n`;
-    return `${register(block)}() => {\n${guard}${body}});\n`;
+    if (show()) return `function ${displayName(block)}(${params}) {\n${body || `${gen.INDENT}// ${t('code.yourCodeHere')}\n`}}\n\n`;
+    return `${register(block)}(${params}) => {\n${guard}${body}});\n`;
   };
 
   gen.forBlock['event_start'] = hat(() => 'whenRunClicked', () => '__events.onStart(');
@@ -178,9 +247,35 @@ export function defineGenerators() {
   gen.forBlock['game_over'] = () => 'game.over();\n';
   gen.forBlock['speed_up'] = () => 'game.faster();\n';
   gen.forBlock['snake_color'] = (b) => `snake.setColour('${b.getFieldValue('COLOUR')}');\n`;
+
+  // Minesweeper
+  gen.forBlock['event_click'] = hat(() => 'whenSquareClicked', () => '__events.onClick(', 'x, y');
+  gen.forBlock['event_rightclick'] = hat(() => 'whenSquareRightClicked', () => '__events.onRightClick(', 'x, y');
+  const atom = (code) => () => [code, Order.ATOMIC];
+  gen.forBlock['click_x'] = atom('x');
+  gen.forBlock['click_y'] = atom('y');
+  gen.forBlock['square_x'] = () => ['square.x', Order.MEMBER];
+  gen.forBlock['square_y'] = () => ['square.y', Order.MEMBER];
+  gen.forBlock['count_get'] = atom('count');
+  const xy = (b) => `${gen.valueToCode(b, 'X', Order.NONE) || '0'}, ${gen.valueToCode(b, 'Y', Order.NONE) || '0'}`;
+  gen.forBlock['field_place_mines'] = (b) => `field.placeMines(${Number(b.getFieldValue('N')) || 10});\n`;
+  gen.forBlock['field_reveal'] = (b) => `field.reveal(${xy(b)});\n`;
+  gen.forBlock['field_reveal_n'] = (b) => `field.reveal(${xy(b)}, ${gen.valueToCode(b, 'N', Order.NONE) || '0'});\n`;
+  gen.forBlock['field_has_mine'] = (b) => [`field.hasMine(${xy(b)})`, Order.FUNCTION_CALL];
+  gen.forBlock['field_flag'] = (b) => `field.toggleFlag(${xy(b)});\n`;
+  gen.forBlock['field_click_around'] = (b) => `field.clickAround(${xy(b)});\n`;
+  gen.forBlock['field_show_mines'] = () => 'field.showMines();\n';
+  gen.forBlock['field_all_open'] = () => ['field.allSafeOpen()', Order.FUNCTION_CALL];
+  gen.forBlock['game_win'] = () => 'game.win();\n';
+  gen.forBlock['count_set'] = () => 'let count = 0;\n';
+  gen.forBlock['count_add'] = () => 'count = count + 1;\n';
+  gen.forBlock['for_neighbours'] = (block) => {
+    const branch = gen.addLoopTrap(gen.statementToCode(block, 'DO'), block);
+    return `for (const square of field.neighbours(${xy(block)})) {\n${branch}}\n`;
+  };
 }
 
-const HATS = new Set(['event_start', 'event_tick', 'event_key']);
+const HATS = new Set(['event_start', 'event_tick', 'event_key', 'event_click', 'event_rightclick']);
 
 /**
  * Code for the workspace, using only blocks inside event blocks. Loose blocks
@@ -229,7 +324,29 @@ const TOOLBOX_ENTRIES = {
     inputs: { TIMES: { shadow: { type: 'math_number', fields: { NUM: 4 } } } },
   },
   if: { kind: 'block', type: 'controls_if' },
+  // Minesweeper blocks come with the clicked square (x, y) already filled in.
+  field_reveal: xyEntry('field_reveal'),
+  field_reveal_n: xyEntry('field_reveal_n', { N: { shadow: { type: 'count_get' } } }),
+  field_has_mine: xyEntry('field_has_mine'),
+  field_flag: xyEntry('field_flag'),
+  field_click_around: xyEntry('field_click_around'),
+  for_neighbours: xyEntry('for_neighbours'),
+  has_mine_square: {
+    kind: 'block',
+    type: 'field_has_mine',
+    inputs: { X: { shadow: { type: 'square_x' } }, Y: { shadow: { type: 'square_y' } } },
+  },
+  count_is_zero: {
+    kind: 'block',
+    type: 'logic_compare',
+    fields: { OP: 'EQ' },
+    inputs: { A: { block: { type: 'count_get' } }, B: { shadow: { type: 'math_number', fields: { NUM: 0 } } } },
+  },
 };
+
+function xyEntry(type, more = {}) {
+  return { kind: 'block', type, inputs: { X: { shadow: { type: 'click_x' } }, Y: { shadow: { type: 'click_y' } }, ...more } };
+}
 
 export function toolboxFor(names) {
   return {

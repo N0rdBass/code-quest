@@ -24,6 +24,22 @@ const SNIPPETS = {
   game_over: { code: 'game.over();¦', help: 'blocks.gameOver' },
   speed_up: { code: 'game.faster();¦', help: 'blocks.speedUp' },
   snake_color: { code: "snake.setColour('blue');¦", help: 'code.help.colour' },
+  event_click: { code: 'function whenSquareClicked(x, y) {\n  ¦\n}', help: 'code.help.click' },
+  event_rightclick: { code: 'function whenSquareRightClicked(x, y) {\n  ¦\n}', help: 'code.help.rightClick' },
+  field_place_mines: { code: 'field.placeMines(10);¦', help: 'code.help.placeMines' },
+  field_reveal: { code: 'field.reveal(x, y);¦', help: 'code.help.reveal' },
+  field_reveal_n: { code: 'field.reveal(x, y, count);¦', help: 'code.help.revealN' },
+  field_has_mine: { code: 'field.hasMine(x, y)¦', help: 'code.help.hasMine' },
+  has_mine_square: { code: 'field.hasMine(square.x, square.y)¦', help: 'code.help.hasMineSquare' },
+  field_show_mines: { code: 'field.showMines();¦', help: 'blocks.showMines' },
+  field_flag: { code: 'field.toggleFlag(x, y);¦', help: 'code.help.flag' },
+  field_click_around: { code: 'field.clickAround(x, y);¦', help: 'code.help.clickAround' },
+  field_all_open: { code: 'field.allSafeOpen()¦', help: 'blocks.allOpen' },
+  game_win: { code: 'game.win();¦', help: 'blocks.win' },
+  for_neighbours: { code: 'for (const square of field.neighbours(x, y)) {\n  ¦\n}', help: 'code.help.neighbours' },
+  count_set: { code: 'let count = 0;¦', help: 'code.help.countSet' },
+  count_add: { code: 'count = count + 1;¦', help: 'code.help.countAdd' },
+  count_is_zero: { code: 'count == 0¦', help: 'code.help.countZero' },
 };
 
 /** The commands for a lesson: its event functions first, then its toolbox. */
@@ -31,6 +47,7 @@ export function commandsFor(lesson, world) {
   const names = [];
   if (lesson.mode !== 'play') names.push('event_start');
   if (world === 'snake') names.push('event_tick');
+  if (world === 'minesweeper') names.push('event_click');
   for (const name of lesson.toolbox) if (!names.includes(name)) names.push(name);
   return names
     .filter((name) => SNIPPETS[name])
@@ -45,7 +62,7 @@ export function commandsFor(lesson, world) {
 const MEMBER_HELP = { 'console.log': 'code.help.log' };
 for (const { code, help } of Object.values(SNIPPETS)) {
   const m = code.match(/^(\w+)\.(\w+)\(/);
-  if (m) MEMBER_HELP[`${m[1]}.${m[2]}`] = help;
+  if (m) MEMBER_HELP[`${m[1]}.${m[2]}`] ||= help;
 }
 
 export function memberHelpKey(obj, name) {

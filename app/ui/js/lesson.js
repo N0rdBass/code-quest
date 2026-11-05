@@ -15,6 +15,7 @@ import { commandsFor, SYMBOLS } from './codehelp.js';
 import { explainAt } from './explain.js';
 import { RobotWorld } from './worlds/robot.js';
 import { SnakeWorld } from './worlds/snake.js';
+import { MinesWorld } from './worlds/mines.js';
 import { StopSignal, GameOverSignal, LoopError, KidError } from './errors.js';
 import { h, clear, confirmBox } from './dom.js';
 
@@ -104,8 +105,10 @@ class LessonController {
       ),
     );
 
-    this.world = this.course.world === 'snake' ? new SnakeWorld(this.canvas) : new RobotWorld(this.canvas);
+    const World = { snake: SnakeWorld, minesweeper: MinesWorld }[this.course.world] || RobotWorld;
+    this.world = new World(this.canvas);
     this.world.onScore = (s) => this.showScore(s);
+    if (this.course.world === 'minesweeper') this.listenToBoard();
     // Test hook: only when opened with ?debug in a browser, never in the app.
     if (new URLSearchParams(location.search).has('debug')) window.cqLesson = this;
     this.reset();
@@ -388,11 +391,11 @@ class LessonController {
     const alert = (...a) => this.log(a);
     if (this.mode === 'code') {
       this.typed = compileTyped(this.editor.value, { world: this.course.world });
-      return (events, bit, snake, game) => this.typed.run(events, bit, snake, game, kidConsole, alert);
+      return (events, bit, snake, game, field) => this.typed.run(events, bit, snake, game, kidConsole, alert, field);
     }
     const code = workspaceCode(this.ws, { loopTrap: 'if (--__loopGuard < 0) throw new __LoopError();\n' });
-    const fn = new Function('__events', 'bit', 'snake', 'game', 'console', '__LoopError', `"use strict";\nlet __loopGuard = 100000;\n${code}`);
-    return (events, bit, snake, game) => fn(events, bit, snake, game, kidConsole, LoopError);
+    const fn = new Function('__events', 'bit', 'snake', 'game', 'console', '__LoopError', 'field', `"use strict";\nlet __loopGuard = 100000;\n${code}`);
+    return (events, bit, snake, game, field) => fn(events, bit, snake, game, kidConsole, LoopError, field);
   }
 
   /** In code mode, more uses of a limited command than the lesson allows. */
@@ -407,11 +410,13 @@ class LessonController {
   }
 
   makeEvents() {
-    const ev = { start: [], tick: [], keys: { up: [], down: [], left: [], right: [] } };
+    const ev = { start: [], tick: [], keys: { up: [], down: [], left: [], right: [] }, click: [], rightClick: [] };
     const api = {
       onStart: (f) => ev.start.push(f),
       onTick: (f) => ev.tick.push(f),
       onKey: (k, f) => ev.keys[k]?.push(f),
+      onClick: (f) => ev.click.push(f),
+      onRightClick: (f) => ev.rightClick.push(f),
     };
     return { ev, api };
   }
@@ -438,6 +443,7 @@ class LessonController {
       return this.fail('msg.error', { error: e.message });
     }
     if (this.course.world === 'snake') this.runSnake(fn, id);
+    else if (this.course.world === 'minesweeper') this.runMines(fn, id);
     else this.runRobot(fn, id);
   }
 
@@ -510,6 +516,92 @@ class LessonController {
         else if (frames.some((f) => this.world.atFlag(f.pos))) this.succeed();
       });
     };
+  }
+
+  // ---- Minesweeper ----
+
+  /** Mouse on the board: hovering shows the square's address, clicks go to the kid's code. */
+  listenToBoard() {
+    const w = this.world;
+    const showSquare = (sq) => {
+      this.statusEl.textContent = sq ? t('lesson.square', { x: sq.x, y: sq.y }) : '';
+    };
+    this.canvas.addEventListener('mousemove', (e) => {
+      const sq = w.squareAt(e.clientX, e.clientY);
+      if (sq?.x === w.hover?.x && sq?.y === w.hover?.y) return;
+      w.hover = sq;
+      w.draw();
+      showSquare(sq);
+    });
+    this.canvas.addEventListener('mouseleave', () => {
+      w.hover = null;
+      w.draw();
+      showSquare(null);
+    });
+    this.canvas.addEventListener('contextmenu', (e) => e.preventDefault());
+    this.canvas.addEventListener('mousedown', (e) => {
+      e.preventDefault();
+      const sq = w.squareAt(e.clientX, e.clientY);
+      if (sq && this.clickHandler) this.clickHandler(sq.x, sq.y, e.button === 2 ? 'right' : 'left');
+    });
+  }
+
+  runMines(fn, id) {
+    const w = this.world;
+    w.reset();
+    this.showScore(0);
+    const { ev, api } = this.makeEvents();
+    const { field, game } = w.api();
+    try {
+      fn(api, null, null, game, field);
+      for (const handler of ev.start) handler();
+    } catch (e) {
+      return this.handleError(e, id);
+    }
+    w.draw();
+    if (!ev.click.length) return this.fail(this.mode === 'code' ? 'msg.noClickCode' : 'msg.noClick');
+    this.say(t(w.mines.size ? (ev.rightClick.length ? 'lesson.clickSquaresFlags' : 'lesson.clickSquares') : 'msg.noMines'), 'info');
+
+    // field.clickAround(x, y) "clicks" squares: the kid's click code runs again for each.
+    w.onClickRequest = (x, y) => {
+      for (const handler of ev.click) handler(x, y);
+    };
+    this.clickHandler = (x, y, button) => {
+      if (id !== this.runId || w.over) return;
+      const handlers = button === 'right' ? ev.rightClick : ev.click;
+      if (!handlers.length) return;
+      const runAll = () => {
+        for (const handler of handlers) handler(x, y);
+      };
+      try {
+        if (button === 'right') w.handle(x, y, runAll);
+        else w.playerClick(x, y, runAll);
+      } catch (e) {
+        if (!(e instanceof GameOverSignal)) {
+          w.draw();
+          return this.handleError(e, id);
+        }
+      }
+      w.draw();
+      this.minesGoalCheck();
+    };
+  }
+
+  minesGoalCheck() {
+    const goal = this.lesson.goal || {};
+    const w = this.world;
+    const s = w.stats;
+    if (s.wrongNumber) return this.fail('msg.wrongNumber', s.wrongNumber);
+    const won =
+      (goal.type === 'opened' && w.safeOpened() >= goal.n) ||
+      (goal.type === 'gameOver' && w.over && w.overReason === goal.reason) ||
+      (goal.type === 'numbers' && s.numbersShown >= goal.n && s.nonZeroShown > 0) ||
+      (goal.type === 'flags' && w.flags.size >= goal.n) ||
+      (goal.type === 'bigOpen' && s.biggestClick >= goal.n) ||
+      w.overReason === 'win';
+    if (won) return this.succeed();
+    if (w.over) return this.fail('msg.boom');
+    if (s.minesOpened) this.say(t(goal.type === 'gameOver' ? 'msg.mineNoRule' : 'msg.mineNoRuleYet'), goal.type === 'gameOver' ? 'warn' : 'info');
   }
 
   runSnake(fn, id) {
@@ -606,6 +698,7 @@ class LessonController {
     clearTimeout(this.timer);
     this.timer = null;
     this.keyHandler = null;
+    this.clickHandler = null;
     if (this.world?.stop) this.world.stop();
     this.runBtn.disabled = false;
     this.stopBtn.disabled = true;
@@ -614,8 +707,8 @@ class LessonController {
 
   reset() {
     this.stop(true);
-    if (this.course.world === 'snake') this.world.reset();
-    else this.world.load(this.lesson.maps[0]);
+    if (this.course.world === 'robot') this.world.load(this.lesson.maps[0]);
+    else this.world.reset();
     this.statusEl.textContent = '';
     this.showScore(0);
   }
@@ -675,7 +768,7 @@ class LessonController {
         'div',
         { class: 'modal' },
         h('div', { class: 'stars' }, '⭐⭐⭐'),
-        h('h2', {}, L.final ? t('msg.gameDone') : t('msg.success')),
+        h('h2', {}, L.final ? t('msg.gameDone', { game: t(`games.${this.course.game}`) }) : t('msg.success')),
         h('p', {}, L.final ? t('msg.gameDoneSub') : t('msg.successSub')),
         h('div', { class: 'modal-buttons' }, ...buttons),
       ),

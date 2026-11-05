@@ -38,12 +38,15 @@
     "next": "Neste oppgave",
     "toHome": "Tilbake til kartet",
     "again": "Prøv igjen",
-    "diploma": "Hent diplomet ditt"
+    "diploma": "Hent diplomet ditt",
+    "square": "Kolonne {x}, rad {y}",
+    "clickSquares": "Klikk på rutene!",
+    "clickSquaresFlags": "Klikk på rutene! Høyreklikk for å sette et flagg."
   },
   "msg": {
     "success": "Bra jobba!",
     "successSub": "Du klarte det!",
-    "gameDone": "Du har laget Snake!",
+    "gameDone": "Du har laget {game}!",
     "gameDoneSub": "Du har laget et ekte spill med kode. Kjempebra!",
     "noStart": "Legg klossene dine inni «når ▶ Kjør trykkes».",
     "noKeys": "Legg til «når tasten … trykkes»-klosser så du kan styre.",
@@ -65,7 +68,17 @@
     "noKeysCode": "Skriv funksjoner som whenKeyUp() { … } så du kan styre.",
     "badDirection": "«{dir}» er ikke en retning. Bruk 'up', 'down', 'left' eller 'right'.",
     "badColour": "«{colour}» er ikke en slangefarge. Velg en av: {list}.",
-    "loopCode": "En løkke gikk altfor mange ganger, kanskje for alltid. Sjekk betingelsen i løkken din."
+    "loopCode": "En løkke gikk altfor mange ganger, kanskje for alltid. Sjekk betingelsen i løkken din.",
+    "offField": "Det finnes ingen rute i kolonne {x}, rad {y}. Kolonnene går fra 0 til {maxX}, og radene fra 0 til {maxY}.",
+    "badNumber": "«{n}» er ikke et antall miner. Vis et helt tall, som 0, 1 eller 2.",
+    "tooDeep": "Rutene fortsatte å klikke på hverandre, igjen og igjen. Klikk bare rundt når antall er 0.",
+    "noClick": "Legg klossene dine inni «når en rute klikkes».",
+    "noClickCode": "Skriv function whenSquareClicked(x, y) { … } så klikk gjør noe.",
+    "noMines": "Tips: bruk «legg ut 10 miner» når spillet starter, ellers er feltet tomt. Klikk på rutene!",
+    "wrongNumber": "Kolonne {x}, rad {y} viser {shown}, men riktig tall er {real}. Sjekk tellingen din!",
+    "boom": "Bom! Du åpnet en mine. Trykk Kjør for å spille igjen.",
+    "mineNoRule": "Du åpnet en mine, men spillet fortsetter! Legg til regelen: hvis det er en mine, er spillet slutt.",
+    "mineNoRuleYet": "Det var en mine, men ingenting skjedde. Det fikser vi i neste oppgave!"
   },
   "diploma": {
     "title": "Diplom",
@@ -118,11 +131,31 @@
       "purple": "lilla",
       "orange": "oransje",
       "pink": "rosa"
-    }
+    },
+    "eventClick": "når en rute klikkes",
+    "eventRightClick": "når en rute høyreklikkes",
+    "clickX": "kolonne x",
+    "clickY": "rad y",
+    "squareX": "den rutens kolonne",
+    "squareY": "den rutens rad",
+    "placeMines": "legg ut %1 miner",
+    "reveal": "åpne ruten i kolonne %1 rad %2",
+    "revealN": "åpne ruten i kolonne %1 rad %2 og vis %3",
+    "hasMine": "mine i kolonne %1 rad %2?",
+    "flag": "sett eller fjern flagg i kolonne %1 rad %2",
+    "clickAround": "klikk alle rutene rundt kolonne %1 rad %2",
+    "showMines": "vis alle minene",
+    "allOpen": "alle trygge ruter er åpne?",
+    "win": "du vant!",
+    "forNeighbours": "for hver rute rundt kolonne %1 rad %2",
+    "countSet": "sett antall til 0",
+    "countAdd": "legg 1 til antall",
+    "countGet": "antall"
   },
   "blockNames": {
     "controls_repeat_ext": "gjenta",
-    "bit_move": "gå"
+    "bit_move": "gå",
+    "count_set": "sett antall til 0"
   },
   "mode": {
     "label": "Hvordan vil du kode?",
@@ -152,7 +185,20 @@
       "if": "hvis spørsmålet er sant, gjør det som står inni { }",
       "turn": "snu slangen: 'up', 'down', 'left' eller 'right'",
       "colour": "slangefarge: 'green' (grønn), 'blue' (blå), 'purple' (lilla), 'orange' (oransje) eller 'pink' (rosa)",
-      "log": "skriv en melding i boksen under koden din"
+      "log": "skriv en melding i boksen under koden din",
+      "click": "når en rute klikkes: x er kolonnen, y er raden",
+      "rightClick": "når en rute høyreklikkes",
+      "placeMines": "gjem miner i feltet (tallet er hvor mange)",
+      "reveal": "åpne ruten i kolonne x, rad y",
+      "revealN": "åpne ruten og vis et tall på den",
+      "hasMine": "er det en mine i kolonne x, rad y? (true eller false)",
+      "hasMineSquare": "er det en mine på den ruten?",
+      "flag": "sett et flagg på ruten, eller ta det bort",
+      "clickAround": "klikk hver lukket rute rundt (kjører whenSquareClicked igjen)",
+      "neighbours": "en løkke: besøk de 8 rutene rundt, én om gangen",
+      "countSet": "lag en variabel som heter count, som starter på 0",
+      "countAdd": "legg 1 til count",
+      "countZero": "spør: er count det samme som 0?"
     },
     "err": {
       "string": "Denne teksten mangler en {q} på slutten. Tekst må starte og slutte med {q}.",
@@ -182,7 +228,8 @@
   },
   "codeNames": {
     "bit_move": "bit.move()",
-    "controls_repeat_ext": "løkke"
+    "controls_repeat_ext": "løkke",
+    "count_set": "let count"
   },
   "explain": {
     "idle": "Klikk på et tegn eller ord i koden din, så forteller jeg hva det betyr.",
@@ -255,7 +302,17 @@
     "ownFunction": "{name} er navnet på en funksjon du har laget. Bruk den ved å skrive {name}();",
     "counter": "{name} er telleren til løkken. Den teller 0, 1, 2, … én mer for hver runde.",
     "newVariable": "{name} er en ny variabel: en boks med et navn som husker en verdi.",
-    "name": "{name} er et navn, for eksempel en variabel du har laget. Hvis du mente en kommando, sjekk stavemåten: store og små bokstaver betyr noe!"
+    "name": "{name} er et navn, for eksempel en variabel du har laget. Hvis du mente en kommando, sjekk stavemåten: store og små bokstaver betyr noe!",
+    "event_click": "{name} er et spesielt navn: koden kjører hver gang en rute klikkes. x og y i ( ) sier hvilken rute.",
+    "event_rightClick": "{name} er et spesielt navn: koden kjører hver gang en rute høyreklikkes.",
+    "coord_x": "x er kolonnen til ruten som ble klikket: 0 er kolonnen lengst til venstre. Tallene over feltet viser kolonnene.",
+    "coord_y": "y er raden til ruten som ble klikket: 0 er den øverste raden. Tallene til venstre for feltet viser radene.",
+    "square_x": "square.x er kolonnen til ruten løkken besøker akkurat nå.",
+    "square_y": "square.y er raden til ruten løkken besøker akkurat nå.",
+    "loopItem": "{name} er hver ting i listen, én om gangen: for hver runde i løkken er den den neste.",
+    "of": "for (… of …) besøker hver ting i en liste, én om gangen.",
+    "parenForOf": "( ) etter for sier hva som skal besøkes: for (const square of liste) besøker hver ting i listen og kaller den square.",
+    "field": "field er minefeltet. Skriv et punktum etter for å bruke en av kommandoene, som field.reveal."
   },
   "glossary": {
     "braces": "holder en gruppe kode som hører sammen: koden til en funksjon, en løkke eller en if",
