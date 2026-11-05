@@ -13,6 +13,7 @@ import { compileTyped, diagnose, countUses, explainJsError, errorLine, CodeProbl
 import { createEditor } from './editor.js';
 import { commandsFor, SYMBOLS } from './codehelp.js';
 import { explainAt } from './explain.js';
+import { findHints } from './hints.js';
 import { RobotWorld } from './worlds/robot.js';
 import { SnakeWorld } from './worlds/snake.js';
 import { MinesWorld } from './worlds/mines.js';
@@ -239,6 +240,8 @@ class LessonController {
       onChange: () => {
         this.saveCode();
         this.refreshCapacity();
+        // The code changed, so an open hint may no longer fit.
+        if (this.mistakeEl) this.mistakeEl.hidden = true;
         clearTimeout(this.checkTimer);
         this.checkTimer = setTimeout(() => this.checkCode(), CHECK_DELAY_MS);
       },
@@ -246,6 +249,7 @@ class LessonController {
       onCursor: (code, pos) => this.explain(code, pos),
     });
     this.explainEl = h('div', { class: 'explain', 'aria-live': 'polite' });
+    this.mistakeEl = h('div', { class: 'hint-box', hidden: true, 'aria-live': 'polite' });
     this.problems = [];
     this.explain('', 0);
     queueMicrotask(() => this.checkCode());
@@ -278,9 +282,11 @@ class LessonController {
           { class: 'code-toolbar' },
           h('span', { class: 'code-tip' }, t('code.runTip')),
           this.capacityEl,
+          this.lesson.solution ? h('button', { class: 'btn small ghost find-mistake', onclick: () => this.findMistake() }, t('hint.button')) : null,
           h('button', { class: 'btn small ghost', onclick: () => this.restartCode() }, `↺ ${t('code.startOver')}`),
         ),
         this.editor.el,
+        this.mistakeEl,
         this.explainEl,
         this.outputEl,
       ),
@@ -740,6 +746,64 @@ class LessonController {
   fail(key, vars) {
     this.stop(false);
     this.say(t(key, vars), 'warn');
+    this.offerHint();
+  }
+
+  // ---- "Find my mistake" ----
+
+  /** After a failed run in code mode: a button that opens the hints. */
+  offerHint() {
+    if (this.mode !== 'code' || !this.lesson.solution) return;
+    this.messageEl.append(' ', h('button', { class: 'btn small ghost', onclick: () => this.findMistake() }, t('hint.offer')));
+  }
+
+  /**
+   * Compare the kid's code with the lesson's solution and show the first
+   * difference: first only where it is, then (on "Show me more") what it is.
+   */
+  findMistake() {
+    if (!this.editor || !this.lesson.solution) return;
+    this.checkCode();
+    const error = this.problems.find((p) => p.severity === 'error');
+    this.hints = error
+      ? [{ type: 'fixError', line: error.line, start: error.start, end: error.end, vars: { message: error.message } }]
+      : findHints(this.editor.value, this.lesson.solution);
+    this.hintIndex = 0;
+    this.hintLevel = 1;
+    this.showHint();
+  }
+
+  showHint() {
+    const hint = this.hints[this.hintIndex];
+    const close = h('button', { class: 'btn small ghost', title: t('hint.close'), onclick: () => this.closeHint() }, '✕');
+    this.mistakeEl.hidden = false;
+    if (!hint) {
+      this.editor.setHint(null);
+      this.mistakeEl.replaceChildren(h('p', {}, `🤔 ${t('hint.none')}`), h('div', { class: 'hint-buttons' }, close));
+      return;
+    }
+    const vars = { ...hint.vars, line: hint.line };
+    if (vars.whereKey) vars.where = t(vars.whereKey, { n: vars.whereLine });
+    const detailed = this.hintLevel > 1 || hint.type === 'fixError';
+    const text = t(detailed ? `hint.what.${hint.type}` : `hint.where.${hint.type}`, vars);
+    const showCode = detailed && vars.code && hint.type !== 'order';
+    const buttons = [];
+    if (!detailed) buttons.push(h('button', { class: 'btn small', onclick: () => ((this.hintLevel = 2), this.showHint()) }, t('hint.more')));
+    else if (this.hintIndex < this.hints.length - 1) {
+      buttons.push(h('button', { class: 'btn small', onclick: () => (this.hintIndex++, (this.hintLevel = 1), this.showHint()) }, t('hint.next')));
+    }
+    buttons.push(close);
+    this.mistakeEl.replaceChildren(
+      h('p', {}, `🔍 ${text}`),
+      ...(showCode ? [h('pre', { class: 'hint-code' }, vars.full || vars.code)] : []),
+      h('div', { class: 'hint-buttons' }, this.hints.length > 1 ? h('span', { class: 'hint-count' }, t('hint.count', { n: this.hintIndex + 1, total: this.hints.length })) : null, ...buttons),
+    );
+    this.editor.setHint({ line: hint.line, start: hint.start, end: hint.end, insertAfter: hint.insertAfter, message: text });
+  }
+
+  closeHint() {
+    this.mistakeEl.hidden = true;
+    this.editor?.setHint(null);
   }
 
   /** Like fail(), and in code mode also marks the line with the mistake. */
@@ -754,6 +818,7 @@ class LessonController {
       this.editor.setProblems([...warnings, { start: place.start, end: place.end, line, severity: 'error', message: text }]);
     }
     if (line) this.editor.markLine(line);
+    this.offerHint();
   }
 
   succeed() {

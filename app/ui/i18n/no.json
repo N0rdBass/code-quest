@@ -329,5 +329,33 @@
     "equals": "spør «er disse like?»",
     "plusPlus": "legger 1 til i",
     "comment": "en lapp til folk; datamaskinen hopper over den"
+  },
+  "hint": {
+    "button": "🔍 Finn feilen min",
+    "offer": "🔍 Hjelp meg å finne feilen",
+    "more": "Vis meg mer",
+    "next": "Neste hint",
+    "close": "Lukk",
+    "count": "Hint {n} av {total}",
+    "none": "Jeg finner ingen feil: koden din har alt løsningen trenger. Les målet igjen, og prøv!",
+    "whereAfter": "etter linje {n}",
+    "whereInside": "inni { } på linje {n}",
+    "where": {
+      "missingInside": "Noe mangler inni { } som starter på linje {line}. Hva kan det være?",
+      "missingAfter": "Noe mangler etter linje {line}. Hva kan det være?",
+      "missingFunction": "En hel funksjon mangler. Hvilken kan det være?",
+      "misplaced": "Linje {line} står på feil sted. Hvor skal den stå?",
+      "different": "Linje {line} er nesten riktig, men noe i den er annerledes.",
+      "order": "Linje {line} kommer for tidlig. Ser du hvorfor?"
+    },
+    "what": {
+      "fixError": "Fiks først det røde merket på linje {line}: {message}",
+      "missingInside": "Inni { } på linje {line}, legg til:",
+      "missingAfter": "Etter linje {line}, legg til:",
+      "missingFunction": "Legg til denne funksjonen (ved siden av de andre, ikke inni dem):",
+      "misplaced": "Flytt linje {line} så den kommer {where}:",
+      "different": "Sammenlign linje {line} med dette. Hva er annerledes?",
+      "order": "Linje {line} bruker {name}, men {name} er først klar etter linje {after}. Flytt linje {line} under linje {after}."
+    }
   }
 }

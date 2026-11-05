@@ -32,15 +32,19 @@ export function createEditor({ value = '', label = '', onChange, onRun, onCursor
   const colours = h('pre', { class: 'ce-hl', 'aria-hidden': 'true' });
   const gutter = h('div', { class: 'ce-gutter', 'aria-hidden': 'true' });
   const errBar = h('div', { class: 'ce-errbar', hidden: true });
-  const el = h('div', { class: 'code-editor' }, h('div', { class: 'ce-inner' }, gutter, h('div', { class: 'ce-text' }, errBar, colours, input)));
+  const insertBar = h('div', { class: 'ce-insertbar', hidden: true });
+  const el = h('div', { class: 'code-editor' }, h('div', { class: 'ce-inner' }, gutter, h('div', { class: 'ce-text' }, errBar, insertBar, colours, input)));
   let errLine = null;
   let problems = []; // { start, end, severity, line, message }
+  let hint = null; // "find my mistake": { line, start?, end?, insertAfter?, message }
 
   input.value = value;
 
   function refresh() {
     // The extra line keeps the coloured copy as tall as the textarea when the code ends in a newline.
-    colours.innerHTML = `${highlight(input.value, problems.filter((p) => p.start != null))}\n `;
+    const marks = problems.filter((p) => p.start != null);
+    if (hint?.start != null) marks.push({ start: hint.start, end: hint.end, severity: 'hint' });
+    colours.innerHTML = `${highlight(input.value, marks)}\n `;
     const count = input.value.split('\n').length;
     const byLine = new Map();
     for (const p of problems) if (p.line) byLine.set(p.line, [...(byLine.get(p.line) || []), p]);
@@ -50,11 +54,16 @@ export function createEditor({ value = '', label = '', onChange, onRun, onCursor
       if (here || n === errLine) {
         const sev = n === errLine || here?.some((p) => p.severity === 'error') ? 'err' : 'warn';
         gutter.append(h('span', { class: sev, title: (here || []).map((p) => p.message).join('\n') || null }, String(n)), '\n');
+      } else if (hint && n === hint.line) {
+        gutter.append(h('span', { class: 'hint', title: hint.message }, String(n)), '\n');
       } else {
         gutter.append(`${n}\n`);
       }
     }
     errBar.hidden = errLine == null;
+    // A missing line: a marker between two lines, where it should go.
+    insertBar.hidden = hint?.insertAfter == null;
+    if (hint?.insertAfter != null) insertBar.style.top = `calc(var(--ce-pad) + ${hint.insertAfter * 1.6}em - 2px)`;
     if (errLine != null) errBar.style.top = `calc(var(--ce-pad) + ${(errLine - 1) * 1.6}em)`;
   }
 
@@ -82,6 +91,7 @@ export function createEditor({ value = '', label = '', onChange, onRun, onCursor
     // Old marks would sit in the wrong place now; the lesson checks again when typing stops.
     errLine = null;
     problems = [];
+    hint = null;
     refresh();
     onChange?.(input.value);
   });
@@ -121,8 +131,10 @@ export function createEditor({ value = '', label = '', onChange, onRun, onCursor
 
   // Hovering over a squiggly line shows its message, like in VS Code.
   input.addEventListener('mousemove', (e) => {
-    const p = problemAt(offsetAt(e.clientX, e.clientY), true);
-    const tip = p ? p.message : '';
+    const at = offsetAt(e.clientX, e.clientY);
+    const p = problemAt(at, true);
+    const onHint = hint?.start != null && at >= hint.start && at < hint.end;
+    const tip = p ? p.message : onHint ? hint.message : '';
     if (input.title !== tip) input.title = tip;
   });
 
@@ -166,6 +178,12 @@ export function createEditor({ value = '', label = '', onChange, onRun, onCursor
     input.setSelectionRange(input.value.length, input.value.length);
   });
 
+  function scrollToLine(n) {
+    const lh = parseFloat(getComputedStyle(colours).lineHeight) || 24;
+    const y = (n - 1) * lh;
+    if (y < el.scrollTop || y > el.scrollTop + el.clientHeight - 2 * lh) el.scrollTop = Math.max(0, y - el.clientHeight / 3);
+  }
+
   refresh();
 
   return {
@@ -185,6 +203,12 @@ export function createEditor({ value = '', label = '', onChange, onRun, onCursor
       refresh();
     },
     problemAt,
+    /** Show a "find my mistake" hint (null clears it), and scroll it into view. */
+    setHint(next) {
+      hint = next;
+      refresh();
+      if (next) scrollToLine(next.insertAfter ?? next.line);
+    },
     focus: () => input.focus(),
     blur: () => input.blur(),
     /** Insert a snippet at the cursor. `¦` in the snippet marks where the cursor goes. */
@@ -211,11 +235,7 @@ export function createEditor({ value = '', label = '', onChange, onRun, onCursor
     markLine(n) {
       errLine = n;
       refresh();
-      if (n != null) {
-        const lh = parseFloat(getComputedStyle(colours).lineHeight) || 24;
-        const y = (n - 1) * lh;
-        if (y < el.scrollTop || y > el.scrollTop + el.clientHeight - 2 * lh) el.scrollTop = Math.max(0, y - el.clientHeight / 3);
-      }
+      if (n != null) scrollToLine(n);
     },
   };
 }

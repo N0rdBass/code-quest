@@ -467,3 +467,37 @@ canvas.world {
 .ce-gutter .err, .ce-gutter .warn { cursor: help; }
 .explain-error { color: #fca5a5; font-weight: 700; }
 .explain-warning { color: #fde68a; }
+
+/* ---- code mode: "find my mistake" hints ---- */
+
+.sq-hint { text-decoration: underline wavy #60a5fa; text-decoration-skip-ink: none; text-underline-offset: 3px; }
+.ce-gutter .hint { color: #0f172a; background: #60a5fa; border-radius: 4px; padding: 0 0.25em; cursor: help; }
+.ce-insertbar {
+  position: absolute;
+  left: 0.6rem;
+  right: 0;
+  height: 0;
+  border-top: 3px dashed #60a5fa;
+  pointer-events: none;
+}
+.ce-insertbar::before {
+  content: '+';
+  position: absolute;
+  left: -0.55rem;
+  top: -0.8rem;
+  font: 800 1rem/1 var(--mono);
+  color: #60a5fa;
+}
+.hint-box {
+  flex: none;
+  padding: 0.6rem 1rem;
+  background: #172554;
+  color: #dbeafe;
+  border-top: 2px solid #60a5fa;
+  font-size: 0.95rem;
+}
+.hint-box p { margin: 0 0 0.4rem; font-weight: 700; }
+.hint-code { margin: 0 0 0.5rem; padding: 0.4rem 0.7rem; background: #0f172a; border-radius: 8px; color: #7dd3fc; font: 0.95rem/1.45 var(--mono); white-space: pre-wrap; }
+.hint-buttons { display: flex; align-items: center; justify-content: flex-end; gap: 0.5rem; }
+.hint-count { flex: 1; color: #93c5fd; font-size: 0.85rem; }
+.hint-box .btn.ghost, .code-toolbar .find-mistake { background: #1e3a8a; color: #dbeafe; border-color: #3b82f6; box-shadow: none; }

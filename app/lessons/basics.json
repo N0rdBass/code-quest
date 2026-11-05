@@ -28,6 +28,7 @@
         "en": "There are 4 squares to the flag, so you need 4 lines of bit.move('right');. Every command ends with ;",
         "no": "Det er 4 ruter til flagget, så du trenger 4 linjer med bit.move('right');. Hver kommando slutter med ;"
       },
+      "solution": "function whenRunClicked() {\n  bit.move('right');\n  bit.move('right');\n  bit.move('right');\n  bit.move('right');\n}\n",
       "concept": {
         "en": "Code is a list of steps, done in order.",
         "no": "Kode er en liste med steg som gjøres i rekkefølge."
@@ -77,6 +78,7 @@
         "en": "One stair is bit.move('right'); and then bit.move('down');. Put those two lines inside the { } of a for loop, and set the number to how many stairs there are.",
         "no": "Ett trappetrinn er bit.move('right'); og så bit.move('down');. Legg de to linjene inni { } i en for-løkke, og sett tallet til så mange trinn som det er."
       },
+      "solution": "function whenRunClicked() {\n  for (let i = 0; i < 4; i++) {\n    bit.move('right');\n    bit.move('down');\n  }\n}\n",
       "concept": {
         "en": "A loop repeats the blocks inside it.",
         "no": "En løkke gjentar klossene inni seg."
@@ -135,6 +137,7 @@
         "en": "Loop 3 times: bit.move('right'); twice, then bit.pickUpCoin(); and game.changeScore(1);.",
         "no": "Gjenta 3 ganger: bit.move('right'); to ganger, så bit.pickUpCoin(); og game.changeScore(1);."
       },
+      "solution": "function whenRunClicked() {\n  for (let i = 0; i < 3; i++) {\n    bit.move('right');\n    bit.move('right');\n    bit.pickUpCoin();\n    game.changeScore(1);\n  }\n}\n",
       "concept": {
         "en": "A variable remembers a value, like the score.",
         "no": "En variabel husker en verdi, for eksempel poengsummen."
@@ -188,6 +191,7 @@
         "en": "Loop 7 times: bit.move('right'); and then if (bit.isOnCoin()) { bit.pickUpCoin(); game.changeScore(1); }",
         "no": "Gjenta 7 ganger: bit.move('right'); og så if (bit.isOnCoin()) { bit.pickUpCoin(); game.changeScore(1); }"
       },
+      "solution": "function whenRunClicked() {\n  for (let i = 0; i < 7; i++) {\n    bit.move('right');\n    if (bit.isOnCoin()) {\n      bit.pickUpCoin();\n      game.changeScore(1);\n    }\n  }\n}\n",
       "concept": {
         "en": "\"If\" lets code make choices.",
         "no": "«Hvis» lar koden ta valg."
@@ -247,6 +251,7 @@
         "en": "For the up arrow: function whenKeyUp() { bit.move('up'); }. Then the same for down, left and right.",
         "no": "For pil opp: function whenKeyUp() { bit.move('up'); }. Så det samme for ned, venstre og høyre."
       },
+      "solution": "function whenKeyUp() {\n  bit.move('up');\n}\n\nfunction whenKeyDown() {\n  bit.move('down');\n}\n\nfunction whenKeyLeft() {\n  bit.move('left');\n}\n\nfunction whenKeyRight() {\n  bit.move('right');\n}\n",
       "concept": {
         "en": "Events run code when something happens.",
         "no": "Hendelser kjører kode når noe skjer."

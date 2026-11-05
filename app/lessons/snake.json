@@ -27,6 +27,7 @@
         "en": "whenRunClicked runs once, at the start. everyTick runs again and again, many times every second. Moving belongs in everyTick.",
         "no": "whenRunClicked kjører én gang, i starten. everyTick kjører igjen og igjen, mange ganger i sekundet. Flytting hører hjemme i everyTick."
       },
+      "solution": "function whenRunClicked() {\n  snake.placeFood();\n}\n\nfunction everyTick() {\n  snake.move();\n}\n",
       "concept": { "en": "A game loop runs the same code many times per second.", "no": "En spill-løkke kjører den samme koden mange ganger i sekundet." },
       "goal": { "type": "moves", "n": 6 },
       "toolbox": ["food_place", "snake_move"],
@@ -58,6 +59,7 @@
         "en": "You need four functions: whenKeyUp, whenKeyDown, whenKeyLeft and whenKeyRight. Write them next to the other functions, not inside them. A snake can't turn straight back into itself.",
         "no": "Du trenger fire funksjoner: whenKeyUp, whenKeyDown, whenKeyLeft og whenKeyRight. Skriv dem ved siden av de andre funksjonene, ikke inni dem. En slange kan ikke snu rett tilbake inn i seg selv."
       },
+      "solution": "function whenRunClicked() {\n  snake.placeFood();\n}\n\nfunction everyTick() {\n  snake.move();\n}\n\nfunction whenKeyUp() {\n  snake.turn('up');\n}\n\nfunction whenKeyDown() {\n  snake.turn('down');\n}\n\nfunction whenKeyLeft() {\n  snake.turn('left');\n}\n\nfunction whenKeyRight() {\n  snake.turn('right');\n}\n",
       "concept": { "en": "Events let the player control the game.", "no": "Hendelser lar spilleren styre spillet." },
       "goal": { "type": "turns" },
       "carryFrom": "snake-1",
@@ -86,6 +88,7 @@
         "en": "if (snake.isOnFood()) { snake.grow(); snake.placeFood(); game.changeScore(1); }",
         "no": "if (snake.isOnFood()) { snake.grow(); snake.placeFood(); game.changeScore(1); }"
       },
+      "solution": "function whenRunClicked() {\n  snake.placeFood();\n}\n\nfunction everyTick() {\n  snake.move();\n  if (snake.isOnFood()) {\n    snake.grow();\n    snake.placeFood();\n    game.changeScore(1);\n  }\n}\n\nfunction whenKeyUp() {\n  snake.turn('up');\n}\n\nfunction whenKeyDown() {\n  snake.turn('down');\n}\n\nfunction whenKeyLeft() {\n  snake.turn('left');\n}\n\nfunction whenKeyRight() {\n  snake.turn('right');\n}\n",
       "concept": { "en": "If + variables = game rules.", "no": "Hvis + variabler = spillregler." },
       "goal": { "type": "score", "n": 3 },
       "carryFrom": "snake-2",
@@ -114,6 +117,7 @@
         "en": "if (snake.hitsWall()) { game.over(); } Put it after snake.move();.",
         "no": "if (snake.hitsWall()) { game.over(); } Legg den etter snake.move();."
       },
+      "solution": "function whenRunClicked() {\n  snake.placeFood();\n}\n\nfunction everyTick() {\n  snake.move();\n  if (snake.hitsWall()) {\n    game.over();\n  }\n  if (snake.isOnFood()) {\n    snake.grow();\n    snake.placeFood();\n    game.changeScore(1);\n  }\n}\n\nfunction whenKeyUp() {\n  snake.turn('up');\n}\n\nfunction whenKeyDown() {\n  snake.turn('down');\n}\n\nfunction whenKeyLeft() {\n  snake.turn('left');\n}\n\nfunction whenKeyRight() {\n  snake.turn('right');\n}\n",
       "concept": { "en": "Games need rules for winning and losing.", "no": "Spill trenger regler for å vinne og tape." },
       "goal": { "type": "gameOver", "reason": "wall" },
       "carryFrom": "snake-3",
@@ -142,6 +146,7 @@
         "en": "Just like the wall rule, but with snake.bitesItself(). The snake needs to be at least 5 long to bite itself.",
         "no": "Akkurat som vegg-regelen, men med snake.bitesItself(). Slangen må være minst 5 lang for å bite seg selv."
       },
+      "solution": "function whenRunClicked() {\n  snake.placeFood();\n}\n\nfunction everyTick() {\n  snake.move();\n  if (snake.hitsWall()) {\n    game.over();\n  }\n  if (snake.bitesItself()) {\n    game.over();\n  }\n  if (snake.isOnFood()) {\n    snake.grow();\n    snake.placeFood();\n    game.changeScore(1);\n  }\n}\n\nfunction whenKeyUp() {\n  snake.turn('up');\n}\n\nfunction whenKeyDown() {\n  snake.turn('down');\n}\n\nfunction whenKeyLeft() {\n  snake.turn('left');\n}\n\nfunction whenKeyRight() {\n  snake.turn('right');\n}\n",
       "concept": { "en": "Many small rules make a whole game.", "no": "Mange små regler blir til et helt spill." },
       "goal": { "type": "gameOver", "reason": "self" },
       "carryFrom": "snake-4",
@@ -170,6 +175,7 @@
         "en": "snake.setColour('purple'); goes in whenRunClicked. game.faster(); goes inside the { } of the food rule.",
         "no": "snake.setColour('purple'); hører hjemme i whenRunClicked. game.faster(); skal inni { } i mat-regelen."
       },
+      "solution": "function whenRunClicked() {\n  snake.setColour('purple');\n  snake.placeFood();\n}\n\nfunction everyTick() {\n  snake.move();\n  if (snake.hitsWall()) {\n    game.over();\n  }\n  if (snake.bitesItself()) {\n    game.over();\n  }\n  if (snake.isOnFood()) {\n    snake.grow();\n    snake.placeFood();\n    game.changeScore(1);\n    game.faster();\n  }\n}\n\nfunction whenKeyUp() {\n  snake.turn('up');\n}\n\nfunction whenKeyDown() {\n  snake.turn('down');\n}\n\nfunction whenKeyLeft() {\n  snake.turn('left');\n}\n\nfunction whenKeyRight() {\n  snake.turn('right');\n}\n",
       "concept": { "en": "You are a game maker now!", "no": "Nå er du en spillutvikler!" },
       "goal": { "type": "score", "n": 5 },
       "final": true,

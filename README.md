@@ -46,6 +46,7 @@ How the code fits together:
 - `ui/js/lesson.js`: lesson screen and mode switch, turns blocks or typed code into a program, runs it, checks the goal
 - `ui/js/blocks.js`: Code Quest's blocks, their translated labels and the code they generate
 - `ui/js/kidcode.js`: code mode's checker. While the kid types (like VS Code) it finds mistakes with their exact characters: missing `}` or `"`, a loop without `{ }`, `whenrunclicked` spelled wrong, a command that doesn't exist (`bit.mvoe`), a word a command doesn't know (`bit.move('downn')`), and a missing `;` (a yellow warning). Before running it adds a guard to every loop so `while (true)` can't freeze the app, and tags every command (`__t(7, bit).move(…)`) so an error while the game runs points at the exact command in every browser engine, without relying on stack traces
+- `ui/js/hints.js`: "Find my mistake": compares the kid's code with the lesson's `solution`, piece by piece (functions, ifs, loops, commands and what's inside what), and finds what is missing, in the wrong place, almost right, or too early. Ignores small differences (loop variable names, `count++`, `===`). Hints come in two steps: first where, then what
 - `ui/js/editor.js`: the code editor (a textarea on top of a coloured copy of the text)
 - `ui/js/codehelp.js`: the command list in code mode, built from the lesson's toolbox (plus the Symbols list)
 - `ui/js/explain.js`: the bar under the editor that explains the symbol or word at the cursor, in context (the `(` after `if` holds a question; the `(` after `bit.move` gives it extra information; a `}` says which function or loop it closes)
@@ -98,6 +99,7 @@ Lessons are JSON in `app/lessons/`. Each has `title`, `story`, `task`, `hint` an
 `concept` in both `en` and `no`, a `toolbox` (block names), a `goal`, and either
 `starter` blocks or `carryFrom` (start from the kid's blocks in another lesson).
 Robot maps are rows of characters: `S` start, `F` flag, `C` coin, `#` wall, `.` floor.
+Every lesson has a `solution` (the model code), used by "Find my mistake". Keep it simple and in the same style as the lesson texts.
 For code mode, add `taskCode` and `hintCode` (both languages) when the normal task talks
 about dragging blocks; they're shown instead of `task` and `hint` in code mode.
 To limit blocks, use `"limits": { "bit_move": 2, "controls_repeat_ext": 1 }` (per block type).

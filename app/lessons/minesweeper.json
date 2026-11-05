@@ -30,6 +30,7 @@
         "en": "x and y are the column and row of the square that was clicked. Your code gets them in the ( ) of whenSquareClicked(x, y).",
         "no": "x og y er kolonnen og raden til ruten som ble klikket. Koden din får dem i ( ) til whenSquareClicked(x, y)."
       },
+      "solution": "function whenRunClicked() {\n  field.placeMines(10);\n}\n\nfunction whenSquareClicked(x, y) {\n  field.reveal(x, y);\n}\n",
       "concept": {
         "en": "A grid has columns (x) and rows (y), so every square has an address.",
         "no": "Et rutenett har kolonner (x) og rader (y), så hver rute har en adresse."
@@ -81,6 +82,7 @@
         "en": "if (field.hasMine(x, y)) { field.showMines(); game.over(); } goes above field.reveal(x, y);",
         "no": "if (field.hasMine(x, y)) { field.showMines(); game.over(); } skal over field.reveal(x, y);"
       },
+      "solution": "function whenRunClicked() {\n  field.placeMines(10);\n}\n\nfunction whenSquareClicked(x, y) {\n  if (field.hasMine(x, y)) {\n    field.showMines();\n    game.over();\n  }\n  field.reveal(x, y);\n}\n",
       "concept": {
         "en": "If + game over = a rule for losing.",
         "no": "Hvis + spillet er slutt = en regel for å tape."
@@ -125,6 +127,7 @@
         "en": "let count = 0; for (const square of field.neighbours(x, y)) { if (field.hasMine(square.x, square.y)) { count = count + 1; } } field.reveal(x, y, count);",
         "no": "let count = 0; for (const square of field.neighbours(x, y)) { if (field.hasMine(square.x, square.y)) { count = count + 1; } } field.reveal(x, y, count);"
       },
+      "solution": "function whenRunClicked() {\n  field.placeMines(10);\n}\n\nfunction whenSquareClicked(x, y) {\n  if (field.hasMine(x, y)) {\n    field.showMines();\n    game.over();\n  }\n  let count = 0;\n  for (const square of field.neighbours(x, y)) {\n    if (field.hasMine(square.x, square.y)) {\n      count = count + 1;\n    }\n  }\n  field.reveal(x, y, count);\n}\n",
       "concept": {
         "en": "A loop can visit every neighbour, and a variable can count.",
         "no": "En løkke kan besøke alle naboene, og en variabel kan telle."
@@ -176,6 +179,7 @@
         "en": "Write the new function next to whenSquareClicked, not inside it.",
         "no": "Skriv den nye funksjonen ved siden av whenSquareClicked, ikke inni den."
       },
+      "solution": "function whenRunClicked() {\n  field.placeMines(10);\n}\n\nfunction whenSquareClicked(x, y) {\n  if (field.hasMine(x, y)) {\n    field.showMines();\n    game.over();\n  }\n  let count = 0;\n  for (const square of field.neighbours(x, y)) {\n    if (field.hasMine(square.x, square.y)) {\n      count = count + 1;\n    }\n  }\n  field.reveal(x, y, count);\n}\n\nfunction whenSquareRightClicked(x, y) {\n  field.toggleFlag(x, y);\n}\n",
       "concept": {
         "en": "Each event can have its own code.",
         "no": "Hver hendelse kan ha sin egen kode."
@@ -229,6 +233,7 @@
         "en": "field.clickAround(x, y) runs your whenSquareClicked again for every closed square around. == asks \"are these the same?\".",
         "no": "field.clickAround(x, y) kjører whenSquareClicked på nytt for hver lukket rute rundt. == spør «er disse like?»."
       },
+      "solution": "function whenRunClicked() {\n  field.placeMines(10);\n}\n\nfunction whenSquareClicked(x, y) {\n  if (field.hasMine(x, y)) {\n    field.showMines();\n    game.over();\n  }\n  let count = 0;\n  for (const square of field.neighbours(x, y)) {\n    if (field.hasMine(square.x, square.y)) {\n      count = count + 1;\n    }\n  }\n  field.reveal(x, y, count);\n  if (count == 0) {\n    field.clickAround(x, y);\n  }\n}\n\nfunction whenSquareRightClicked(x, y) {\n  field.toggleFlag(x, y);\n}\n",
       "concept": {
         "en": "Code that starts itself again is called recursion.",
         "no": "Kode som starter seg selv igjen kalles rekursjon."
@@ -284,6 +289,7 @@
         "en": "if (field.allSafeOpen()) { game.win(); } goes after the count == 0 rule.",
         "no": "if (field.allSafeOpen()) { game.win(); } skal etter count == 0-regelen."
       },
+      "solution": "function whenRunClicked() {\n  field.placeMines(10);\n}\n\nfunction whenSquareClicked(x, y) {\n  if (field.hasMine(x, y)) {\n    field.showMines();\n    game.over();\n  }\n  let count = 0;\n  for (const square of field.neighbours(x, y)) {\n    if (field.hasMine(square.x, square.y)) {\n      count = count + 1;\n    }\n  }\n  field.reveal(x, y, count);\n  if (count == 0) {\n    field.clickAround(x, y);\n  }\n  if (field.allSafeOpen()) {\n    game.win();\n  }\n}\n\nfunction whenSquareRightClicked(x, y) {\n  field.toggleFlag(x, y);\n}\n",
       "concept": {
         "en": "A game needs a way to win, too.",
         "no": "Et spill trenger også en måte å vinne på."
