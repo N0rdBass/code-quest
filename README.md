@@ -83,17 +83,6 @@ That's for later.
 If the app's folder can't be written to (e.g. installed in Program Files), progress
 goes to the normal per-user app data folder instead. The start screen shows where.
 
-## Quick testing in a browser
-
-```bash
-cd app
-python3 -m http.server 8765
-```
-
-Open <http://127.0.0.1:8765/>. In a browser, progress goes to localStorage instead
-of the file. Add `?debug` to the address to expose the lesson as `window.cqLesson`
-for test scripts.
-
 ## Adding a lesson
 
 Lessons are JSON in `app/lessons/`. Each has `title`, `story`, `task`, `hint` and
