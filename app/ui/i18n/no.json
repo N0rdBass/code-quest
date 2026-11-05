@@ -356,6 +356,37 @@
       "misplaced": "Flytt linje {line} så den kommer {where}:",
       "different": "Sammenlign linje {line} med dette. Hva er annerledes?",
       "order": "Linje {line} bruker {name}, men {name} er først klar etter linje {after}. Flytt linje {line} under linje {after}."
+    },
+    "blocks": {
+      "none": "Jeg finner ingen feil: klossene dine har alt løsningen trenger. Les målet igjen, og prøv!",
+      "where": {
+        "missingInside": "Noe mangler inni klossen med ⚠-tegnet. Hva kan det være?",
+        "missingAfter": "Noe mangler under klossen med ⚠-tegnet. Hva kan det være?",
+        "missingFunction": "En hel gul hendelse-kloss mangler. Hvilken kan det være?",
+        "misplaced": "En kloss står på feil sted: se etter ⚠-tegnet. Hvor skal den stå?",
+        "different": "Klossen med ⚠-tegnet er nesten riktig, men noe i den er annerledes.",
+        "order": "En kloss kommer for tidlig: se etter ⚠-tegnet. Ser du hvorfor?"
+      },
+      "what": {
+        "missingInside": "Legg disse klossene inni klossen med ⚠-tegnet:",
+        "missingAfter": "Legg disse klossene under klossen med ⚠-tegnet:",
+        "missingFunction": "Legg til denne hendelse-klossen, med disse klossene inni:",
+        "misplaced": "Flytt klossen som står på feil sted. Det andre ⚠-tegnet viser hvor den skal stå:",
+        "different": "Sammenlign klossen med ⚠-tegnet med denne. Hva er annerledes?",
+        "order": "Den klossen bruker {name}, men {name} er først klar etter klossen med det andre ⚠-tegnet. Flytt den under den klossen."
+      },
+      "mark": {
+        "misplaced": "Denne klossen står på feil sted.",
+        "different": "Denne klossen er nesten riktig.",
+        "order": "Denne klossen kommer for tidlig."
+      },
+      "anchor": {
+        "missingInside": "Noe mangler inni denne klossen.",
+        "missingAfter": "Noe mangler under denne klossen.",
+        "misplacedInside": "Klossen som står på feil sted skal inni denne.",
+        "misplacedAfter": "Klossen som står på feil sted skal under denne.",
+        "order": "Flytt klossen som kommer for tidlig under denne."
+      }
     }
   }
 }

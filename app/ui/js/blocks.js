@@ -299,6 +299,28 @@ export function workspaceCode(ws, { display = false, loopTrap = null } = {}) {
   }
 }
 
+/**
+ * The blocks as code (like "Show code"), where every block also leaves its id
+ * in a comment line just above its code: //@'id'. The hints compare this code
+ * with the lesson's solution and then use blockAt(line) to point at the block.
+ */
+export function workspaceCodeWithIds(ws) {
+  const gen = javascript.javascriptGenerator;
+  gen.STATEMENT_PREFIX = '//@%1\n';
+  let code;
+  try {
+    code = workspaceCode(ws, { display: true });
+  } finally {
+    gen.STATEMENT_PREFIX = null;
+  }
+  const lines = code.split('\n');
+  const blockAt = (line) => {
+    const m = /^\s*\/\/@'(.*)'\s*$/.exec(lines[line - 2] ?? '');
+    return m ? ws.getBlockById(m[1]) : null;
+  };
+  return { code, blockAt };
+}
+
 /** Saved blocks (JSON) as the code a kid would type, without showing them. */
 export function codeFromBlocks(json) {
   const ws = new Blockly.Workspace();

@@ -356,6 +356,37 @@
       "misplaced": "Move line {line} so it comes {where}:",
       "different": "Compare line {line} with this. What is different?",
       "order": "Line {line} uses {name}, but {name} is only ready after line {after}. Move line {line} below line {after}."
+    },
+    "blocks": {
+      "none": "I can't find a mistake: your blocks have everything the solution needs. Read the goal again, and try it!",
+      "where": {
+        "missingInside": "Something is missing inside the block with the ⚠ sign. What could it be?",
+        "missingAfter": "Something is missing under the block with the ⚠ sign. What could it be?",
+        "missingFunction": "A whole yellow event block is missing. Which one could it be?",
+        "misplaced": "A block is in the wrong place: look for the ⚠ sign. Where should it be?",
+        "different": "The block with the ⚠ sign is almost right, but something in it is different.",
+        "order": "A block comes too early: look for the ⚠ sign. Can you see why?"
+      },
+      "what": {
+        "missingInside": "Put these blocks inside the block with the ⚠ sign:",
+        "missingAfter": "Put these blocks under the block with the ⚠ sign:",
+        "missingFunction": "Add this event block, with these blocks inside:",
+        "misplaced": "Move the block that is in the wrong place. The other ⚠ sign shows where it should go:",
+        "different": "Compare the block with the ⚠ sign with this. What is different?",
+        "order": "That block uses {name}, but {name} is only ready after the block with the other ⚠ sign. Move it under that block."
+      },
+      "mark": {
+        "misplaced": "This block is in the wrong place.",
+        "different": "This block is almost right.",
+        "order": "This block comes too early."
+      },
+      "anchor": {
+        "missingInside": "Something is missing inside this block.",
+        "missingAfter": "Something is missing under this block.",
+        "misplacedInside": "The block in the wrong place should go inside this one.",
+        "misplacedAfter": "The block in the wrong place should go under this one.",
+        "order": "Move the block that comes too early under this one."
+      }
     }
   }
 }

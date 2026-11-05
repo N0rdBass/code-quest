@@ -199,6 +199,8 @@ const all = (nodes) => nodes.flatMap((n) => [n, ...all(n.body || []), ...all(n.e
  * The differences between the kid's code and the solution, in the order they
  * appear in the kid's code. Each hint: { type, line, start?, end?, insertAfter?, vars }.
  */
+export { parse as parseCode };
+
 export function findHints(kidCode, solutionCode) {
   const kid = parse(kidCode);
   const sol = parse(solutionCode);
@@ -210,7 +212,7 @@ export function findHints(kidCode, solutionCode) {
     if (s.kind !== 'function') continue;
     const k = kidFns.get(s.name);
     if (!k) {
-      hints.push({ type: 'missingFunction', line: kid.lastLine, insertAfter: kid.lastLine, vars: { code: s.show, full: s.full } });
+      hints.push({ type: 'missingFunction', line: kid.lastLine, insertAfter: kid.lastLine, sol: s, vars: { code: s.show, full: s.full } });
       continue;
     }
     used.add(k);
@@ -231,21 +233,21 @@ function compare(solNodes, kidNodes, owner, fn, hints, used) {
       if (elsewhere) {
         used.add(elsewhere);
         const where = prev ? { key: 'hint.whereAfter', line: prev.endLine } : { key: 'hint.whereInside', line: owner.line };
-        hints.push({ type: 'misplaced', line: elsewhere.line, start: elsewhere.start, end: elsewhere.end, vars: { code: s.show, whereKey: where.key, whereLine: where.line } });
+        hints.push({ type: 'misplaced', line: elsewhere.line, start: elsewhere.start, end: elsewhere.end, sol: s, anchorLine: prev ? prev.line : owner.line, anchorInside: !prev, vars: { code: s.show, whereKey: where.key, whereLine: where.line } });
         continue;
       }
       // Almost the same line here: same command, same variable, or same kind of if/loop.
       k = kidNodes.find((n) => free(n) && n.kind === s.kind && n.family === s.family);
       if (k) {
         used.add(k);
-        hints.push({ type: 'different', line: k.line, start: k.start, end: k.end, vars: { code: s.show } });
+        hints.push({ type: 'different', line: k.line, start: k.start, end: k.end, sol: s, vars: { code: s.show } });
         if (s.body) compare(s.body, k.body || [], k, fn, hints, used);
         pairs.push([s, k]);
         prev = k;
         continue;
       }
       const after = prev ? prev.endLine : owner.line;
-      hints.push({ type: prev ? 'missingAfter' : 'missingInside', line: after, insertAfter: after, vars: { code: s.show, full: s.full } });
+      hints.push({ type: prev ? 'missingAfter' : 'missingInside', line: after, insertAfter: after, sol: s, anchorLine: prev ? prev.line : owner.line, vars: { code: s.show, full: s.full } });
       continue;
     }
     used.add(k);
@@ -258,7 +260,7 @@ function compare(solNodes, kidNodes, owner, fn, hints, used) {
     for (const [s2, k2] of pairs.slice(0, i)) {
       const name = [...s.uses].find((u) => s2.sets.has(u));
       if (name && k2.line > k.line) {
-        hints.push({ type: 'order', line: k.line, start: k.start, end: k.end, vars: { name, after: k2.endLine } });
+        hints.push({ type: 'order', line: k.line, start: k.start, end: k.end, anchorLine: k2.line, vars: { name, after: k2.endLine } });
         break;
       }
     }

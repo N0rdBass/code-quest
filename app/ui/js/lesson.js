@@ -8,7 +8,8 @@
 
 import { t, tr } from './i18n.js';
 import * as storage from './storage.js';
-import { defineBlocks, toolboxFor, workspaceCode, codeFromBlocks } from './blocks.js';
+import { defineBlocks, toolboxFor, workspaceCode, workspaceCodeWithIds, codeFromBlocks } from './blocks.js';
+import { blocksFor } from './codeblocks.js';
 import { compileTyped, diagnose, countUses, explainJsError, errorLine, CodeProblem } from './kidcode.js';
 import { createEditor } from './editor.js';
 import { commandsFor, SYMBOLS } from './codehelp.js';
@@ -147,6 +148,7 @@ class LessonController {
 
   teardownWorkspace() {
     clearTimeout(this.checkTimer);
+    this.clearBlockMarks();
     this.resizeObserver?.disconnect();
     this.resizeObserver = null;
     if (this.ws) {
@@ -166,7 +168,11 @@ class LessonController {
     this.blocklyDiv = h('div', { class: 'blockly' });
     this.codeEl = h('pre', { class: 'code-view' });
     this.codePanel = h('div', { class: 'code-panel', hidden: this.mode !== 'both' }, h('h3', {}, t('lesson.codeTitle')), this.codeEl);
-    return h('section', { class: 'workspace' }, this.blocklyDiv, this.capacityEl, this.codePanel);
+    this.mistakeEl = h('div', { class: 'hint-box', hidden: true, 'aria-live': 'polite' });
+    const find = this.lesson.solution
+      ? h('button', { class: 'btn small ghost find-mistake blocks-find', onclick: () => this.findMistake() }, t('hint.button'))
+      : null;
+    return h('section', { class: 'workspace' }, this.blocklyDiv, this.capacityEl, find, this.mistakeEl, this.codePanel);
   }
 
   injectBlockly() {
@@ -195,6 +201,9 @@ class LessonController {
       if (e.isUiEvent) return;
       this.saveWorkspace();
       this.refreshCode();
+      // The program changed, so an open hint may no longer fit. (Blockly sends its
+      // events a moment later, so compare the code rather than trust the event.)
+      if (this.mistakeEl && !this.mistakeEl.hidden && workspaceCode(this.ws, { display: true }) !== this.hintCodeAt) this.closeHint();
     });
     this.refreshCode();
     this.resizeObserver = new ResizeObserver(() => Blockly.svgResize(this.ws));
@@ -753,7 +762,7 @@ class LessonController {
 
   /** After a failed run in code mode: a button that opens the hints. */
   offerHint() {
-    if (this.mode !== 'code' || !this.lesson.solution) return;
+    if (!this.lesson.solution || (!this.editor && !this.ws)) return;
     this.messageEl.append(' ', h('button', { class: 'btn small ghost', onclick: () => this.findMistake() }, t('hint.offer')));
   }
 
@@ -762,7 +771,18 @@ class LessonController {
    * difference: first only where it is, then (on "Show me more") what it is.
    */
   findMistake() {
-    if (!this.editor || !this.lesson.solution) return;
+    if (!this.lesson.solution) return;
+    if (this.ws) {
+      // Blocks: compare the blocks' code (with block ids) and point at blocks.
+      const { code, blockAt } = workspaceCodeWithIds(this.ws);
+      this.blockAt = blockAt;
+      this.hintCodeAt = workspaceCode(this.ws, { display: true });
+      this.hints = findHints(code, this.lesson.solution);
+      this.hintIndex = 0;
+      this.hintLevel = 1;
+      return this.showBlockHint();
+    }
+    if (!this.editor) return;
     this.checkCode();
     const error = this.problems.find((p) => p.severity === 'error');
     this.hints = error
@@ -801,9 +821,98 @@ class LessonController {
     this.editor.setHint({ line: hint.line, start: hint.start, end: hint.end, insertAfter: hint.insertAfter, message: text });
   }
 
+  /** Blocks mode: mark blocks with a ⚠ sign, and show missing pieces as real blocks. */
+  showBlockHint() {
+    this.clearBlockMarks();
+    const hint = this.hints[this.hintIndex];
+    const close = h('button', { class: 'btn small ghost', title: t('hint.close'), onclick: () => this.closeHint() }, '✕');
+    this.mistakeEl.hidden = false;
+    if (!hint) {
+      this.mistakeEl.replaceChildren(h('p', {}, `🤔 ${t('hint.blocks.none')}`), h('div', { class: 'hint-buttons' }, close));
+      return;
+    }
+    const detailed = this.hintLevel > 1;
+    const vars = { ...hint.vars };
+    const text = t(`hint.blocks.${detailed ? 'what' : 'where'}.${hint.type}`, vars);
+
+    // Which blocks get a ⚠ sign: the block that's wrong, and (for missing
+    // pieces, or once "Show me more" is pressed) the block where it should go.
+    const target = ['misplaced', 'different', 'order'].includes(hint.type) ? this.blockAt(hint.line) : null;
+    const anchor = hint.anchorLine != null ? this.blockAt(hint.anchorLine) : null;
+    const marks = [];
+    if (target) marks.push([target, t(`hint.blocks.mark.${hint.type}`)]);
+    if (anchor && (hint.type.startsWith('missing') || detailed)) {
+      const key = hint.type === 'misplaced' ? (hint.anchorInside ? 'misplacedInside' : 'misplacedAfter') : hint.type;
+      marks.push([anchor, t(`hint.blocks.anchor.${key}`)]);
+    }
+    this.markingHint = true;
+    try {
+      for (const [block, note] of marks) {
+        block.setWarningText(note, 'cq-hint');
+        this.markedBlocks.push(block);
+      }
+      const focus = target || anchor;
+      if (focus) {
+        focus.select();
+        // Scroll it into the free part of the workspace (not behind the block menu).
+        if (this.ws.scrollBoundsIntoView) this.ws.scrollBoundsIntoView(focus.getBoundingRectangleWithoutChildren?.() ?? focus.getBoundingRectangle(), 40);
+        else this.ws.centerOnBlock(focus.id);
+      }
+    } finally {
+      this.markingHint = false;
+    }
+
+    const buttons = [];
+    if (!detailed) buttons.push(h('button', { class: 'btn small', onclick: () => ((this.hintLevel = 2), this.showBlockHint()) }, t('hint.more')));
+    else if (this.hintIndex < this.hints.length - 1) {
+      buttons.push(h('button', { class: 'btn small', onclick: () => (this.hintIndex++, (this.hintLevel = 1), this.showBlockHint()) }, t('hint.next')));
+    }
+    buttons.push(close);
+    const preview = detailed && hint.sol && hint.type !== 'order' ? h('div', { class: 'mini-blocks' }) : null;
+    this.mistakeEl.replaceChildren(
+      h('p', {}, `🔍 ${text}`),
+      ...(preview ? [preview] : []),
+      h('div', { class: 'hint-buttons' }, this.hints.length > 1 ? h('span', { class: 'hint-count' }, t('hint.count', { n: this.hintIndex + 1, total: this.hints.length })) : null, ...buttons),
+    );
+    if (preview) this.showMiniBlocks(preview, blocksFor(hint.sol));
+  }
+
+  /** Draw a stack of blocks (read-only) inside the hint box. */
+  showMiniBlocks(div, json) {
+    if (!json) return div.remove();
+    const ws = Blockly.inject(div, {
+      readOnly: true,
+      renderer: 'zelos',
+      media: 'vendor/blockly/media/',
+      sounds: false,
+      zoom: { startScale: 0.7 },
+      move: { scrollbars: false, drag: false, wheel: false },
+    });
+    this.miniWs = ws;
+    Blockly.serialization.workspaces.load({ blocks: { languageVersion: 0, blocks: [{ ...json, x: 8, y: 8 }] } }, ws);
+    Blockly.renderManagement?.triggerQueuedRenders?.(ws);
+    const box = ws.getBlocksBoundingBox();
+    div.style.height = `${Math.ceil((box.bottom - box.top) * ws.scale) + 20}px`;
+    Blockly.svgResize(ws);
+    ws.scroll(0, 0);
+  }
+
+  clearBlockMarks() {
+    this.markingHint = true;
+    try {
+      for (const block of this.markedBlocks || []) if (!block.isDeadOrDying?.()) block.setWarningText(null, 'cq-hint');
+    } finally {
+      this.markingHint = false;
+    }
+    this.markedBlocks = [];
+    this.miniWs?.dispose();
+    this.miniWs = null;
+  }
+
   closeHint() {
     this.mistakeEl.hidden = true;
     this.editor?.setHint(null);
+    this.clearBlockMarks();
   }
 
   /** Like fail(), and in code mode also marks the line with the mistake. */
