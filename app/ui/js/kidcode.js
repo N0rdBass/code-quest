@@ -1,8 +1,12 @@
-// Typed code (code mode). A small tokenizer does three jobs:
+// Typed code (code mode). A small tokenizer does several jobs:
 //   - colours the code in the editor
-//   - finds the mistakes kids make most (missing } or ", a loop without { })
-//     and says which line they are on
-//   - puts a guard inside every loop, so `while (true) {}` can't freeze the app
+//   - checks the code while the kid types, like VS Code does: missing } or ",
+//     a loop without { }, a command that doesn't exist (bit.mvoe), a direction
+//     that doesn't exist ('downn'), a missing ;. Each problem knows exactly
+//     which characters are wrong, so the editor can underline them.
+//   - puts a guard inside every loop, so `while (true) {}` can't freeze the app,
+//     and tags every command with its place in the code, so an error while the
+//     game runs can point at the exact command (in every browser engine)
 // Then the code is turned into the same kind of program the blocks make.
 
 import { LoopError } from './errors.js';
@@ -25,7 +29,6 @@ const OBJECTS = new Set(['bit', 'snake', 'game', 'console', 'Math']);
 const PAIRS = { '(': ')', '[': ']', '{': '}' };
 const CLOSERS = new Set([')', ']', '}']);
 
-const GUARD = ' if (--__loopGuard < 0) throw new __LoopError();';
 const SOURCE_NAME = 'player-code';
 
 // ---------------------------------------------------------------------------
@@ -111,24 +114,46 @@ const significant = (tokens) => tokens.filter((t) => t.type !== 'ws' && t.type !
 
 const escapeHtml = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
-export function highlight(code) {
+/**
+ * Coloured HTML for the code. `problems` ({ start, end, severity }) get a
+ * squiggly underline over exactly their characters.
+ */
+export function highlight(code, problems = []) {
   const tokens = tokenize(code);
+  // Places where the underline starts or stops, so tokens can be cut there.
+  const cuts = new Set();
+  for (const p of problems) {
+    cuts.add(p.start);
+    cuts.add(p.end);
+  }
+  const squiggle = (at) => {
+    let sev = null;
+    for (const p of problems) if (p.start <= at && at < p.end) sev = sev === 'error' ? sev : p.severity;
+    return sev;
+  };
   let html = '';
   tokens.forEach((t, k) => {
-    const text = escapeHtml(t.value);
     let cls = null;
     if (t.type === 'comment') cls = 'c';
     else if (t.type === 'str') cls = 's';
     else if (t.type === 'num') cls = 'n';
     else if (t.type === 'id') {
       const prev = tokens[k - 1];
-      const afterDot = prev && prev.value === '.';
-      if (afterDot) cls = 'm';
+      if (prev && prev.value === '.') cls = 'm';
       else if (KEYWORDS.has(t.value)) cls = 'k';
       else if (OBJECTS.has(t.value)) cls = 'o';
       else if (t.value in EVENT_FUNCS) cls = 'e';
     }
-    html += cls ? `<span class="t-${cls}">${text}</span>` : text;
+    // Split the token wherever an underline starts or stops.
+    let from = t.start;
+    for (let at = t.start + 1; at <= t.end; at++) {
+      if (at < t.end && !cuts.has(at)) continue;
+      const text = escapeHtml(code.slice(from, at));
+      const sev = squiggle(from);
+      const classes = [cls && `t-${cls}`, sev && `sq-${sev}`].filter(Boolean).join(' ');
+      html += classes ? `<span class="${classes}">${text}</span>` : text;
+      from = at;
+    }
   });
   return html;
 }
@@ -136,40 +161,43 @@ export function highlight(code) {
 // ---------------------------------------------------------------------------
 // Checking
 
-/** A mistake the kid can fix: a translation key, its values, and the line. */
+/**
+ * A mistake the kid can fix: a translation key, its values, the line, and
+ * the exact characters that are wrong (start/end offsets in the code).
+ */
 export class CodeProblem extends Error {
-  constructor(key, vars = {}, line = null) {
+  constructor(key, vars = {}, line = null, start = null, end = null, severity = 'error') {
     super(key);
-    this.key = key;
-    this.vars = vars;
-    this.line = line;
+    Object.assign(this, { key, vars, line, start, end, severity });
   }
 }
+
+const problemAt = (tok, key, vars, severity) => new CodeProblem(key, vars, tok.line, tok.start, tok.end, severity);
 
 /** Unclosed strings and comments, and brackets that don't match. */
 function checkBrackets(tokens) {
   const stack = [];
   for (const t of tokens) {
-    if (t.type === 'str' && t.unclosed) throw new CodeProblem('code.err.string', { q: t.value[0] }, t.line);
-    if (t.type === 'comment' && t.unclosed) throw new CodeProblem('code.err.comment', {}, t.line);
+    if (t.type === 'str' && t.unclosed) throw problemAt(t, 'code.err.string', { q: t.value[0] });
+    if (t.type === 'comment' && t.unclosed) throw problemAt(t, 'code.err.comment', {});
     if (t.type !== 'punct') continue;
     if (PAIRS[t.value]) stack.push(t);
     else if (CLOSERS.has(t.value)) {
       // No opener of this kind is waiting at all: it's simply one too many.
-      if (!stack.some((o) => PAIRS[o.value] === t.value)) throw new CodeProblem('code.err.extraClose', { ch: t.value }, t.line);
+      if (!stack.some((o) => PAIRS[o.value] === t.value)) throw problemAt(t, 'code.err.extraClose', { ch: t.value });
       const open = stack.pop();
       // An open ( or [ is almost always closed on its own line, so point there.
       if (PAIRS[open.value] !== t.value && open.value !== '{') {
-        throw new CodeProblem('code.err.unclosed', { open: open.value, close: PAIRS[open.value] }, open.line);
+        throw problemAt(open, 'code.err.unclosed', { open: open.value, close: PAIRS[open.value] });
       }
       if (PAIRS[open.value] !== t.value) {
-        throw new CodeProblem('code.err.mismatch', { open: open.value, close: t.value, want: PAIRS[open.value], openLine: open.line }, t.line);
+        throw problemAt(t, 'code.err.mismatch', { open: open.value, close: t.value, want: PAIRS[open.value], openLine: open.line });
       }
     }
   }
   if (stack.length) {
     const open = stack[stack.length - 1];
-    throw new CodeProblem('code.err.unclosed', { open: open.value, close: PAIRS[open.value] }, open.line);
+    throw problemAt(open, 'code.err.unclosed', { open: open.value, close: PAIRS[open.value] });
   }
 }
 
@@ -185,51 +213,180 @@ function matching(sig, from) {
 
 const isKeyword = (sig, j, word) => sig[j].type === 'id' && sig[j].value === word && sig[j - 1]?.value !== '.';
 
-/**
- * Returns the code with a loop guard right after the { of every loop.
- * The guard goes on the same line, so line numbers stay the same.
- */
-function guardLoops(code, tokens) {
-  const sig = significant(tokens);
-  const inserts = [];
+/** Loops must have ( ) and { }. Returns where each loop body starts (for the guards). */
+function findLoops(sig) {
+  const loops = [];
   for (let j = 0; j < sig.length; j++) {
     if (isKeyword(sig, j, 'do')) {
-      if (sig[j + 1]?.value !== '{') throw new CodeProblem('code.err.loopBraces', { kw: 'do' }, sig[j].line);
-      inserts.push(sig[j + 1].end);
+      if (sig[j + 1]?.value !== '{') throw problemAt(sig[j], 'code.err.loopBraces', { kw: 'do' });
+      loops.push({ kw: sig[j], body: sig[j + 1] });
       continue;
     }
     const kw = sig[j].value;
     if (!(isKeyword(sig, j, 'for') || isKeyword(sig, j, 'while'))) continue;
-    if (sig[j + 1]?.value !== '(') throw new CodeProblem('code.err.loopParen', { kw }, sig[j].line);
-    const close = matching(sig, j + 1);
-    const next = sig[close + 1];
+    if (sig[j + 1]?.value !== '(') throw problemAt(sig[j], 'code.err.loopParen', { kw });
+    const next = sig[matching(sig, j + 1) + 1];
     if (next?.value === '{') {
-      inserts.push(next.end);
+      loops.push({ kw: sig[j], body: next });
       continue;
     }
     // The end of a do { ... } while (...); loop. Its body already has a guard.
     if (kw === 'while' && sig[j - 1]?.value === '}' && (!next || next.value === ';' || next.value === '}')) continue;
-    throw new CodeProblem('code.err.loopBraces', { kw }, sig[j].line);
+    throw problemAt(sig[j], 'code.err.loopBraces', { kw });
   }
-  let out = '';
-  let last = 0;
-  for (const at of inserts) {
-    out += code.slice(last, at) + GUARD;
-    last = at;
-  }
-  return out + code.slice(last);
+  return loops;
 }
 
 /** Functions whose name is almost an event name, like `whenrunclicked`. */
-function checkEventNames(tokens) {
-  const sig = significant(tokens);
+function checkEventNames(sig) {
   const lower = Object.fromEntries(Object.keys(EVENT_FUNCS).map((k) => [k.toLowerCase(), k]));
   for (let j = 0; j < sig.length - 1; j++) {
     if (!isKeyword(sig, j, 'function') || sig[j + 1].type !== 'id') continue;
     const name = sig[j + 1].value;
     const want = lower[name.toLowerCase()];
-    if (want && want !== name) throw new CodeProblem('code.err.eventName', { name, want }, sig[j + 1].line);
+    if (want && want !== name) throw problemAt(sig[j + 1], 'code.err.eventName', { name, want });
   }
+}
+
+// What each object can do, and which words its commands accept.
+const DIRECTIONS = ['up', 'down', 'left', 'right'];
+const COLOURS = ['green', 'blue', 'purple', 'orange', 'pink'];
+const API = {
+  bit: { move: DIRECTIONS, pickUpCoin: null, isOnCoin: null },
+  snake: { move: null, turn: DIRECTIONS, grow: null, placeFood: null, isOnFood: null, hitsWall: null, bitesItself: null, setColour: COLOURS },
+  game: { changeScore: null, over: null, faster: null },
+  console: { log: null, info: null, warn: null, error: null },
+};
+const WORLD_OBJECTS = { robot: ['bit', 'game', 'console'], snake: ['snake', 'game', 'console'] };
+
+/** Each use of an object, like `bit.move('right')`: where it is and what's in it. */
+function apiUses(sig) {
+  const uses = [];
+  for (let j = 0; j < sig.length; j++) {
+    const t = sig[j];
+    if (t.type !== 'id' || !API[t.value] || sig[j - 1]?.value === '.' || sig[j + 1]?.value !== '.') continue;
+    const member = sig[j + 2];
+    if (member?.type !== 'id') continue;
+    const call = sig[j + 3]?.value === '(' ? j + 3 : -1;
+    const close = call >= 0 ? matching(sig, call) : -1;
+    uses.push({ j, obj: t, member, call, close, end: close >= 0 ? sig[close].end : member.end });
+  }
+  return uses;
+}
+
+/** Commands that don't exist, objects not in this lesson, and wrong words like 'downn'. */
+function checkApi(sig, world) {
+  const problems = [];
+  const here = WORLD_OBJECTS[world] || Object.keys(API);
+  for (const u of apiUses(sig)) {
+    const obj = u.obj.value;
+    if (!here.includes(obj)) {
+      problems.push(problemAt(u.obj, 'code.err.notInLesson', { name: obj }));
+      continue;
+    }
+    const allowed = API[obj];
+    if (!(u.member.value in allowed)) {
+      const near = Object.keys(allowed).find((m) => m.toLowerCase() === u.member.value.toLowerCase());
+      problems.push(problemAt(u.member, near ? 'code.err.wrongCase' : 'code.err.noCommand', { name: `${obj}.${u.member.value}`, want: `${obj}.${near}`, obj }));
+      continue;
+    }
+    if (u.call < 0) {
+      problems.push(problemAt(u.member, 'code.err.needParens', { name: `${obj}.${u.member.value}` }));
+      continue;
+    }
+    // A word the command doesn't know: bit.move('downn')
+    const words = allowed[u.member.value];
+    const arg = sig[u.call + 1];
+    if (words && arg?.type === 'str' && !arg.unclosed && !arg.value.startsWith('`')) {
+      const word = arg.value.slice(1, -1);
+      if (!words.includes(word)) {
+        problems.push(problemAt(arg, 'code.err.badWord', { word, name: `${obj}.${u.member.value}`, list: words.map((w) => `'${w}'`).join(', ') }));
+      }
+    }
+  }
+  return problems;
+}
+
+/**
+ * Gentle warnings for a command without ; at the end. JavaScript doesn't
+ * need it, but the lessons teach that every command ends with ;.
+ */
+function checkSemicolons(sig) {
+  const problems = [];
+  for (const u of apiUses(sig)) {
+    if (u.close < 0) continue;
+    const before = sig[u.j - 1];
+    // A new line starts a new command, unless the line above ends in an operator, ( or ,
+    const newLine = before && before.line < u.obj.line && /[\w$)\]'"`]$/.test(before.value);
+    const statementStart = !before || ['{', '}', ';'].includes(before.value) || newLine;
+    const after = sig[u.close + 1];
+    if (!statementStart || [';', '.', ')', ','].includes(after?.value)) continue;
+    const close = sig[u.close];
+    problems.push(new CodeProblem('code.warn.semicolon', {}, close.line, close.start, close.end, 'warning'));
+  }
+  return problems;
+}
+
+/** For a syntax error the engine doesn't place: find the line that breaks it. */
+function findBadLine(code) {
+  const lines = code.split('\n');
+  for (let k = 0; k < lines.length; k++) {
+    const keepBraces = lines[k].replace(/[^{}]/g, '');
+    const trial = [...lines.slice(0, k), keepBraces, ...lines.slice(k + 1)].join('\n');
+    try {
+      make(trial);
+      return k + 1;
+    } catch {
+      /* not this line */
+    }
+  }
+  return null;
+}
+
+/** The text of a line (without the spaces around it), as start/end offsets. */
+function lineRange(code, line) {
+  let start = 0;
+  for (let n = 1; n < line; n++) start = code.indexOf('\n', start) + 1;
+  let end = code.indexOf('\n', start);
+  if (end < 0) end = code.length;
+  const text = code.slice(start, end);
+  const lead = text.length - text.trimStart().length;
+  return { start: start + lead, end: Math.max(start + lead + 1, start + text.trimEnd().length) };
+}
+
+/**
+ * Every problem in the code, most important first. Used while typing and
+ * before running. `world` is 'robot' or 'snake'.
+ */
+export function diagnose(code, { world } = {}) {
+  const tokens = tokenize(code);
+  const sig = significant(tokens);
+  const problems = [];
+  let structureOk = true;
+  try {
+    checkBrackets(tokens);
+    checkEventNames(sig);
+    findLoops(sig);
+  } catch (p) {
+    if (!(p instanceof CodeProblem)) throw p;
+    problems.push(p);
+    structureOk = false;
+  }
+  const apiProblems = checkApi(sig, world);
+  problems.push(...apiProblems);
+  if (structureOk && !apiProblems.length) {
+    try {
+      make(code);
+    } catch (e) {
+      if (!(e instanceof SyntaxError)) throw e;
+      const line = findBadLine(code);
+      const range = line ? lineRange(code, line) : { start: null, end: null };
+      problems.push(new CodeProblem('code.err.syntax', { detail: e.message }, line, range.start, range.end));
+    }
+  }
+  problems.push(...checkSemicolons(sig));
+  const rank = (p) => (p.severity === 'error' ? 0 : 1);
+  return problems.sort((a, b) => rank(a) - rank(b) || (a.start ?? 0) - (b.start ?? 0));
 }
 
 // ---------------------------------------------------------------------------
@@ -257,7 +414,7 @@ export function countUses(code, limits) {
 // Globals kid code shouldn't reach by accident. Not a real sandbox (kids run
 // their own code on their own computer), but it keeps mistakes harmless.
 const HIDDEN = ['window', 'document', 'globalThis', 'self', 'top', 'parent', 'localStorage', 'sessionStorage', 'fetch', 'prompt', 'confirm', '__TAURI__'];
-const PARAMS = ['__events', 'bit', 'snake', 'game', 'console', '__LoopError', 'alert', ...HIDDEN];
+const PARAMS = ['__events', 'bit', 'snake', 'game', 'console', '__LoopError', '__trace', 'alert', ...HIDDEN];
 
 function wrap(body) {
   const returns = Object.keys(EVENT_FUNCS)
@@ -275,6 +432,7 @@ function wrap(body) {
     '"use strict";',
     'let __loopGuard = 100000;',
     'const __safe = (f) => () => { __loopGuard = 100000; return f(); };',
+    'const __t = (k, o) => ((__trace.at = k), o);',
     'const __kid = (function () {',
     body,
     `;return { ${returns} };`,
@@ -306,47 +464,63 @@ function rawLine(e) {
   return m ? Number(m[1]) : null;
 }
 
-/** The kid's line where an error happened, or null if we can't tell. */
+/** The kid's line where an error happened, from the stack trace, or null. */
 export function errorLine(e) {
   const raw = rawLine(e);
   const off = measureOffset();
   return raw == null || off == null ? null : raw - off;
 }
 
-/** For a syntax error the engine doesn't place: find the line that breaks it. */
-function findBadLine(code) {
-  const lines = code.split('\n');
-  for (let k = 0; k < lines.length; k++) {
-    const keepBraces = lines[k].replace(/[^{}]/g, '');
-    const trial = [...lines.slice(0, k), keepBraces, ...lines.slice(k + 1)].join('\n');
-    try {
-      make(trial);
-      return k + 1;
-    } catch {
-      /* not this line */
-    }
+/**
+ * Adds two things to the code, without moving any line:
+ *  - a guard at the start of every loop body
+ *  - a tag on every command: `bit.move(…)` becomes `__t(7, bit).move(…)`,
+ *    so when a command fails, we know it was place 7 (its exact characters).
+ *    The tag starts with a name, not a (, so code without ; still works:
+ *    a line starting with ( would be glued onto the line above.
+ */
+function instrument(code, sig, loops) {
+  const places = [];
+  const edits = [];
+  for (const { kw, body } of loops) {
+    const k = places.push({ start: kw.start, end: kw.end, line: kw.line }) - 1;
+    edits.push({ at: body.end, end: body.end, text: ` if (--__loopGuard < 0) { __trace.at = ${k}; throw new __LoopError(); }` });
   }
-  return null;
+  for (const u of apiUses(sig)) {
+    const k = places.push({ start: u.obj.start, end: u.end, line: u.obj.line }) - 1;
+    edits.push({ at: u.obj.start, end: u.obj.end, text: `__t(${k}, ${u.obj.value})` });
+  }
+  edits.sort((a, b) => a.at - b.at);
+  let out = '';
+  let last = 0;
+  for (const e of edits) {
+    out += code.slice(last, e.at) + e.text;
+    last = e.end;
+  }
+  return { code: out + code.slice(last), places };
 }
 
 /**
- * Turns typed code into a program with the same shape as the blocks' program:
- * fn(events, bit, snake, game, console, LoopError, alert).
- * Throws a CodeProblem the kid can fix.
+ * Turns typed code into a program with the same shape as the blocks' program.
+ * Throws the first CodeProblem if the code has a mistake.
+ * Returns { run(events, bit, snake, game, console, alert), placeOf(error) }.
  */
-export function compileTyped(code) {
+export function compileTyped(code, { world } = {}) {
+  const first = diagnose(code, { world }).find((p) => p.severity === 'error');
+  if (first) throw first;
   const tokens = tokenize(code);
-  checkBrackets(tokens);
-  checkEventNames(tokens);
-  const guarded = guardLoops(code, tokens);
-  let fn;
-  try {
-    fn = make(guarded);
-  } catch (e) {
-    if (!(e instanceof SyntaxError)) throw e;
-    throw new CodeProblem('code.err.syntax', { detail: e.message }, findBadLine(code));
-  }
-  return (events, bit, snake, game, console, alert) => fn(events, bit, snake, game, console, LoopError, alert);
+  const sig = significant(tokens);
+  const { code: tagged, places } = instrument(code, sig, findLoops(sig));
+  const fn = make(tagged);
+  const trace = { at: null };
+  return {
+    run(events, bit, snake, game, console, alert) {
+      trace.at = null;
+      return fn(events, bit, snake, game, console, LoopError, trace, alert);
+    },
+    /** Where the last tagged command was: { line, start, end }, or null. */
+    lastPlace: () => (trace.at == null ? null : places[trace.at]),
+  };
 }
 
 /** Makes JavaScript's own error messages kid-friendly. Returns [key, vars]. */

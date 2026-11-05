@@ -167,10 +167,18 @@
       "notDefined": "\"{name}\" doesn't exist. Check the spelling: capital letters matter!",
       "notFunction": "There is no command called {name}. Check the spelling, or look in the command list.",
       "recursion": "A function calls itself again and again, forever.",
-      "tooMany": "You may use {name} only {max} time(s) here, but you used it {used} times. Use a loop!"
+      "tooMany": "You may use {name} only {max} time(s) here, but you used it {used} times. Use a loop!",
+      "notInLesson": "There is no {name} in this lesson.",
+      "noCommand": "{name} is not a command. Check the spelling, or look in the Commands list for what {obj} can do.",
+      "wrongCase": "{name} should be written {want}. Capital letters matter!",
+      "needParens": "{name} needs ( ) after it, or it won't run: {name}()",
+      "badWord": "{name} doesn't know '{word}'. Use one of: {list}."
     },
     "symbols": "Symbols",
-    "symbolsTip": "Click on any symbol or word in your code to see what it means there."
+    "symbolsTip": "Click on any symbol or word in your code to see what it means there.",
+    "warn": {
+      "semicolon": "Put a ; at the end of this command, like a full stop at the end of a sentence."
+    }
   },
   "codeNames": {
     "bit_move": "bit.move()",

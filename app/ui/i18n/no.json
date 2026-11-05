@@ -167,10 +167,18 @@
       "notDefined": "«{name}» finnes ikke. Sjekk stavemåten: store og små bokstaver betyr noe!",
       "notFunction": "Det finnes ingen kommando som heter {name}. Sjekk stavemåten, eller se i kommandolisten.",
       "recursion": "En funksjon kaller seg selv igjen og igjen, i det uendelige.",
-      "tooMany": "Du kan bare bruke {name} {max} gang(er) her, men du brukte den {used} ganger. Bruk en løkke!"
+      "tooMany": "Du kan bare bruke {name} {max} gang(er) her, men du brukte den {used} ganger. Bruk en løkke!",
+      "notInLesson": "Det finnes ingen {name} i denne oppgaven.",
+      "noCommand": "{name} er ikke en kommando. Sjekk stavemåten, eller se i kommandolisten hva {obj} kan gjøre.",
+      "wrongCase": "{name} skal skrives {want}. Store og små bokstaver betyr noe!",
+      "needParens": "{name} trenger ( ) etter seg, ellers kjører den ikke: {name}()",
+      "badWord": "{name} kjenner ikke '{word}'. Bruk en av: {list}."
     },
     "symbols": "Tegn",
-    "symbolsTip": "Klikk på et tegn eller ord i koden din for å se hva det betyr der."
+    "symbolsTip": "Klikk på et tegn eller ord i koden din for å se hva det betyr der.",
+    "warn": {
+      "semicolon": "Sett et ; på slutten av denne kommandoen, som et punktum på slutten av en setning."
+    }
   },
   "codeNames": {
     "bit_move": "bit.move()",

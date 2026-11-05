@@ -17,7 +17,7 @@ blocks, blocks + code, and typed code.
 | Basics (5 lessons) | Bit the robot: steps in order, repeat, score (variables), if, key events. Lesson 4 is tested on two different maps, so the `if` really matters. |
 | Snake (6 lessons) | Move, steer, eat, walls, don't bite yourself, make it yours. Each lesson starts with the kid's own blocks from the lesson before, so they build *one* game. |
 | Three modes | A switch at the top of every lesson: **Blocks** (drag and drop), **Both** (blocks with the real JavaScript they make next to them) and **Code** (type JavaScript). The choice is saved per player. |
-| Code mode | A kid-friendly editor (line numbers, colours, auto-indent), a list of the lesson's commands to click in, and mistakes explained in plain words with the line marked in red. Switching to code the first time starts from the kid's own blocks, turned into code. `console.log` prints below the editor. Clicking any symbol or word (`{ }`, `( )`, `' '`, `;`, `for`, `i` …) explains what it means there, and a Symbols list sums them up. |
+| Code mode | A kid-friendly editor (line numbers, colours, auto-indent, red/yellow squiggly lines under mistakes while typing, with the message on hover), a list of the lesson's commands to click in, and mistakes explained in plain words with the line marked in red. Switching to code the first time starts from the kid's own blocks, turned into code. `console.log` prints below the editor. Clicking any symbol or word (`{ }`, `( )`, `' '`, `;`, `for`, `i` …) explains what it means there, and a Symbols list sums them up. |
 | Diploma | Printable diploma with the kid's name after finishing Snake. |
 | Languages | Norsk / English switch on the start screen and the map. |
 | Portable saves | Progress is saved in `code-quest-data/` next to the app, so it travels on the USB stick. |
@@ -44,7 +44,7 @@ How the code fits together:
 - `ui/js/app.js`: screens (players → map → lesson → diploma)
 - `ui/js/lesson.js`: lesson screen and mode switch, turns blocks or typed code into a program, runs it, checks the goal
 - `ui/js/blocks.js`: Code Quest's blocks, their translated labels and the code they generate
-- `ui/js/kidcode.js`: code mode's checker: finds common mistakes (missing `}` or `"`, a loop without `{ }`, `whenrunclicked` spelled wrong) with line numbers, adds a guard to every loop so `while (true)` can't freeze the app, and explains JavaScript's own errors
+- `ui/js/kidcode.js`: code mode's checker. While the kid types (like VS Code) it finds mistakes with their exact characters: missing `}` or `"`, a loop without `{ }`, `whenrunclicked` spelled wrong, a command that doesn't exist (`bit.mvoe`), a word a command doesn't know (`bit.move('downn')`), and a missing `;` (a yellow warning). Before running it adds a guard to every loop so `while (true)` can't freeze the app, and tags every command (`__t(7, bit).move(…)`) so an error while the game runs points at the exact command in every browser engine, without relying on stack traces
 - `ui/js/editor.js`: the code editor (a textarea on top of a coloured copy of the text)
 - `ui/js/codehelp.js`: the command list in code mode, built from the lesson's toolbox (plus the Symbols list)
 - `ui/js/explain.js`: the bar under the editor that explains the symbol or word at the cursor, in context (the `(` after `if` holds a question; the `(` after `bit.move` gives it extra information; a `}` says which function or loop it closes)

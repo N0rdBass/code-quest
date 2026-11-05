@@ -1,5 +1,6 @@
 // A small code editor for kids: line numbers, colours, Tab and auto-indent,
-// and a red mark on the line with a mistake. A plain <textarea> lies on top of
+// and, like VS Code, a squiggly line under mistakes (red) and warnings
+// (yellow), with the message when you hover over it or its line number. A plain <textarea> lies on top of
 // a coloured copy of the same text, so typing, selecting and undo are the
 // browser's own and work everywhere.
 
@@ -33,16 +34,26 @@ export function createEditor({ value = '', label = '', onChange, onRun, onCursor
   const errBar = h('div', { class: 'ce-errbar', hidden: true });
   const el = h('div', { class: 'code-editor' }, h('div', { class: 'ce-inner' }, gutter, h('div', { class: 'ce-text' }, errBar, colours, input)));
   let errLine = null;
+  let problems = []; // { start, end, severity, line, message }
 
   input.value = value;
 
   function refresh() {
     // The extra line keeps the coloured copy as tall as the textarea when the code ends in a newline.
-    colours.innerHTML = `${highlight(input.value)}\n `;
+    colours.innerHTML = `${highlight(input.value, problems.filter((p) => p.start != null))}\n `;
     const count = input.value.split('\n').length;
-    let nums = '';
-    for (let n = 1; n <= count; n++) nums += n === errLine ? `<span class="err">${n}</span>\n` : `${n}\n`;
-    gutter.innerHTML = nums;
+    const byLine = new Map();
+    for (const p of problems) if (p.line) byLine.set(p.line, [...(byLine.get(p.line) || []), p]);
+    gutter.replaceChildren();
+    for (let n = 1; n <= count; n++) {
+      const here = byLine.get(n);
+      if (here || n === errLine) {
+        const sev = n === errLine || here?.some((p) => p.severity === 'error') ? 'err' : 'warn';
+        gutter.append(h('span', { class: sev, title: (here || []).map((p) => p.message).join('\n') || null }, String(n)), '\n');
+      } else {
+        gutter.append(`${n}\n`);
+      }
+    }
     errBar.hidden = errLine == null;
     if (errLine != null) errBar.style.top = `calc(var(--ce-pad) + ${(errLine - 1) * 1.6}em)`;
   }
@@ -68,7 +79,9 @@ export function createEditor({ value = '', label = '', onChange, onRun, onCursor
   }
 
   input.addEventListener('input', () => {
+    // Old marks would sit in the wrong place now; the lesson checks again when typing stops.
     errLine = null;
+    problems = [];
     refresh();
     onChange?.(input.value);
   });
@@ -106,6 +119,45 @@ export function createEditor({ value = '', label = '', onChange, onRun, onCursor
     }
   });
 
+  // Hovering over a squiggly line shows its message, like in VS Code.
+  input.addEventListener('mousemove', (e) => {
+    const p = problemAt(offsetAt(e.clientX, e.clientY), true);
+    const tip = p ? p.message : '';
+    if (input.title !== tip) input.title = tip;
+  });
+
+  /** The character offset under a mouse position (monospace font, no wrapping). */
+  function offsetAt(x, y) {
+    const style = getComputedStyle(input);
+    const rect = input.getBoundingClientRect();
+    const lh = parseFloat(style.lineHeight) || 24;
+    const line = Math.floor((y - rect.top - parseFloat(style.paddingTop)) / lh);
+    const col = Math.floor((x - rect.left - parseFloat(style.paddingLeft)) / charWidth());
+    const lines = input.value.split('\n');
+    if (line < 0 || line >= lines.length || col < 0 || col >= lines[line].length) return -1;
+    let off = 0;
+    for (let k = 0; k < line; k++) off += lines[k].length + 1;
+    return off + col;
+  }
+
+  let cw = 0;
+  function charWidth() {
+    if (!cw) {
+      const probe = h('span', { style: 'position:absolute;visibility:hidden;white-space:pre' }, 'x'.repeat(100));
+      colours.append(probe);
+      cw = probe.getBoundingClientRect().width / 100 || 10;
+      probe.remove();
+    }
+    return cw;
+  }
+
+  /** The problem at a character offset (also just after it, for the cursor). */
+  function problemAt(pos, exact = false) {
+    if (pos < 0) return null;
+    const hits = problems.filter((p) => p.start != null && p.start <= pos && (exact ? pos < p.end : pos <= p.end));
+    return hits.find((p) => p.severity === 'error') || hits[0] || null;
+  }
+
   // Clicking below the last line still puts the cursor in the editor.
   el.addEventListener('mousedown', (e) => {
     if (e.target === input) return;
@@ -124,8 +176,15 @@ export function createEditor({ value = '', label = '', onChange, onRun, onCursor
     set value(v) {
       input.value = v;
       errLine = null;
+      problems = [];
       refresh();
     },
+    /** Show these problems as squiggly lines and marked line numbers. */
+    setProblems(list) {
+      problems = list;
+      refresh();
+    },
+    problemAt,
     focus: () => input.focus(),
     blur: () => input.blur(),
     /** Insert a snippet at the cursor. `¦` in the snippet marks where the cursor goes. */

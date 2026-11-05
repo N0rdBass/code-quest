@@ -9,7 +9,7 @@
 import { t, tr } from './i18n.js';
 import * as storage from './storage.js';
 import { defineBlocks, toolboxFor, workspaceCode, codeFromBlocks } from './blocks.js';
-import { compileTyped, countUses, explainJsError, errorLine, CodeProblem } from './kidcode.js';
+import { compileTyped, diagnose, countUses, explainJsError, errorLine, CodeProblem } from './kidcode.js';
 import { createEditor } from './editor.js';
 import { commandsFor, SYMBOLS } from './codehelp.js';
 import { explainAt } from './explain.js';
@@ -20,6 +20,7 @@ import { h, clear, confirmBox } from './dom.js';
 
 const MODE_ICONS = { blocks: '🧩', both: '🧩 + </>', code: '</>' };
 const MAX_OUTPUT_LINES = 200;
+const CHECK_DELAY_MS = 400; // check the code this long after typing stops
 
 const KEYS = { ArrowUp: 'up', ArrowDown: 'down', ArrowLeft: 'left', ArrowRight: 'right' };
 
@@ -141,6 +142,7 @@ class LessonController {
   }
 
   teardownWorkspace() {
+    clearTimeout(this.checkTimer);
     this.resizeObserver?.disconnect();
     this.resizeObserver = null;
     if (this.ws) {
@@ -234,12 +236,16 @@ class LessonController {
       onChange: () => {
         this.saveCode();
         this.refreshCapacity();
+        clearTimeout(this.checkTimer);
+        this.checkTimer = setTimeout(() => this.checkCode(), CHECK_DELAY_MS);
       },
       onRun: () => this.run(),
       onCursor: (code, pos) => this.explain(code, pos),
     });
     this.explainEl = h('div', { class: 'explain', 'aria-live': 'polite' });
+    this.problems = [];
     this.explain('', 0);
+    queueMicrotask(() => this.checkCode());
     const commands = commandsFor(this.lesson, this.course.world).map((c) =>
       h(
         'button',
@@ -313,6 +319,7 @@ class LessonController {
     this.editor.value = this.codeFromBlocksOrStarter();
     this.saveCode();
     this.refreshCapacity();
+    this.checkCode();
   }
 
   saveCode() {
@@ -333,7 +340,25 @@ class LessonController {
   }
 
   /** Explain the symbol or word at the cursor, in the bar under the editor. */
+  /** Check the code like VS Code does while you type, and underline the mistakes. */
+  checkCode() {
+    if (!this.editor) return;
+    this.problems = diagnose(this.editor.value, { world: this.course.world }).map((p) => this.problemView(p));
+    this.editor.setProblems(this.problems);
+  }
+
+  problemView(p) {
+    return { start: p.start, end: p.end, line: p.line, severity: p.severity, message: t(p.key, p.vars) };
+  }
+
+  /** Explain the symbol or word at the cursor; a mistake there is explained first. */
   explain(code, pos) {
+    const problem = code ? this.editor?.problemAt(pos) : null;
+    if (problem) {
+      const icon = problem.severity === 'error' ? '❌' : '⚠️';
+      this.explainEl.replaceChildren(h('span', { class: `explain-${problem.severity}` }, `${icon} ${problem.message}`));
+      return;
+    }
     const found = code ? explainAt(code, pos) : null;
     if (!found) {
       this.explainEl.replaceChildren(h('span', { class: 'explain-idle' }, `💡 ${t('explain.idle')}`));
@@ -362,8 +387,8 @@ class LessonController {
     const kidConsole = { log: (...a) => this.log(a), info: (...a) => this.log(a), warn: (...a) => this.log(a), error: (...a) => this.log(a) };
     const alert = (...a) => this.log(a);
     if (this.mode === 'code') {
-      const fn = compileTyped(this.editor.value);
-      return (events, bit, snake, game) => fn(events, bit, snake, game, kidConsole, alert);
+      this.typed = compileTyped(this.editor.value, { world: this.course.world });
+      return (events, bit, snake, game) => this.typed.run(events, bit, snake, game, kidConsole, alert);
     }
     const code = workspaceCode(this.ws, { loopTrap: 'if (--__loopGuard < 0) throw new __LoopError();\n' });
     const fn = new Function('__events', 'bit', 'snake', 'game', 'console', '__LoopError', `"use strict";\nlet __loopGuard = 100000;\n${code}`);
@@ -409,7 +434,7 @@ class LessonController {
     try {
       fn = this.compile();
     } catch (e) {
-      if (e instanceof CodeProblem) return this.failAt(e.line, e.key, e.vars);
+      if (e instanceof CodeProblem) return this.failAt(e.line, e.key, e.vars, e);
       return this.fail('msg.error', { error: e.message });
     }
     if (this.course.world === 'snake') this.runSnake(fn, id);
@@ -564,10 +589,14 @@ class LessonController {
   handleError(e, id = this.runId) {
     // Errors from an older run (before Stop/Run was pressed again) don't count.
     if (id !== this.runId || e instanceof StopSignal) return;
-    const line = this.mode === 'code' ? errorLine(e) : null;
-    if (e instanceof KidError) return this.failAt(line, e.key, e.vars);
-    if (e instanceof LoopError) return this.failAt(line, this.mode === 'code' ? 'msg.loopCode' : 'msg.loop');
-    if (this.mode === 'code') return this.failAt(line, ...explainJsError(e));
+    // Where in the typed code it went wrong. A failing command (bit.move('downn'))
+    // or loop knows its own place, in every browser engine; other errors fall
+    // back on the stack trace.
+    const place = this.mode === 'code' && (e instanceof KidError || e instanceof LoopError || e instanceof TypeError) ? this.typed?.lastPlace() : null;
+    const line = this.mode === 'code' ? place?.line ?? errorLine(e) : null;
+    if (e instanceof KidError) return this.failAt(line, e.key, e.vars, place);
+    if (e instanceof LoopError) return this.failAt(line, this.mode === 'code' ? 'msg.loopCode' : 'msg.loop', {}, place);
+    if (this.mode === 'code') return this.failAt(line, ...explainJsError(e), place);
     console.error(e);
     this.fail('msg.error', { error: e?.message || String(e) });
   }
@@ -610,11 +639,17 @@ class LessonController {
   }
 
   /** Like fail(), and in code mode also marks the line with the mistake. */
-  failAt(line, key, vars) {
+  /** Like fail(), and in code mode also underlines the mistake (`place` = { start, end }). */
+  failAt(line, key, vars, place = null) {
     this.stop(false);
     const text = t(key, vars);
     this.say(line ? t('code.onLine', { line, text }) : text, 'warn');
-    if (line) this.editor?.markLine(line);
+    if (!this.editor) return;
+    if (place?.start != null) {
+      const warnings = this.problems.filter((p) => p.severity === 'warning');
+      this.editor.setProblems([...warnings, { start: place.start, end: place.end, line, severity: 'error', message: text }]);
+    }
+    if (line) this.editor.markLine(line);
   }
 
   succeed() {
