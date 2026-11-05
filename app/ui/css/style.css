@@ -16,6 +16,7 @@
   --warn-bg: #fff4d6;
   --info-bg: #e7f0fd;
   --radius: 16px;
+  --mono: 'JetBrains Mono', 'Cascadia Code', 'Consolas', 'DejaVu Sans Mono', monospace;
   font-family: 'Nunito', 'Segoe UI', 'Ubuntu', 'Helvetica Neue', Arial, sans-serif;
   color: var(--ink);
 }
@@ -233,7 +234,136 @@ p { margin: 0 0 0.6em; line-height: 1.45; }
   border-top: 2px solid var(--line);
 }
 .code-panel h3 { font-size: 0.85rem; color: #94a3b8; font-weight: 700; }
-.code-view { margin: 0; font: 0.95rem/1.5 'JetBrains Mono', 'Cascadia Code', 'Consolas', monospace; white-space: pre-wrap; }
+.code-view { margin: 0; font: 0.95rem/1.5 var(--mono); white-space: pre-wrap; }
+
+/* ---- mode switch (blocks / both / code) ---- */
+
+.mode-switch { display: flex; gap: 0.3rem; }
+.mode-switch .btn { white-space: nowrap; }
+
+/* ---- code mode ---- */
+
+.workspace.code-mode { flex-direction: row; background: #0f172a; }
+.commands {
+  flex: none;
+  width: clamp(210px, 22%, 280px);
+  overflow-y: auto;
+  background: #1e293b;
+  color: #e2e8f0;
+  padding: 0.8rem 0.7rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+.commands h3 { font-size: 1rem; margin: 0; }
+.commands-tip { font-size: 0.85rem; color: #94a3b8; margin: 0 0 0.2rem; }
+.command {
+  font: inherit;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  padding: 0.5em 0.6em;
+  border-radius: 10px;
+  border: 2px solid #334155;
+  background: #0f172a;
+  color: inherit;
+  cursor: pointer;
+}
+.command:hover { border-color: #60a5fa; }
+.command:focus-visible { outline: 3px solid var(--yellow); outline-offset: 1px; }
+.command code { font: 0.88rem/1.35 var(--mono); color: #7dd3fc; word-break: break-word; }
+.command span { font-size: 0.8rem; color: #94a3b8; line-height: 1.3; }
+
+.code-main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.code-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  padding: 0.45rem 0.8rem;
+  background: #1e293b;
+  border-bottom: 1px solid #334155;
+}
+.code-tip { flex: 1; font-size: 0.85rem; color: #94a3b8; }
+.code-mode .capacity { position: static; color: #fde68a; }
+.code-toolbar .btn.ghost { background: #334155; color: #e2e8f0; border-color: #475569; box-shadow: none; }
+
+.code-editor {
+  --ce-pad: 0.8rem;
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  background: #0f172a;
+  font: 1.05rem/1.6 var(--mono);
+  cursor: text;
+}
+.ce-inner { display: flex; min-height: 100%; width: max-content; min-width: 100%; }
+.ce-gutter {
+  position: sticky;
+  left: 0;
+  z-index: 2;
+  padding: var(--ce-pad) 0.7rem var(--ce-pad) 0.9rem;
+  min-width: 3.2em;
+  text-align: right;
+  white-space: pre;
+  color: #64748b;
+  background: #0f172a;
+  border-right: 1px solid #1e293b;
+  user-select: none;
+}
+.ce-gutter .err { color: #fff; background: var(--red); border-radius: 4px; padding: 0 0.25em; }
+.ce-text { position: relative; flex: 1; }
+.ce-hl, .ce-input {
+  margin: 0;
+  padding: var(--ce-pad) 1rem;
+  font: inherit;
+  letter-spacing: normal;
+  white-space: pre;
+  tab-size: 2;
+  border: 0;
+}
+.ce-hl { position: relative; z-index: 1; min-height: 100%; color: #e2e8f0; pointer-events: none; }
+.ce-input {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  resize: none;
+  overflow: hidden;
+  background: transparent;
+  color: transparent;
+  caret-color: #fff;
+  outline: none;
+}
+.ce-input::selection { background: rgba(96, 165, 250, 0.35); color: transparent; }
+.ce-errbar {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 1.6em;
+  background: rgba(229, 72, 77, 0.22);
+  border-left: 3px solid var(--red);
+}
+.t-k { color: #c4b5fd; font-weight: 700; }
+.t-s { color: #86efac; }
+.t-n { color: #fdba74; }
+.t-c { color: #64748b; font-style: italic; }
+.t-o { color: #7dd3fc; }
+.t-m { color: #93c5fd; }
+.t-e { color: #fde68a; font-weight: 700; }
+
+.output {
+  flex: none;
+  max-height: 25%;
+  overflow: auto;
+  margin: 0;
+  padding: 0.5rem 1rem;
+  background: #020617;
+  color: #cbd5e1;
+  border-top: 1px solid #334155;
+  font: 0.9rem/1.45 var(--mono);
+}
 
 .stage {
   padding: 0.6rem 1rem 1rem;

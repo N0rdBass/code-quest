@@ -5,7 +5,7 @@ import { setLanguage, language, LANGS, t, tr } from './i18n.js';
 import * as storage from './storage.js';
 import { defineGenerators } from './blocks.js';
 import { openLesson } from './lesson.js';
-import { h, clear } from './dom.js';
+import { h, clear, confirmBox } from './dom.js';
 
 const root = document.getElementById('app');
 const COURSE_FILES = ['basics', 'snake'];
@@ -122,32 +122,6 @@ async function showPlayers() {
     ),
   );
   if (!list.length) nameInput.focus();
-}
-
-/** In-app yes/no box (window.confirm is not reliable inside the desktop app). */
-function confirmBox(text, yesLabel) {
-  return new Promise((resolve) => {
-    const done = (answer) => {
-      backdrop.remove();
-      resolve(answer);
-    };
-    const backdrop = h(
-      'div',
-      { class: 'modal-backdrop' },
-      h(
-        'div',
-        { class: 'modal' },
-        h('p', {}, text),
-        h(
-          'div',
-          { class: 'modal-buttons' },
-          h('button', { class: 'btn stop', onclick: () => done(true) }, yesLabel),
-          h('button', { class: 'btn ghost', onclick: () => done(false) }, '✕'),
-        ),
-      ),
-    );
-    document.body.append(backdrop);
-  });
 }
 
 // ---------------------------------------------------------------------------

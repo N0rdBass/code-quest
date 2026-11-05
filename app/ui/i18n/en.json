@@ -29,8 +29,6 @@
     "stop": "Stop",
     "reset": "Reset",
     "hint": "Hint",
-    "showCode": "Show code",
-    "hideCode": "Hide code",
     "codeTitle": "Your blocks as real code (JavaScript)",
     "goal": "Goal",
     "score": "Score",
@@ -62,7 +60,12 @@
     "scoreGoal": "Game over! You got {score}. Try to get {want} points!",
     "snakeLeft": "The snake slithered off the screen!",
     "snakeLeftHint": "The snake slithered off the screen! Add a rule: if the snake hits the wall, then game over.",
-    "noFood": "Tip: use \"place food\" so the snake has something to eat."
+    "noFood": "Tip: use \"place food\" so the snake has something to eat.",
+    "noStartCode": "Put your code inside function whenRunClicked() { … }",
+    "noKeysCode": "Write functions like whenKeyUp() { … } so you can steer.",
+    "badDirection": "\"{dir}\" is not a direction. Use 'up', 'down', 'left' or 'right'.",
+    "badColour": "\"{colour}\" is not a snake colour. Pick one of: {list}.",
+    "loopCode": "A loop ran far too many times, maybe forever. Check the condition of your loop."
   },
   "diploma": {
     "title": "Diploma",
@@ -120,5 +123,54 @@
   "blockNames": {
     "controls_repeat_ext": "repeat",
     "bit_move": "move"
+  },
+  "mode": {
+    "label": "How do you want to code?",
+    "blocks": "Blocks",
+    "both": "Both",
+    "code": "Code",
+    "blocksTip": "Drag and drop blocks",
+    "bothTip": "Blocks, with the real code they make next to them",
+    "codeTip": "Type real JavaScript code"
+  },
+  "code": {
+    "yourCodeHere": "your code here",
+    "editorLabel": "Your code",
+    "commands": "Commands",
+    "commandsTip": "Click one to add it to your code.",
+    "addCommand": "Add to my code",
+    "runTip": "Ctrl + Enter runs your code",
+    "startOver": "Start over",
+    "startOverConfirm": "Throw away the code you typed in this lesson and start again from your blocks?",
+    "usesLeft": "Left: {n}",
+    "onLine": "Line {line}: {text}",
+    "help": {
+      "key": "when an arrow key is pressed: whenKeyUp, whenKeyDown, whenKeyLeft, whenKeyRight",
+      "move": "move one square: 'up', 'down', 'left' or 'right'",
+      "score": "change the score (the number is how much)",
+      "repeat": "repeat 4 times (change the 4)",
+      "if": "if the question is true, do what is inside { }",
+      "turn": "turn the snake: 'up', 'down', 'left' or 'right'",
+      "colour": "snake colour: 'green', 'blue', 'purple', 'orange' or 'pink'"
+    },
+    "err": {
+      "string": "This text has no closing {q}. Text must start and end with {q}.",
+      "comment": "This /* comment */ is never closed with */.",
+      "extraClose": "There is one {ch} too many here.",
+      "mismatch": "Here is a {close}, but the {open} on line {openLine} needs a {want} first.",
+      "unclosed": "This {open} is never closed. Add a {close} where it should end.",
+      "loopBraces": "Put the code for your \"{kw}\" loop inside { }.",
+      "loopParen": "After \"{kw}\" comes ( … ), like: {kw} (…) { }",
+      "eventName": "\"{name}\" should be written {want}. Capital letters matter!",
+      "syntax": "The computer doesn't understand this line. Check for typos. ({detail})",
+      "notDefined": "\"{name}\" doesn't exist. Check the spelling: capital letters matter!",
+      "notFunction": "There is no command called {name}. Check the spelling, or look in the command list.",
+      "recursion": "A function calls itself again and again, forever.",
+      "tooMany": "You may use {name} only {max} time(s) here, but you used it {used} times. Use a loop!"
+    }
+  },
+  "codeNames": {
+    "bit_move": "bit.move()",
+    "controls_repeat_ext": "loop"
   }
 }

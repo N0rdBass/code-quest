@@ -91,6 +91,21 @@ export function lessonState(profileId, lessonId) {
   return (p.lessons[lessonId] ||= {});
 }
 
+// How a player writes code: 'blocks', 'both' (blocks + code side by side) or 'code'.
+export const MODES = ['blocks', 'both', 'code'];
+
+export function mode(profileId) {
+  const m = data.profiles[profileId]?.mode;
+  return MODES.includes(m) ? m : 'blocks';
+}
+
+export function setMode(profileId, m) {
+  const p = data.profiles[profileId];
+  if (!p || !MODES.includes(m)) return;
+  p.mode = m;
+  save();
+}
+
 export function setLanguagePref(lang) {
   data.lang = lang;
   save();

@@ -1,7 +1,11 @@
 // Bit's grid world for the basics course.
 // Maps are rows of characters: S = start, F = flag, C = coin, # = wall, . = floor.
+//
+// Kid code runs instantly on the world's state (so `bit.isOnCoin()` is always
+// right), and every action is recorded as a frame. play() then animates the
+// frames. Kid code never has to wait, so typed code needs no `await`.
 
-import { StopSignal, KidError } from '../errors.js';
+import { KidError } from '../errors.js';
 
 const STEPS = { up: [0, -1], down: [0, 1], left: [-1, 0], right: [1, 0] };
 const STEP_MS = 260;
@@ -12,7 +16,6 @@ export class RobotWorld {
   constructor(canvas) {
     this.canvas = canvas;
     this.ctx = canvas.getContext('2d');
-    this.message = null;
   }
 
   load(rows) {
@@ -31,15 +34,17 @@ export class RobotWorld {
         if (ch === 'S') this.pos = { x, y };
       }),
     );
-    this.drawPos = { ...this.pos };
     this.facing = 'right';
     this.score = 0;
     this.actions = 0;
+    this.frames = [];
+    // What the screen shows. It catches up with the real state as frames play.
+    this.view = { pos: { ...this.pos }, facing: 'right', coins: new Set(this.coins), score: 0 };
+    this.drawPos = { ...this.pos };
     this.stopped = false;
-    // Every load starts a new "generation". Actions from an older run see the
-    // number changed and quietly stop instead of moving Bit in the new run.
+    // Every load starts a new "generation". Playback from an older run sees the
+    // number changed and quietly stops instead of moving Bit in the new run.
     this.gen = (this.gen || 0) + 1;
-    this.queue = Promise.resolve();
     this.bumpAt = null;
     this.canvas.width = this.w * CELL;
     this.canvas.height = this.h * CELL;
@@ -55,15 +60,14 @@ export class RobotWorld {
   api() {
     return {
       bit: {
-        move: (dir) => this.enqueue(() => this.move(dir)),
-        pickUpCoin: () => this.enqueue(() => this.pickUp()),
+        move: (dir) => this.move(dir),
+        pickUpCoin: () => this.pickUp(),
         isOnCoin: () => this.coins.has(key(this.pos.x, this.pos.y)),
       },
       game: {
         changeScore: (n) => {
           this.score += Number(n) || 0;
-          this.onScore?.(this.score);
-          this.draw();
+          this.record('score');
         },
         over: () => {},
         faster: () => {},
@@ -71,39 +75,65 @@ export class RobotWorld {
     };
   }
 
-  /** Actions run one after another, even when key presses come in fast. */
-  enqueue(fn) {
-    const gen = this.gen;
-    const p = this.queue.then(() => {
-      if (this.stopped || gen !== this.gen) throw new StopSignal();
-      if (++this.actions > MAX_ACTIONS) throw new KidError('msg.tooManySteps');
-      return fn();
-    });
-    this.queue = p.catch(() => {});
-    return p;
+  countAction() {
+    if (++this.actions > MAX_ACTIONS) throw new KidError('msg.tooManySteps');
   }
 
-  async move(dir) {
-    const [dx, dy] = STEPS[dir] || [0, 0];
+  record(kind) {
+    this.frames.push({ kind, pos: { ...this.pos }, facing: this.facing, coins: new Set(this.coins), score: this.score });
+  }
+
+  /** The frames recorded since the last call. */
+  takeFrames() {
+    const f = this.frames;
+    this.frames = [];
+    return f;
+  }
+
+  move(dir) {
+    if (!STEPS[dir]) throw new KidError('msg.badDirection', { dir: String(dir) });
+    this.countAction();
+    const [dx, dy] = STEPS[dir];
     this.facing = dir;
     const nx = this.pos.x + dx;
     const ny = this.pos.y + dy;
     if (this.isBlocked(nx, ny)) {
-      await this.bump(nx, ny);
+      this.record('bump');
       throw new KidError('msg.bump');
     }
-    const gen = this.gen;
-    await this.animate(this.pos, { x: nx, y: ny });
-    if (gen !== this.gen || this.stopped) throw new StopSignal();
     this.pos = { x: nx, y: ny };
-    this.onMove?.();
+    this.record('move');
   }
 
-  async pickUp() {
-    const k = key(this.pos.x, this.pos.y);
-    if (this.coins.has(k)) this.coins.delete(k);
-    this.draw();
-    await sleep(STEP_MS / 2);
+  pickUp() {
+    this.countAction();
+    this.coins.delete(key(this.pos.x, this.pos.y));
+    this.record('pickup');
+  }
+
+  /** Animate frames one after another. Resolves false if stopped or reloaded. */
+  async play(frames) {
+    const gen = this.gen;
+    const alive = () => gen === this.gen && !this.stopped;
+    for (const f of frames) {
+      if (!alive()) return false;
+      this.view.facing = f.facing;
+      if (f.kind === 'move') await this.animate(this.view.pos, f.pos);
+      else if (f.kind === 'bump') await this.bump();
+      else if (f.kind === 'pickup') {
+        this.view.coins = f.coins;
+        this.draw();
+        await sleep(STEP_MS / 2);
+      }
+      if (gen !== this.gen) return false;
+      this.view.pos = f.pos;
+      this.view.coins = f.coins;
+      if (f.score !== this.view.score) {
+        this.view.score = f.score;
+        this.onScore?.(f.score);
+      }
+    }
+    return alive();
   }
 
   isBlocked(x, y) {
@@ -112,8 +142,8 @@ export class RobotWorld {
 
   // ---- goal checks ----
 
-  atFlag() {
-    return !!this.flag && this.pos.x === this.flag.x && this.pos.y === this.flag.y;
+  atFlag(pos = this.pos) {
+    return !!this.flag && pos.x === this.flag.x && pos.y === this.flag.y;
   }
 
   // ---- drawing ----
@@ -148,11 +178,11 @@ export class RobotWorld {
     });
   }
 
-  async bump(x, y) {
-    this.bumpAt = { x, y };
-    const base = { ...this.pos };
+  async bump() {
+    this.bumpAt = true;
+    const base = { ...this.view.pos };
     for (const off of [0.18, -0.12, 0.08, 0]) {
-      const [dx, dy] = STEPS[this.facing];
+      const [dx, dy] = STEPS[this.view.facing];
       this.drawPos = { x: base.x + dx * off, y: base.y + dy * off };
       this.draw();
       await sleep(60);
@@ -184,11 +214,11 @@ export class RobotWorld {
       }
     }
     if (this.flag) drawFlag(ctx, this.flag.x * CELL, this.flag.y * CELL);
-    for (const k of this.coins) {
+    for (const k of this.view.coins) {
       const [x, y] = k.split(',').map(Number);
       drawCoin(ctx, x * CELL + CELL / 2, y * CELL + CELL / 2);
     }
-    drawBit(ctx, this.drawPos.x * CELL, this.drawPos.y * CELL, this.facing, !!this.bumpAt);
+    drawBit(ctx, this.drawPos.x * CELL, this.drawPos.y * CELL, this.view.facing, !!this.bumpAt);
   }
 }
 

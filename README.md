@@ -5,8 +5,9 @@ Norwegian and English. Kids drag code blocks (Blockly), learn the basics with
 Bit the robot, and then build a real game step by step: Snake first, more later.
 It runs offline from a USB stick or a laptop, with no accounts and no internet.
 
-**Status: prototype (v0.1.0, 2026-10-30).** Built so far: the basics course
-(5 lessons) and Snake (6 lessons), in blocks mode with a "Show code" panel.
+**Status: prototype (v0.1.0, 2026-10-30; code mode added 2026-11-05).** Built so
+far: the basics course (5 lessons) and Snake (6 lessons), in all three modes:
+blocks, blocks + code, and typed code.
 
 ## What's in the prototype
 
@@ -15,7 +16,8 @@ It runs offline from a USB stick or a laptop, with no accounts and no internet.
 | Players | Nickname profiles, many kids on one PC. No real names or accounts needed. |
 | Basics (5 lessons) | Bit the robot: steps in order, repeat, score (variables), if, key events. Lesson 4 is tested on two different maps, so the `if` really matters. |
 | Snake (6 lessons) | Move, steer, eat, walls, don't bite yourself, make it yours. Each lesson starts with the kid's own blocks from the lesson before, so they build *one* game. |
-| Show code | Shows the blocks as real JavaScript, side by side (the "blocks → code" bridge). |
+| Three modes | A switch at the top of every lesson: **Blocks** (drag and drop), **Both** (blocks with the real JavaScript they make next to them) and **Code** (type JavaScript). The choice is saved per player. |
+| Code mode | A kid-friendly editor (line numbers, colours, auto-indent), a list of the lesson's commands to click in, and mistakes explained in plain words with the line marked in red. Switching to code the first time starts from the kid's own blocks, turned into code. `console.log` prints below the editor. |
 | Diploma | Printable diploma with the kid's name after finishing Snake. |
 | Languages | Norsk / English switch on the start screen and the map. |
 | Portable saves | Progress is saved in `code-quest-data/` next to the app, so it travels on the USB stick. |
@@ -40,9 +42,12 @@ code-quest/
 How the code fits together:
 
 - `ui/js/app.js`: screens (players → map → lesson → diploma)
-- `ui/js/lesson.js`: lesson screen, turns blocks into code, runs it, checks the goal
+- `ui/js/lesson.js`: lesson screen and mode switch, turns blocks or typed code into a program, runs it, checks the goal
 - `ui/js/blocks.js`: Code Quest's blocks, their translated labels and the code they generate
-- `ui/js/worlds/robot.js`, `worlds/snake.js`: the two game worlds
+- `ui/js/kidcode.js`: code mode's checker: finds common mistakes (missing `}` or `"`, a loop without `{ }`, `whenrunclicked` spelled wrong) with line numbers, adds a guard to every loop so `while (true)` can't freeze the app, and explains JavaScript's own errors
+- `ui/js/editor.js`: the code editor (a textarea on top of a coloured copy of the text)
+- `ui/js/codehelp.js`: the command list in code mode, built from the lesson's toolbox
+- `ui/js/worlds/robot.js`, `worlds/snake.js`: the two game worlds. Bit's world runs the kid's code instantly and records each step, then animates the steps, so typed code never needs `await`
 - `ui/js/storage.js`: profiles and saving (through Rust in the app, localStorage in a browser)
 - `src-tauri/src/main.rs`: finds the portable save folder and reads/writes `progress.json`
 
@@ -91,14 +96,17 @@ Lessons are JSON in `app/lessons/`. Each has `title`, `story`, `task`, `hint` an
 `concept` in both `en` and `no`, a `toolbox` (block names), a `goal`, and either
 `starter` blocks or `carryFrom` (start from the kid's blocks in another lesson).
 Robot maps are rows of characters: `S` start, `F` flag, `C` coin, `#` wall, `.` floor.
+For code mode, add `taskCode` and `hintCode` (both languages) when the normal task talks
+about dragging blocks; they're shown instead of `task` and `hint` in code mode.
 To limit blocks, use `"limits": { "bit_move": 2, "controls_repeat_ext": 1 }` (per block type).
+In code mode the same limits count `bit.move(` and loops (see `LIMIT_MATCHERS` in `kidcode.js`).
 Don't use Blockly's overall `maxBlocks`: it also counts the event block and the number
 bubble inside "repeat", so kids get fewer blocks than the lesson says.
 
 ## Next steps
 
 - Try it with a real kid (age 8–12) and fix what confuses them.
-- Code mode (typing instead of blocks) for ages 10–12.
+- Try code mode in the desktop window itself (tested in a browser so far) and with a 10–12 year old.
 - Instructor guide for coding clubs.
 - Export/import progress as a file for installed copies.
 - Windows + macOS builds, then Minesweeper ★★.

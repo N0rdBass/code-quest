@@ -29,8 +29,6 @@
     "stop": "Stopp",
     "reset": "Start på nytt",
     "hint": "Hint",
-    "showCode": "Vis kode",
-    "hideCode": "Skjul kode",
     "codeTitle": "Klossene dine som ekte kode (JavaScript)",
     "goal": "Mål",
     "score": "Poeng",
@@ -62,7 +60,12 @@
     "scoreGoal": "Spillet er slutt! Du fikk {score}. Prøv å få {want} poeng!",
     "snakeLeft": "Slangen krøp ut av skjermen!",
     "snakeLeftHint": "Slangen krøp ut av skjermen! Lag en regel: hvis slangen treffer veggen, er spillet slutt.",
-    "noFood": "Tips: bruk «legg ut mat» så slangen har noe å spise."
+    "noFood": "Tips: bruk «legg ut mat» så slangen har noe å spise.",
+    "noStartCode": "Legg koden din inni function whenRunClicked() { … }",
+    "noKeysCode": "Skriv funksjoner som whenKeyUp() { … } så du kan styre.",
+    "badDirection": "«{dir}» er ikke en retning. Bruk 'up', 'down', 'left' eller 'right'.",
+    "badColour": "«{colour}» er ikke en slangefarge. Velg en av: {list}.",
+    "loopCode": "En løkke gikk altfor mange ganger, kanskje for alltid. Sjekk betingelsen i løkken din."
   },
   "diploma": {
     "title": "Diplom",
@@ -120,5 +123,54 @@
   "blockNames": {
     "controls_repeat_ext": "gjenta",
     "bit_move": "gå"
+  },
+  "mode": {
+    "label": "Hvordan vil du kode?",
+    "blocks": "Klosser",
+    "both": "Begge",
+    "code": "Kode",
+    "blocksTip": "Dra og slipp klosser",
+    "bothTip": "Klosser, med den ekte koden de lager ved siden av",
+    "codeTip": "Skriv ekte JavaScript-kode"
+  },
+  "code": {
+    "yourCodeHere": "koden din her",
+    "editorLabel": "Koden din",
+    "commands": "Kommandoer",
+    "commandsTip": "Klikk på en for å legge den til i koden.",
+    "addCommand": "Legg til i koden min",
+    "runTip": "Ctrl + Enter kjører koden",
+    "startOver": "Begynn på nytt",
+    "startOverConfirm": "Kaste koden du har skrevet i denne oppgaven og begynne på nytt fra klossene dine?",
+    "usesLeft": "Igjen: {n}",
+    "onLine": "Linje {line}: {text}",
+    "help": {
+      "key": "når en piltast trykkes: whenKeyUp, whenKeyDown, whenKeyLeft, whenKeyRight",
+      "move": "gå én rute: 'up' (opp), 'down' (ned), 'left' (venstre) eller 'right' (høyre)",
+      "score": "endre poengsummen (tallet er hvor mye)",
+      "repeat": "gjenta 4 ganger (bytt ut 4)",
+      "if": "hvis spørsmålet er sant, gjør det som står inni { }",
+      "turn": "snu slangen: 'up', 'down', 'left' eller 'right'",
+      "colour": "slangefarge: 'green' (grønn), 'blue' (blå), 'purple' (lilla), 'orange' (oransje) eller 'pink' (rosa)"
+    },
+    "err": {
+      "string": "Denne teksten mangler en {q} på slutten. Tekst må starte og slutte med {q}.",
+      "comment": "Denne /* kommentaren */ blir aldri lukket med */.",
+      "extraClose": "Her er det én {ch} for mye.",
+      "mismatch": "Her står det {close}, men {open} på linje {openLine} trenger en {want} først.",
+      "unclosed": "Denne {open} blir aldri lukket. Legg til en {close} der den skal slutte.",
+      "loopBraces": "Legg koden til «{kw}»-løkken inni { }.",
+      "loopParen": "Etter «{kw}» kommer ( … ), slik: {kw} (…) { }",
+      "eventName": "«{name}» skal skrives {want}. Store og små bokstaver betyr noe!",
+      "syntax": "Datamaskinen forstår ikke denne linjen. Se etter skrivefeil. ({detail})",
+      "notDefined": "«{name}» finnes ikke. Sjekk stavemåten: store og små bokstaver betyr noe!",
+      "notFunction": "Det finnes ingen kommando som heter {name}. Sjekk stavemåten, eller se i kommandolisten.",
+      "recursion": "En funksjon kaller seg selv igjen og igjen, i det uendelige.",
+      "tooMany": "Du kan bare bruke {name} {max} gang(er) her, men du brukte den {used} ganger. Bruk en løkke!"
+    }
+  },
+  "codeNames": {
+    "bit_move": "bit.move()",
+    "controls_repeat_ext": "løkke"
   }
 }

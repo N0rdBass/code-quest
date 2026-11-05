@@ -2,7 +2,7 @@
 // "is on food?" ...). The rules of the game (eat, walls, biting yourself) are
 // what the kid builds with blocks, so nothing here ends the game by itself.
 
-import { GameOverSignal } from '../errors.js';
+import { GameOverSignal, KidError } from '../errors.js';
 
 const COLS = 20;
 const ROWS = 15;
@@ -60,7 +60,8 @@ export class SnakeWorld {
         hitsWall: () => this.hitsWall(),
         bitesItself: () => this.bitesItself(),
         setColour: (c) => {
-          if (COLOURS[c]) this.colour = c;
+          if (!COLOURS[c]) throw new KidError('msg.badColour', { colour: String(c), list: Object.keys(COLOURS).map((k) => `'${k}'`).join(', ') });
+          this.colour = c;
         },
       },
       game: {
@@ -96,7 +97,7 @@ export class SnakeWorld {
   }
 
   turn(d) {
-    if (!DIRS[d]) return;
+    if (!DIRS[d]) throw new KidError('msg.badDirection', { dir: String(d) });
     // Turning straight back would mean instantly biting yourself; real Snake ignores that.
     if (this.body.length > 1 && d === OPPOSITE[this.lastMoved]) return;
     this.dir = d;

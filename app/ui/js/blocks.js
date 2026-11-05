@@ -2,9 +2,11 @@
 // JavaScript they turn into. Built-in Blockly blocks (repeat, if) are reused.
 //
 // The generator has two modes:
-//   - run mode: real code for the game, with `await` for animated robot steps
-//     and a loop guard so a huge repeat can't freeze the app
-//   - display mode (gen.cqDisplay): tidy code for the "Show code" panel
+//   - run mode: real code for the game, with a loop guard so a huge repeat
+//     can't freeze the app
+//   - display mode (gen.cqDisplay): tidy code for the "Show code" panel. This is
+//     also exactly what a kid types in code mode, so switching from blocks to
+//     code starts from their own blocks.
 
 import { t } from './i18n.js';
 
@@ -135,25 +137,33 @@ export function defineGenerators() {
   const gen = javascript.javascriptGenerator;
   const Order = javascript.Order;
   const show = () => gen.cqDisplay === true;
-  const aw = () => (show() || !gen.cqAsync ? '' : 'await ');
-  const asyncKw = () => (gen.cqAsync ? 'async ' : '');
   const guard = '  __loopGuard = 100000;\n';
 
   const hat = (displayName, register) => (block) => {
     const body = gen.statementToCode(block, 'DO');
-    if (show()) return `function ${displayName(block)}() {\n${body}}\n\n`;
-    return `${register(block)}${asyncKw()}() => {\n${guard}${body}});\n`;
+    if (show()) return `function ${displayName(block)}() {\n${body || `${gen.INDENT}// ${t('code.yourCodeHere')}\n`}}\n\n`;
+    return `${register(block)}() => {\n${guard}${body}});\n`;
   };
 
-  gen.forBlock['event_start'] = hat(() => 'whenRunClicked', () => 'events.onStart(');
-  gen.forBlock['event_tick'] = hat(() => 'everyTick', () => 'events.onTick(');
+  gen.forBlock['event_start'] = hat(() => 'whenRunClicked', () => '__events.onStart(');
+  gen.forBlock['event_tick'] = hat(() => 'everyTick', () => '__events.onTick(');
   gen.forBlock['event_key'] = hat(
     (b) => `whenKey${capital(b.getFieldValue('KEY'))}`,
-    (b) => `events.onKey('${b.getFieldValue('KEY')}', `,
+    (b) => `__events.onKey('${b.getFieldValue('KEY')}', `,
   );
 
-  gen.forBlock['bit_move'] = (b) => `${aw()}bit.move('${b.getFieldValue('DIR')}');\n`;
-  gen.forBlock['bit_pickup'] = () => `${aw()}bit.pickUpCoin();\n`;
+  // "repeat 4 times" as the for loop kids see in books: i, then j, k when nested.
+  gen.forBlock['controls_repeat_ext'] = (block) => {
+    const times = gen.valueToCode(block, 'TIMES', Order.ASSIGNMENT) || '0';
+    const branch = gen.addLoopTrap(gen.statementToCode(block, 'DO'), block);
+    let depth = 0;
+    for (let p = block.getSurroundParent(); p; p = p.getSurroundParent()) if (p.type === 'controls_repeat_ext') depth++;
+    const v = 'ijk'[depth] || `i${depth}`;
+    return `for (let ${v} = 0; ${v} < ${times}; ${v}++) {\n${branch}}\n`;
+  };
+
+  gen.forBlock['bit_move'] = (b) => `bit.move('${b.getFieldValue('DIR')}');\n`;
+  gen.forBlock['bit_pickup'] = () => 'bit.pickUpCoin();\n';
   gen.forBlock['bit_on_coin'] = () => ['bit.isOnCoin()', Order.FUNCTION_CALL];
 
   gen.forBlock['score_change'] = (b) => `game.changeScore(${Number(b.getFieldValue('N')) || 0});\n`;
@@ -177,10 +187,9 @@ const HATS = new Set(['event_start', 'event_tick', 'event_key']);
  * can never run, so they never become code (not even for a moment before
  * Blockly greys them out).
  */
-export function workspaceCode(ws, { display = false, async = false, loopTrap = null } = {}) {
+export function workspaceCode(ws, { display = false, loopTrap = null } = {}) {
   const gen = javascript.javascriptGenerator;
   gen.cqDisplay = display;
-  gen.cqAsync = async;
   gen.INFINITE_LOOP_TRAP = loopTrap;
   try {
     gen.init(ws);
@@ -192,6 +201,17 @@ export function workspaceCode(ws, { display = false, async = false, loopTrap = n
   } finally {
     gen.cqDisplay = false;
     gen.INFINITE_LOOP_TRAP = null;
+  }
+}
+
+/** Saved blocks (JSON) as the code a kid would type, without showing them. */
+export function codeFromBlocks(json) {
+  const ws = new Blockly.Workspace();
+  try {
+    Blockly.serialization.workspaces.load(json, ws);
+    return `${workspaceCode(ws, { display: true }).trim()}\n`;
+  } finally {
+    ws.dispose();
   }
 }
 

@@ -19,6 +19,14 @@
         "en": "Start code runs once. Tick code runs again and again. Moving belongs in the tick.",
         "no": "Startkode kjører én gang. Tikk-kode kjører igjen og igjen. Flytting hører hjemme i tikket."
       },
+      "taskCode": {
+        "en": "Write snake.placeFood(); inside whenRunClicked(), and snake.move(); inside everyTick(). Press Run!",
+        "no": "Skriv snake.placeFood(); inni whenRunClicked(), og snake.move(); inni everyTick(). Trykk Kjør!"
+      },
+      "hintCode": {
+        "en": "whenRunClicked runs once, at the start. everyTick runs again and again, many times every second. Moving belongs in everyTick.",
+        "no": "whenRunClicked kjører én gang, i starten. everyTick kjører igjen og igjen, mange ganger i sekundet. Flytting hører hjemme i everyTick."
+      },
       "concept": { "en": "A game loop runs the same code many times per second.", "no": "En spill-løkke kjører den samme koden mange ganger i sekundet." },
       "goal": { "type": "moves", "n": 6 },
       "toolbox": ["food_place", "snake_move"],
@@ -42,6 +50,14 @@
         "en": "Up arrow → turn snake up. Do the same for down, left and right. A snake can't turn straight back into itself.",
         "no": "Pil opp → snu slangen opp. Gjør det samme for ned, venstre og høyre. En slange kan ikke snu rett tilbake inn i seg selv."
       },
+      "taskCode": {
+        "en": "Add a function for each arrow key, like function whenKeyUp() { snake.turn('up'); }. Then steer the snake up, down, left and right.",
+        "no": "Lag en funksjon for hver piltast, som function whenKeyUp() { snake.turn('up'); }. Styr så slangen opp, ned, venstre og høyre."
+      },
+      "hintCode": {
+        "en": "You need four functions: whenKeyUp, whenKeyDown, whenKeyLeft and whenKeyRight. Write them next to the other functions, not inside them. A snake can't turn straight back into itself.",
+        "no": "Du trenger fire funksjoner: whenKeyUp, whenKeyDown, whenKeyLeft og whenKeyRight. Skriv dem ved siden av de andre funksjonene, ikke inni dem. En slange kan ikke snu rett tilbake inn i seg selv."
+      },
       "concept": { "en": "Events let the player control the game.", "no": "Hendelser lar spilleren styre spillet." },
       "goal": { "type": "turns" },
       "carryFrom": "snake-1",
@@ -61,6 +77,14 @@
       "hint": {
         "en": "Put an \"if\" block under \"move snake forward\". Use \"snake is on the food?\" as the question, and put three blocks inside.",
         "no": "Legg en «hvis»-kloss under «flytt slangen fremover». Bruk «slangen er på maten?» som spørsmål, og legg tre klosser inni."
+      },
+      "taskCode": {
+        "en": "In everyTick(), after snake.move();: if the snake is on the food, make it longer, place new food and add 1 point. Eat 3 times!",
+        "no": "I everyTick(), etter snake.move();: hvis slangen er på maten, gjør den lengre, legg ut ny mat og gi 1 poeng. Spis 3 ganger!"
+      },
+      "hintCode": {
+        "en": "if (snake.isOnFood()) { snake.grow(); snake.placeFood(); game.changeScore(1); }",
+        "no": "if (snake.isOnFood()) { snake.grow(); snake.placeFood(); game.changeScore(1); }"
       },
       "concept": { "en": "If + variables = game rules.", "no": "Hvis + variabler = spillregler." },
       "goal": { "type": "score", "n": 3 },
@@ -82,6 +106,14 @@
         "en": "Another \"if\" block, with \"snake hits the wall?\" and \"game over\" inside. Put it after \"move snake forward\".",
         "no": "En ny «hvis»-kloss, med «slangen treffer veggen?» og «spillet er slutt» inni. Legg den etter «flytt slangen fremover»."
       },
+      "taskCode": {
+        "en": "Add a rule to everyTick(): if the snake hits the wall, call game.over();. Test it by steering into a wall!",
+        "no": "Legg til en regel i everyTick(): hvis slangen treffer veggen, kaller du game.over();. Test det ved å styre inn i en vegg!"
+      },
+      "hintCode": {
+        "en": "if (snake.hitsWall()) { game.over(); } Put it after snake.move();.",
+        "no": "if (snake.hitsWall()) { game.over(); } Legg den etter snake.move();."
+      },
       "concept": { "en": "Games need rules for winning and losing.", "no": "Spill trenger regler for å vinne og tape." },
       "goal": { "type": "gameOver", "reason": "wall" },
       "carryFrom": "snake-3",
@@ -102,6 +134,14 @@
         "en": "Just like the wall rule, but with \"snake bites itself?\". The snake needs to be at least 5 long to bite itself.",
         "no": "Akkurat som vegg-regelen, men med «slangen biter seg selv?». Slangen må være minst 5 lang for å bite seg selv."
       },
+      "taskCode": {
+        "en": "Add: if the snake bites itself, game.over();. Eat a few times so the snake gets long, then turn into yourself to test it.",
+        "no": "Legg til: hvis slangen biter seg selv, game.over();. Spis noen ganger så slangen blir lang, og sving inn i deg selv for å teste."
+      },
+      "hintCode": {
+        "en": "Just like the wall rule, but with snake.bitesItself(). The snake needs to be at least 5 long to bite itself.",
+        "no": "Akkurat som vegg-regelen, men med snake.bitesItself(). Slangen må være minst 5 lang for å bite seg selv."
+      },
       "concept": { "en": "Many small rules make a whole game.", "no": "Mange små regler blir til et helt spill." },
       "goal": { "type": "gameOver", "reason": "self" },
       "carryFrom": "snake-4",
@@ -121,6 +161,14 @@
       "hint": {
         "en": "\"snake colour\" goes in \"when ▶ Run is clicked\". \"make the game faster\" goes inside the food rule.",
         "no": "«slangefarge» hører hjemme i «når ▶ Kjør trykkes». «gjør spillet raskere» skal inni mat-regelen."
+      },
+      "taskCode": {
+        "en": "Pick a colour with snake.setColour(…) in whenRunClicked(). Call game.faster(); when the snake eats. Then play and get 5 points!",
+        "no": "Velg en farge med snake.setColour(…) i whenRunClicked(). Kall game.faster(); når slangen spiser. Spill så og få 5 poeng!"
+      },
+      "hintCode": {
+        "en": "snake.setColour('purple'); goes in whenRunClicked. game.faster(); goes inside the { } of the food rule.",
+        "no": "snake.setColour('purple'); hører hjemme i whenRunClicked. game.faster(); skal inni { } i mat-regelen."
       },
       "concept": { "en": "You are a game maker now!", "no": "Nå er du en spillutvikler!" },
       "goal": { "type": "score", "n": 5 },

@@ -1,14 +1,24 @@
-// The lesson screen: guide text on the left, Blockly in the middle, the game on
-// the right. Turns the blocks into code, runs it in the right world, and checks
-// the lesson goal.
+// The lesson screen: blocks or typed code on the left, the task and the game on
+// the right. Turns the kid's program into code, runs it in the right world, and
+// checks the lesson goal.
+//
+// Three modes, same lessons: 'blocks', 'both' (blocks + the code they make) and
+// 'code' (typed). Blocks and typed code are saved separately for each lesson,
+// so switching mode never throws work away.
 
 import { t, tr } from './i18n.js';
 import * as storage from './storage.js';
-import { defineBlocks, toolboxFor, workspaceCode } from './blocks.js';
+import { defineBlocks, toolboxFor, workspaceCode, codeFromBlocks } from './blocks.js';
+import { compileTyped, countUses, explainJsError, errorLine, CodeProblem } from './kidcode.js';
+import { createEditor } from './editor.js';
+import { commandsFor } from './codehelp.js';
 import { RobotWorld } from './worlds/robot.js';
 import { SnakeWorld } from './worlds/snake.js';
 import { StopSignal, GameOverSignal, LoopError, KidError } from './errors.js';
-import { h, clear } from './dom.js';
+import { h, clear, confirmBox } from './dom.js';
+
+const MODE_ICONS = { blocks: '🧩', both: '🧩 + </>', code: '</>' };
+const MAX_OUTPUT_LINES = 200;
 
 const KEYS = { ArrowUp: 'up', ArrowDown: 'down', ArrowLeft: 'left', ArrowRight: 'right' };
 
@@ -25,7 +35,7 @@ class LessonController {
     this.runId = 0;
     this.timer = null;
     this.keyHandler = null;
-    this.showCode = false;
+    this.mode = storage.mode(profileId);
     this.onKeyDown = (e) => this.handleKey(e);
     window.addEventListener('keydown', this.onKeyDown, true);
   }
@@ -34,6 +44,7 @@ class LessonController {
 
   render() {
     const L = this.lesson;
+    const typed = this.mode === 'code';
     clear(this.root);
 
     this.statusEl = h('div', { class: 'status' });
@@ -41,11 +52,7 @@ class LessonController {
     this.messageEl = h('div', { class: 'message', role: 'status' });
     this.capacityEl = h('div', { class: 'capacity' });
     this.canvas = h('canvas', { class: 'world' });
-    this.codeEl = h('pre', { class: 'code-view' });
-    this.codePanel = h('div', { class: 'code-panel', hidden: true }, h('h3', {}, t('lesson.codeTitle')), this.codeEl);
-    this.blocklyDiv = h('div', { class: 'blockly' });
-    this.hintEl = h('p', { class: 'hint', hidden: true }, tr(L.hint));
-    this.codeBtn = h('button', { class: 'btn ghost', onclick: () => this.toggleCode() }, t('lesson.showCode'));
+    this.hintEl = h('p', { class: 'hint', hidden: true }, tr((typed && L.hintCode) || L.hint));
     this.runBtn = h('button', { class: 'btn run', onclick: () => this.run() }, `▶ ${t('lesson.run')}`);
     this.stopBtn = h('button', { class: 'btn stop', onclick: () => this.stop(true), disabled: true }, `■ ${t('lesson.stop')}`);
 
@@ -55,12 +62,12 @@ class LessonController {
         { class: 'topbar' },
         h('button', { class: 'btn ghost', onclick: () => this.onBack() }, `← ${t('lesson.back')}`),
         h('h1', {}, `${this.index + 1}. ${tr(L.title)}`),
-        this.codeBtn,
+        this.modeSwitch(),
       ),
       h(
         'main',
         { class: 'lesson' },
-        h('section', { class: 'workspace' }, this.blocklyDiv, this.capacityEl, this.codePanel),
+        typed ? this.codeWorkspace() : this.blocksWorkspace(),
         h(
           'aside',
           { class: 'side' },
@@ -68,7 +75,7 @@ class LessonController {
             'div',
             { class: 'guide' },
             h('div', { class: 'bubble' }, h('img', { src: 'ui/img/bit.svg', alt: '', class: 'avatar' }), h('p', {}, tr(L.story))),
-            h('div', { class: 'task' }, h('h2', {}, t('lesson.goal')), h('p', {}, tr(L.task))),
+            h('div', { class: 'task' }, h('h2', {}, t('lesson.goal')), h('p', {}, tr((typed && L.taskCode) || L.task))),
             h(
               'div',
               { class: 'guide-extra' },
@@ -100,7 +107,59 @@ class LessonController {
     // Test hook: only when opened with ?debug in a browser, never in the app.
     if (new URLSearchParams(location.search).has('debug')) window.cqLesson = this;
     this.reset();
-    this.injectBlockly();
+    if (typed) this.refreshCapacity();
+    else this.injectBlockly();
+  }
+
+  modeSwitch() {
+    return h(
+      'div',
+      { class: 'mode-switch', role: 'group', 'aria-label': t('mode.label') },
+      storage.MODES.map((m) =>
+        h(
+          'button',
+          {
+            class: `btn small ${m === this.mode ? 'active' : 'ghost'}`,
+            title: t(`mode.${m}Tip`),
+            'aria-pressed': m === this.mode ? 'true' : 'false',
+            onclick: () => this.setMode(m),
+          },
+          `${MODE_ICONS[m]} ${t(`mode.${m}`)}`,
+        ),
+      ),
+    );
+  }
+
+  setMode(m) {
+    if (m === this.mode) return;
+    this.teardownWorkspace();
+    this.stop(false);
+    this.mode = m;
+    storage.setMode(this.profileId, m);
+    this.render();
+  }
+
+  teardownWorkspace() {
+    this.resizeObserver?.disconnect();
+    this.resizeObserver = null;
+    if (this.ws) {
+      this.saveWorkspace();
+      this.ws.dispose();
+      this.ws = null;
+    }
+    if (this.editor) {
+      this.saveCode();
+      this.editor = null;
+    }
+  }
+
+  // ---- blocks ----
+
+  blocksWorkspace() {
+    this.blocklyDiv = h('div', { class: 'blockly' });
+    this.codeEl = h('pre', { class: 'code-view' });
+    this.codePanel = h('div', { class: 'code-panel', hidden: this.mode !== 'both' }, h('h3', {}, t('lesson.codeTitle')), this.codeEl);
+    return h('section', { class: 'workspace' }, this.blocklyDiv, this.capacityEl, this.codePanel);
   }
 
   injectBlockly() {
@@ -151,13 +210,6 @@ class LessonController {
     storage.save();
   }
 
-  toggleCode() {
-    this.showCode = !this.showCode;
-    this.codePanel.hidden = !this.showCode;
-    this.codeBtn.textContent = this.showCode ? t('lesson.hideCode') : t('lesson.showCode');
-    this.refreshCode();
-  }
-
   refreshCode() {
     const limits = Object.entries(this.lesson.limits || {});
     this.capacityEl.textContent = limits.length
@@ -167,19 +219,139 @@ class LessonController {
             .join(', '),
         })
       : '';
-    if (!this.showCode) return;
+    if (this.mode !== 'both') return;
     this.codeEl.textContent = workspaceCode(this.ws, { display: true }).trim();
+  }
+
+  // ---- typed code ----
+
+  codeWorkspace() {
+    this.outputEl = h('pre', { class: 'output', hidden: true, 'aria-live': 'polite' });
+    this.editor = createEditor({
+      value: this.initialCode(),
+      label: t('code.editorLabel'),
+      onChange: () => {
+        this.saveCode();
+        this.refreshCapacity();
+      },
+      onRun: () => this.run(),
+    });
+    const commands = commandsFor(this.lesson, this.course.world).map((c) =>
+      h(
+        'button',
+        { class: 'command', title: t('code.addCommand'), onclick: () => this.editor.insertSnippet(c.code) },
+        h('code', {}, c.label),
+        h('span', {}, c.help),
+      ),
+    );
+    return h(
+      'section',
+      { class: 'workspace code-mode' },
+      h('div', { class: 'commands' }, h('h3', {}, t('code.commands')), h('p', { class: 'commands-tip' }, t('code.commandsTip')), ...commands),
+      h(
+        'div',
+        { class: 'code-main' },
+        h(
+          'div',
+          { class: 'code-toolbar' },
+          h('span', { class: 'code-tip' }, t('code.runTip')),
+          this.capacityEl,
+          h('button', { class: 'btn small ghost', onclick: () => this.restartCode() }, `↺ ${t('code.startOver')}`),
+        ),
+        this.editor.el,
+        this.outputEl,
+      ),
+    );
+  }
+
+  /**
+   * Where typed code starts: the kid's own code for this lesson, else their code
+   * from the lesson before, else their blocks turned into code, else the starter.
+   */
+  initialCode() {
+    const L = this.lesson;
+    const own = storage.lessonState(this.profileId, L.id);
+    if (typeof own.code === 'string') return own.code;
+    const prev = L.carryFrom ? storage.lessonState(this.profileId, L.carryFrom) : {};
+    if (typeof prev.code === 'string') return prev.code;
+    return this.codeFromBlocksOrStarter();
+  }
+
+  codeFromBlocksOrStarter() {
+    const L = this.lesson;
+    defineBlocks();
+    const own = storage.lessonState(this.profileId, L.id).workspace;
+    const prev = L.carryFrom && storage.lessonState(this.profileId, L.carryFrom).workspace;
+    const json = own || prev || { blocks: { languageVersion: 0, blocks: L.starter || [] } };
+    try {
+      return codeFromBlocks(json);
+    } catch (e) {
+      console.error('Could not turn blocks into code', e);
+      return '';
+    }
+  }
+
+  async restartCode() {
+    if (!(await confirmBox(t('code.startOverConfirm'), t('code.startOver')))) return;
+    this.stop(true);
+    // Start again from the blocks (or the starter), not from the code typed so far.
+    delete storage.lessonState(this.profileId, this.lesson.id).code;
+    this.editor.value = this.codeFromBlocksOrStarter();
+    this.saveCode();
+    this.refreshCapacity();
+  }
+
+  saveCode() {
+    if (!this.editor) return;
+    storage.lessonState(this.profileId, this.lesson.id).code = this.editor.value;
+    storage.save();
+  }
+
+  refreshCapacity() {
+    const limits = this.lesson.limits || {};
+    if (!Object.keys(limits).length) return;
+    const used = countUses(this.editor.value, limits);
+    this.capacityEl.textContent = t('code.usesLeft', {
+      n: Object.entries(limits)
+        .map(([type, max]) => `${Math.max(0, max - used[type])} × ${t(`codeNames.${type}`)}`)
+        .join(', '),
+    });
+  }
+
+  /** console.log and alert print here, so kids can see what their code is doing. */
+  log(args) {
+    if (!this.outputEl) return;
+    const text = args.map((a) => (typeof a === 'string' ? a : safeString(a))).join(' ');
+    const lines = `${this.outputEl.textContent}${text}\n`.split('\n');
+    this.outputEl.textContent = lines.slice(-MAX_OUTPUT_LINES - 1).join('\n');
+    this.outputEl.hidden = false;
+    this.outputEl.scrollTop = this.outputEl.scrollHeight;
   }
 
   // ---- running ----
 
+  /** Returns fn(events, bit, snake, game), from the blocks or the typed code. */
   compile() {
-    const code = workspaceCode(this.ws, {
-      async: this.course.world === 'robot',
-      loopTrap: 'if (--__loopGuard < 0) throw new LoopError();\n',
-    });
-    // Kid code only sees the objects passed in here.
-    return new Function('events', 'bit', 'snake', 'game', 'LoopError', `"use strict";\nlet __loopGuard = 100000;\n${code}`);
+    const kidConsole = { log: (...a) => this.log(a), info: (...a) => this.log(a), warn: (...a) => this.log(a), error: (...a) => this.log(a) };
+    const alert = (...a) => this.log(a);
+    if (this.mode === 'code') {
+      const fn = compileTyped(this.editor.value);
+      return (events, bit, snake, game) => fn(events, bit, snake, game, kidConsole, alert);
+    }
+    const code = workspaceCode(this.ws, { loopTrap: 'if (--__loopGuard < 0) throw new __LoopError();\n' });
+    const fn = new Function('__events', 'bit', 'snake', 'game', 'console', '__LoopError', `"use strict";\nlet __loopGuard = 100000;\n${code}`);
+    return (events, bit, snake, game) => fn(events, bit, snake, game, kidConsole, LoopError);
+  }
+
+  /** In code mode, more uses of a limited command than the lesson allows. */
+  limitProblem() {
+    const limits = this.lesson.limits || {};
+    if (this.mode !== 'code' || !Object.keys(limits).length) return null;
+    const used = countUses(this.editor.value, limits);
+    for (const [type, max] of Object.entries(limits)) {
+      if (used[type] > max) return ['code.err.tooMany', { name: t(`codeNames.${type}`), max, used: used[type] }];
+    }
+    return null;
   }
 
   makeEvents() {
@@ -199,10 +371,18 @@ class LessonController {
     this.runBtn.disabled = true;
     this.stopBtn.disabled = false;
     document.activeElement?.blur?.();
+    this.editor?.markLine(null);
+    if (this.outputEl) {
+      this.outputEl.textContent = '';
+      this.outputEl.hidden = true;
+    }
+    const tooMany = this.limitProblem();
+    if (tooMany) return this.fail(...tooMany);
     let fn;
     try {
       fn = this.compile();
     } catch (e) {
+      if (e instanceof CodeProblem) return this.failAt(e.line, e.key, e.vars);
       return this.fail('msg.error', { error: e.message });
     }
     if (this.course.world === 'snake') this.runSnake(fn, id);
@@ -218,21 +398,23 @@ class LessonController {
       this.statusEl.textContent = maps.length > 1 ? t('lesson.test', { n: i + 1, total: maps.length }) : '';
       const { ev, api } = this.makeEvents();
       const { bit, game } = this.world.api();
+      // Kid code runs instantly; the world records each step, then plays them back.
+      let error = null;
       try {
-        fn(api, bit, null, game, LoopError);
+        fn(api, bit, null, game);
       } catch (e) {
-        return this.handleError(e, id);
+        error = e;
       }
-
-      if (L.mode === 'play') return this.playRobot(ev, id);
-
-      if (!ev.start.length) return this.fail('msg.noStart');
+      if (!error && L.mode === 'play') return this.playRobot(ev, id);
+      if (!error && !ev.start.length) return this.fail(this.mode === 'code' ? 'msg.noStartCode' : 'msg.noStart');
       try {
-        for (const handler of ev.start) await handler();
+        if (!error) for (const handler of ev.start) handler();
       } catch (e) {
-        return this.handleError(e, id);
+        error = e;
       }
-      if (id !== this.runId) return;
+      const played = await this.world.play(this.world.takeFrames());
+      if (!played || id !== this.runId) return;
+      if (error) return this.handleError(error, id);
       const problem = this.robotGoalProblem();
       if (problem) return this.fail(...problem);
       if (i < maps.length - 1) await sleep(600);
@@ -252,18 +434,29 @@ class LessonController {
 
   playRobot(ev, id) {
     const hasKeys = Object.values(ev.keys).some((list) => list.length);
-    if (!hasKeys) return this.fail('msg.noKeys');
+    if (!hasKeys) return this.fail(this.mode === 'code' ? 'msg.noKeysCode' : 'msg.noKeys');
     this.say(t('lesson.useArrows'), 'info');
-    this.world.onMove = () => {
-      if (id === this.runId && this.world.atFlag()) this.succeed();
-    };
+    let chain = Promise.resolve();
+    let waiting = 0;
     this.keyHandler = (dir) => {
-      for (const handler of ev.keys[dir]) {
-        handler().catch((e) => {
-          if (e instanceof KidError && e.key === 'msg.bump' && id === this.runId) this.say(t('msg.bump'), 'warn');
-          else this.handleError(e, id);
-        });
+      // Holding a key down shouldn't pile up a long queue of moves.
+      if (waiting > 2) return;
+      let error = null;
+      try {
+        for (const handler of ev.keys[dir]) handler();
+      } catch (e) {
+        error = e;
       }
+      const frames = this.world.takeFrames();
+      waiting++;
+      chain = chain.then(async () => {
+        const played = await this.world.play(frames);
+        waiting--;
+        if (!played || id !== this.runId) return;
+        if (error instanceof KidError && error.key === 'msg.bump') this.say(t('msg.bump'), 'warn');
+        else if (error) this.handleError(error, id);
+        else if (frames.some((f) => this.world.atFlag(f.pos))) this.succeed();
+      });
     };
   }
 
@@ -275,7 +468,7 @@ class LessonController {
     const { ev, api } = this.makeEvents();
     const { snake, game } = w.api();
     try {
-      fn(api, null, snake, game, LoopError);
+      fn(api, null, snake, game);
       for (const handler of ev.start) handler();
     } catch (e) {
       if (!(e instanceof GameOverSignal)) return this.handleError(e);
@@ -344,8 +537,10 @@ class LessonController {
   handleError(e, id = this.runId) {
     // Errors from an older run (before Stop/Run was pressed again) don't count.
     if (id !== this.runId || e instanceof StopSignal) return;
-    if (e instanceof KidError) return this.fail(e.key, e.vars);
-    if (e instanceof LoopError) return this.fail('msg.loop');
+    const line = this.mode === 'code' ? errorLine(e) : null;
+    if (e instanceof KidError) return this.failAt(line, e.key, e.vars);
+    if (e instanceof LoopError) return this.failAt(line, this.mode === 'code' ? 'msg.loopCode' : 'msg.loop');
+    if (this.mode === 'code') return this.failAt(line, ...explainJsError(e));
     console.error(e);
     this.fail('msg.error', { error: e?.message || String(e) });
   }
@@ -355,10 +550,7 @@ class LessonController {
     clearTimeout(this.timer);
     this.timer = null;
     this.keyHandler = null;
-    if (this.world) {
-      this.world.onMove = null;
-      if (this.world.stop) this.world.stop();
-    }
+    if (this.world?.stop) this.world.stop();
     this.runBtn.disabled = false;
     this.stopBtn.disabled = true;
     if (byButton) this.say('');
@@ -381,11 +573,21 @@ class LessonController {
   say(text, kind = 'info') {
     this.messageEl.textContent = text;
     this.messageEl.className = `message ${text ? kind : ''}`;
+    // On short screens the message can sit below the game: bring it into view.
+    if (text && kind === 'warn') this.messageEl.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
   }
 
   fail(key, vars) {
     this.stop(false);
     this.say(t(key, vars), 'warn');
+  }
+
+  /** Like fail(), and in code mode also marks the line with the mistake. */
+  failAt(line, key, vars) {
+    this.stop(false);
+    const text = t(key, vars);
+    this.say(line ? t('code.onLine', { line, text }) : text, 'warn');
+    if (line) this.editor?.markLine(line);
   }
 
   succeed() {
@@ -422,11 +624,15 @@ class LessonController {
   close() {
     this.stop(false);
     window.removeEventListener('keydown', this.onKeyDown, true);
-    this.resizeObserver?.disconnect();
-    if (this.ws) {
-      this.saveWorkspace();
-      this.ws.dispose();
-    }
+    this.teardownWorkspace();
+  }
+}
+
+function safeString(v) {
+  try {
+    return JSON.stringify(v) ?? String(v);
+  } catch {
+    return String(v);
   }
 }
 
