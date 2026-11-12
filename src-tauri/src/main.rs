@@ -22,7 +22,16 @@ fn app_home() -> Option<PathBuf> {
     if let Ok(appimage) = std::env::var("APPIMAGE") {
         return Path::new(&appimage).parent().map(Path::to_path_buf);
     }
-    let exe = std::env::current_exe().ok()?;
+    let mut exe = std::env::current_exe().ok()?;
+    // Started through the Linux program loader (ld-linux …so code-quest), as the
+    // start script does on USB sticks that won't let programs run directly
+    // (FAT sticks mounted with "showexec"). Then current_exe() is the loader
+    // itself; the real program is the path the loader was given (argv[0]).
+    let is_loader = exe.file_name().and_then(|n| n.to_str()).is_some_and(|n| n.starts_with("ld-linux") || n.starts_with("ld.so"));
+    if is_loader {
+        let program = PathBuf::from(std::env::args_os().next()?);
+        exe = fs::canonicalize(&program).unwrap_or(program);
+    }
     let dir = exe.parent()?.to_path_buf();
     if cfg!(target_os = "macos") {
         // .../Code Quest.app/Contents/MacOS/code-quest -> .../
@@ -102,6 +111,8 @@ fn main() {
     tauri::Builder::default()
         .setup(|app| {
             let dir = resolve_data_dir(app.handle());
+            // Handy when started from a terminal or a start script: where is progress saved?
+            eprintln!("Code Quest: progress is saved in {}", dir.display());
             let _ = DATA_DIR.set(dir);
             Ok(())
         })

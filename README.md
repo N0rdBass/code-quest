@@ -73,8 +73,23 @@ web files are packed inside it, so you only need that one file.
 **After changing anything in `app/`, run `touch src/main.rs` before `cargo build`.**
 Cargo doesn't notice changed web files by itself, and would keep the old ones.
 
-**Put it on a USB stick (Linux):** copy `code-quest` to the stick and run it from
-there. A `code-quest-data/` folder appears next to it with the saved progress.
+**Put it on a USB stick (Linux):** copy `code-quest` and `start-code-quest-linux.sh`
+to the stick. A `code-quest-data/` folder appears next to the program with the saved progress.
+
+Most Linux PCs mount FAT USB sticks with the `showexec` option: only `.exe`, `.com`
+and `.bat` files may run, so `code-quest` can't be started directly from the stick
+(and naming it `.exe` makes GNOME open it with Wine/Proton). Start it with the script
+instead, which runs the program through the Linux program loader:
+
+```bash
+bash /path/to/stick/start-code-quest-linux.sh
+```
+
+The app notices it was started this way and still saves progress on the stick
+(it prints where, e.g. `Code Quest: progress is saved in …/code-quest-data`).
+The script also works for a copy of the whole project (it then finds the program in
+`src-tauri/target/release/`). For one-click starting on a PC, add an app-menu entry
+whose command is `bash "<stick>/start-code-quest-linux.sh"`.
 
 **Windows / macOS:** build on the Windows VM / MacBook the same way as Solvex
 (`cargo build --release` there gives `code-quest.exe` / `code-quest`). Windows
