@@ -23,7 +23,10 @@ const WORD_KEYS = {
   null: 'nothing', undefined: 'nothing', of: 'of',
 };
 
-const OBJECT_KEYS = { bit: 'bit', snake: 'snake', game: 'game', console: 'console', Math: 'math', field: 'field', garden: 'garden' };
+// What `me` can have and do, in an object's script (Garden defence).
+const ME_WORDS = new Set(['speed', 'hp', 'kind', 'x', 'y', 'move', 'squash', 'shoot']);
+
+const OBJECT_KEYS = { bit: 'bit', snake: 'snake', game: 'game', console: 'console', Math: 'math', field: 'field', garden: 'garden', me: 'me' };
 const SKIP = new Set(['ws', 'nl']);
 
 export function explainAt(code, pos) {
@@ -139,6 +142,7 @@ function explainWord(sig, j) {
   if (prev?.value === '.') {
     const obj = sig[j - 2]?.value ?? '';
     if (obj === 'square' && (word === 'x' || word === 'y')) return { key: `explain.square_${word}` };
+    if (obj === 'me' && ME_WORDS.has(word)) return { key: `explain.me_${word}` };
     if ((word === 'x' || word === 'y') && isLoopItem(sig, obj)) return { key: `explain.item_${word}`, vars: { name: obj } };
     const help = memberHelpKey(obj, word);
     return help ? { key: 'explain.member', vars: { name: `${obj}.${word}`, helpKey: help } } : { key: 'explain.memberUnknown', vars: { name: `${obj}.${word}`, obj } };
@@ -146,7 +150,7 @@ function explainWord(sig, j) {
   if (WORD_KEYS[word]) return { key: `explain.${WORD_KEYS[word]}` };
   if (word in EVENT_FUNCS) {
     const ev = EVENT_FUNCS[word];
-    if (['start', 'tick', 'click', 'rightClick'].includes(ev)) return { key: `explain.event_${ev}`, vars: { name: word } };
+    if (['start', 'tick', 'click', 'rightClick', 'created', 'hit'].includes(ev)) return { key: `explain.event_${ev}`, vars: { name: word } };
     return { key: 'explain.event_key', vars: { name: word, key: ev } };
   }
   if (OBJECT_KEYS[word]) return { key: `explain.${OBJECT_KEYS[word]}` };

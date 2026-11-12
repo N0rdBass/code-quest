@@ -21,13 +21,15 @@ export const EVENT_FUNCS = {
   whenKeyRight: 'right',
   whenSquareClicked: 'click',
   whenSquareRightClicked: 'rightClick',
+  whenCreated: 'created',
+  whenHit: 'hit',
 };
 
 const KEYWORDS = new Set([
   'function', 'for', 'while', 'do', 'if', 'else', 'let', 'const', 'var', 'return',
   'true', 'false', 'null', 'undefined', 'break', 'continue', 'new', 'of', 'in', 'typeof',
 ]);
-const OBJECTS = new Set(['bit', 'snake', 'game', 'console', 'Math', 'field', 'garden']);
+const OBJECTS = new Set(['bit', 'snake', 'game', 'console', 'Math', 'field', 'garden', 'me']);
 const PAIRS = { '(': ')', '[': ']', '{': '}' };
 const CLOSERS = new Set([')', ']', '}']);
 
@@ -257,11 +259,26 @@ const API = {
   bit: { move: DIRECTIONS, pickUpCoin: null, isOnCoin: null },
   snake: { move: null, turn: DIRECTIONS, grow: null, placeFood: null, isOnFood: null, hitsWall: null, bitesItself: null, setColour: COLOURS },
   game: { changeScore: null, over: null, faster: null, win: null, changeCoins: null, coins: null, every: null },
-  garden: { build: null, buildFence: null, isEmpty: null, newBug: null, moveBugs: null, sprinklers: null, shoot: null, bugAtHouse: null, stopped: null },
+  garden: { build: null, buildFence: null, isEmpty: null, newBug: null, bugAtHouse: null, stopped: null },
+  me: {}, // depends on the script: see ME_API
   field: { placeMines: null, reveal: null, hasMine: null, showMines: null, toggleFlag: null, hasFlag: null, neighbours: null, clickAround: null, allSafeOpen: null },
   console: { log: null, info: null, warn: null, error: null },
 };
 const WORLD_OBJECTS = { robot: ['bit', 'game', 'console'], snake: ['snake', 'game', 'console'], minesweeper: ['field', 'game', 'console'], garden: ['garden', 'game', 'console'] };
+
+// Games with several scripts (Garden defence): what each script can use. In an
+// object's script, `me` is the object running it ("this bug", "this sprinkler").
+// 'prop' marks a value (me.speed), not a command, so it takes no ( ).
+const SCRIPT_OBJECTS = {
+  garden: ['garden', 'game', 'console'],
+  bug: ['me', 'game', 'garden', 'console'],
+  sprinkler: ['me', 'game', 'garden', 'console'],
+};
+const ME_API = {
+  bug: { move: null, squash: null, speed: 'prop', hp: 'prop', kind: 'prop', x: 'prop', y: 'prop' },
+  sprinkler: { shoot: null, x: 'prop', y: 'prop' },
+};
+const isProp = (u, script) => u.obj.value === 'me' && ME_API[script]?.[u.member.value] === 'prop';
 
 /** Each use of an object, like `bit.move('right')`: where it is and what's in it. */
 function apiUses(sig) {
@@ -279,19 +296,24 @@ function apiUses(sig) {
 }
 
 /** Commands that don't exist, objects not in this lesson, and wrong words like 'downn'. */
-function checkApi(sig, world) {
+function checkApi(sig, world, script) {
   const problems = [];
-  const here = WORLD_OBJECTS[world] || Object.keys(API);
+  const here = (script && SCRIPT_OBJECTS[script]) || WORLD_OBJECTS[world] || Object.keys(API);
   for (const u of apiUses(sig)) {
     const obj = u.obj.value;
     if (!here.includes(obj)) {
-      problems.push(problemAt(u.obj, 'code.err.notInLesson', { name: obj }));
+      problems.push(problemAt(u.obj, obj === 'me' ? 'code.err.noMeHere' : 'code.err.notInLesson', { name: obj }));
       continue;
     }
-    const allowed = API[obj];
+    const allowed = obj === 'me' ? ME_API[script] || {} : API[obj];
     if (!(u.member.value in allowed)) {
       const near = Object.keys(allowed).find((m) => m.toLowerCase() === u.member.value.toLowerCase());
       problems.push(problemAt(u.member, near ? 'code.err.wrongCase' : 'code.err.noCommand', { name: `${obj}.${u.member.value}`, want: `${obj}.${near}`, obj }));
+      continue;
+    }
+    if (allowed[u.member.value] === 'prop') {
+      // A value like me.speed: it's read or set, never run with ( ).
+      if (u.call >= 0) problems.push(problemAt(u.member, 'code.err.propCalled', { name: `${obj}.${u.member.value}` }));
       continue;
     }
     if (u.call < 0) {
@@ -316,7 +338,7 @@ function checkApi(sig, world) {
 const QUESTIONS = new Set([
   'bit.isOnCoin', 'snake.isOnFood', 'snake.hitsWall', 'snake.bitesItself',
   'field.hasMine', 'field.hasFlag', 'field.allSafeOpen', 'field.neighbours',
-  'garden.isEmpty', 'garden.sprinklers', 'garden.bugAtHouse', 'garden.stopped', 'game.coins', 'game.every',
+  'garden.isEmpty', 'garden.bugAtHouse', 'garden.stopped', 'game.coins', 'game.every',
 ]);
 
 /** Is this use of an object the start of a command (not part of a bigger expression)? */
@@ -331,9 +353,9 @@ function startsCommand(sig, u) {
  *  - a command inside it: if (field.hasMine(x, y) field.reveal(x, y)) …
  *  - two questions side by side without && (and) or || (or) between them
  */
-function checkConditions(sig) {
+function checkConditions(sig, script) {
   const problems = [];
-  const uses = apiUses(sig);
+  const uses = apiUses(sig).filter((u) => !isProp(u, script));
   for (let j = 0; j < sig.length; j++) {
     if (!(isKeyword(sig, j, 'if') || isKeyword(sig, j, 'while')) || sig[j + 1]?.value !== '(') continue;
     const kw = sig[j].value;
@@ -442,7 +464,7 @@ function lineRange(code, line) {
  * Every problem in the code, most important first. Used while typing and
  * before running. `world` is 'robot' or 'snake'.
  */
-export function diagnose(code, { world } = {}) {
+export function diagnose(code, { world, script } = {}) {
   const tokens = tokenize(code);
   const sig = significant(tokens);
   const problems = [];
@@ -456,9 +478,9 @@ export function diagnose(code, { world } = {}) {
     problems.push(p);
     structureOk = false;
   }
-  const apiProblems = checkApi(sig, world);
+  const apiProblems = checkApi(sig, world, script);
   problems.push(...apiProblems);
-  const conditionProblems = structureOk ? checkConditions(sig) : [];
+  const conditionProblems = structureOk ? checkConditions(sig, script) : [];
   problems.push(...conditionProblems);
   if (structureOk) problems.push(...checkLogic(sig));
   // JavaScript's own syntax message only if nothing clearer was found.
@@ -516,12 +538,17 @@ function wrap(body) {
       if (ev === 'tick') return `if (__kid.${name}) __events.onTick(${call});`;
       if (ev === 'click') return `if (__kid.${name}) __events.onClick(${call});`;
       if (ev === 'rightClick') return `if (__kid.${name}) __events.onRightClick(${call});`;
+      if (ev === 'created') return `if (__kid.${name}) __events.onCreated?.(${call});`;
+      if (ev === 'hit') return `if (__kid.${name}) __events.onHit?.(${call});`;
       return `if (__kid.${name}) __events.onKey('${ev}', ${call});`;
     })
     .join('\n');
   return [
     '"use strict";',
     'let __loopGuard = 100000;',
+    // In an object's script, `me` is the object running it right now.
+    'let me = null;',
+    '__events.bindMe?.((m) => { me = m; });',
     'const __safe = (f) => (...args) => { __loopGuard = 100000; return f(...args); };',
     'const __t = (k, o) => ((__trace.at = k), o);',
     'const __kid = (function () {',
@@ -596,8 +623,8 @@ function instrument(code, sig, loops) {
  * Throws the first CodeProblem if the code has a mistake.
  * Returns { run(events, bit, snake, game, console, alert), placeOf(error) }.
  */
-export function compileTyped(code, { world } = {}) {
-  const first = diagnose(code, { world }).find((p) => p.severity === 'error');
+export function compileTyped(code, { world, script } = {}) {
+  const first = diagnose(code, { world, script }).find((p) => p.severity === 'error');
   if (first) throw first;
   const tokens = tokenize(code);
   const sig = significant(tokens);

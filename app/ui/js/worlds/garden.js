@@ -1,13 +1,15 @@
 // Hageforsvar / Garden defence: Bit's garden vs bugs.
 // A lawn of 5 rows and 9 columns, with Bit's house on the left. Snails and
-// beetles crawl in from the right. Bit builds sprinklers (they shoot water
-// drops along their row) and fences (they hold bugs back). Every squashed bug
-// leaves a coin.
+// beetles crawl in from the right. Bit builds sprinklers that shoot water
+// drops along their row.
 //
-// Like Snake and Minesweeper, the engine only offers building blocks. The rules
-// (when bugs come, when sprinklers shoot, what building costs, losing, winning)
-// are what the kid builds. Only "physics" happens by itself: water drops fly,
-// a drop that hits a bug hurts it, and a bug eats whatever stands in its way.
+// Every bug and every sprinkler is an object that runs its own script: the kid
+// writes the 🐌 Insekt script once, and each bug follows it with `me` meaning
+// "this bug". The 🏡 Hagen script runs the game itself (building, waves, coins,
+// winning, losing). The engine only does physics: water drops fly, a drop that
+// reaches a bug tells that bug "you were hit", and a bug that walks into a
+// sprinkler eats it. Everything else (speed, HP, when to shoot, what a hit does,
+// coins) is the kid's code.
 
 import { GameOverSignal, KidError } from '../errors.js';
 
@@ -18,10 +20,11 @@ const LEFT = 58; // the house strip + row numbers
 const TOP = 20; // column numbers
 const TICK_MS = 150;
 const DROP_SPEED = 0.35;
-const START_COINS = 0;
-const BUGS = {
-  snail: { hp: 3, speed: 0.05, body: '#c08552', shell: '#e0a458' },
-  beetle: { hp: 2, speed: 0.08, body: '#1e293b', shell: '#e03131' },
+const DEFAULT_BUG = { hp: 3, speed: 0.05 }; // until the kid gives bugs their own
+const MAX_SPEED = 1;
+const LOOKS = {
+  snail: { body: '#c08552', shell: '#e0a458' },
+  beetle: { body: '#1e293b', shell: '#e03131' },
 };
 const GADGET_HP = { sprinkler: 15, fence: 60 };
 
@@ -34,20 +37,27 @@ export class GardenWorld {
     canvas.width = LEFT + COLS * CELL + 4;
     canvas.height = TOP + ROWS * CELL + 4;
     this.hover = null;
+    // Set by the lesson: runs an object's script event, e.g. ('bug', 'hit', me).
+    // Returns true if the script has code for that event.
+    this.onObjectEvent = null;
     this.reset();
   }
 
   reset() {
-    this.gadgets = new Map(); // key → { type, x, y, hp }
+    this.gadgets = new Map(); // key → { type, x, y, hp, me }
     this.bugs = [];
     this.drops = [];
     this.puffs = [];
-    this.coins = START_COINS;
+    this.coins = 0;
     this.ticks = 0;
     this.nextId = 1;
     this.over = false;
     this.overReason = null;
-    this.stats = { built: 0, sprinklers: 0, fences: 0, spawned: 0, stopped: 0, reachedHouse: 0, shots: 0, coinsWentNegative: false, spent: 0 };
+    this.handling = null; // e.g. 'bug.hit' while a bug's "when water hits me" runs
+    this.stats = {
+      built: 0, sprinklers: 0, fences: 0, spawned: 0, ownBugs: 0, stopped: 0, reachedHouse: 0,
+      shots: 0, hitsIgnored: 0, hpGoneNotSquashed: 0, coinsWentNegative: false, spent: 0, earnedFromBugs: 0,
+    };
     this.onScore?.(this.coins);
     this.draw();
   }
@@ -56,7 +66,7 @@ export class GardenWorld {
     return TICK_MS;
   }
 
-  // ---- the API kid code calls (as `garden` and `game`) ----
+  // ---- the API the 🏡 Hagen script calls (as `garden` and `game`) ----
 
   api() {
     return {
@@ -68,10 +78,7 @@ export class GardenWorld {
           return !this.gadgets.has(key(x, y));
         },
         newBug: () => this.newBug(),
-        moveBugs: () => this.moveBugs(),
-        sprinklers: () => [...this.gadgets.values()].filter((g) => g.type === 'sprinkler').map((g) => ({ x: g.x, y: g.y })),
-        shoot: (x, y) => this.shoot(x, y),
-        bugAtHouse: () => this.bugs.some((b) => b.x < 0),
+        bugAtHouse: () => this.bugs.some((b) => b.x < 0 && !b.squashed),
         stopped: () => this.stats.stopped,
       },
       game: {
@@ -79,6 +86,7 @@ export class GardenWorld {
           const d = Math.round(Number(n)) || 0;
           this.coins += d;
           if (d < 0) this.stats.spent -= d;
+          else if (this.handling === 'bug.hit') this.stats.earnedFromBugs += d;
           if (this.coins < 0) this.stats.coinsWentNegative = true;
           this.onScore?.(this.coins);
         },
@@ -94,7 +102,7 @@ export class GardenWorld {
         },
         over: () => {
           this.over = true;
-          this.overReason = this.bugs.some((b) => b.x < 0) ? 'house' : 'other';
+          this.overReason = this.bugs.some((b) => b.x < 0 && !b.squashed) ? 'house' : 'other';
           throw new GameOverSignal();
         },
         win: () => {
@@ -116,63 +124,127 @@ export class GardenWorld {
   build(type, x, y) {
     this.check(x, y);
     if (this.gadgets.has(key(x, y))) return;
-    this.gadgets.set(key(x, y), { type, x, y, hp: GADGET_HP[type], cooldown: 0 });
+    const g = { type, x, y, hp: GADGET_HP[type] };
+    if (type === 'sprinkler') g.me = this.sprinklerMe(g);
+    this.gadgets.set(key(x, y), g);
     this.stats.built++;
     this.stats[type === 'fence' ? 'fences' : 'sprinklers']++;
+    if (g.me) this.onObjectEvent?.('sprinkler', 'created', g.me);
   }
 
   newBug() {
     const kind = Math.random() < 0.4 ? 'beetle' : 'snail';
     const y = Math.floor(Math.random() * ROWS);
-    this.bugs.push({ id: this.nextId++, kind, y, x: COLS - 0.01, hp: BUGS[kind].hp, eating: false, hurt: 0 });
+    const bug = { id: this.nextId++, kind, y, x: COLS - 0.01, hp: DEFAULT_BUG.hp, speed: DEFAULT_BUG.speed, own: false, eating: false, hurt: 0, squashed: false };
+    bug.me = this.bugMe(bug);
+    this.bugs.push(bug);
     this.stats.spawned++;
+    // The 🐌 Insekt script's "when I'm created" gives this bug its speed and HP.
+    this.onObjectEvent?.('bug', 'created', bug.me);
+    if (bug.own) this.stats.ownBugs++;
   }
 
-  /** Every bug crawls one small step left, or eats the gadget in its way. */
-  moveBugs() {
-    for (const bug of this.bugs) {
-      const col = Math.floor(bug.x);
-      const gadget = this.gadgets.get(key(col, bug.y));
-      if (gadget && bug.x - col < 0.75 && bug.x > 0) {
-        bug.eating = true;
-        if (--gadget.hp <= 0) this.gadgets.delete(key(col, bug.y));
-        continue;
-      }
-      bug.eating = false;
-      bug.x -= BUGS[bug.kind].speed;
+  // ---- `me` for a bug and for a sprinkler ----
+
+  bugMe(bug) {
+    const world = this;
+    return {
+      get speed() {
+        return bug.speed;
+      },
+      set speed(v) {
+        bug.speed = v;
+        bug.own = true;
+      },
+      get hp() {
+        return bug.hp;
+      },
+      set hp(v) {
+        bug.hp = v;
+        bug.own = true;
+      },
+      get kind() {
+        return bug.kind;
+      },
+      get x() {
+        return Math.max(0, Math.min(COLS - 1, Math.floor(bug.x)));
+      },
+      get y() {
+        return bug.y;
+      },
+      move: () => world.moveBug(bug),
+      squash: () => world.squash(bug),
+    };
+  }
+
+  sprinklerMe(g) {
+    const world = this;
+    return {
+      get x() {
+        return g.x;
+      },
+      get y() {
+        return g.y;
+      },
+      shoot: () => world.shoot(g),
+    };
+  }
+
+  /** The bug crawls one small step left (its own speed), or eats what's in its way. */
+  moveBug(bug) {
+    if (bug.squashed) return;
+    const speed = Number(bug.speed);
+    if (!Number.isFinite(speed) || speed < 0 || speed > MAX_SPEED) {
+      throw new KidError('msg.badSpeed', { speed: String(bug.speed), max: MAX_SPEED });
     }
+    const col = Math.floor(bug.x);
+    const gadget = this.gadgets.get(key(col, bug.y));
+    if (gadget && bug.x - col < 0.75 && bug.x > 0) {
+      bug.eating = true;
+      if (--gadget.hp <= 0) this.gadgets.delete(key(col, bug.y));
+      return;
+    }
+    bug.eating = false;
+    bug.x -= speed;
   }
 
-  shoot(x, y) {
-    this.check(x, y);
-    const g = this.gadgets.get(key(x, y));
-    if (!g || g.type !== 'sprinkler') throw new KidError('msg.noSprinkler', { x, y });
-    this.drops.push({ x: x + 0.6, y });
+  squash(bug) {
+    if (bug.squashed) return;
+    bug.squashed = true;
+    this.stats.stopped++;
+    this.puffs.push({ x: bug.x + 0.5, y: bug.y, t: 6 });
+  }
+
+  shoot(g) {
+    if (!this.gadgets.has(key(g.x, g.y))) return; // eaten
+    this.drops.push({ x: g.x + 0.6, y: g.y });
     this.stats.shots++;
   }
 
-  /** Called by the lesson once per tick, after the kid's tick code. */
+  /** Each tick: every bug, then every sprinkler, runs its own "every game tick". */
+  objectsTick() {
+    for (const bug of [...this.bugs]) if (!bug.squashed) this.onObjectEvent?.('bug', 'tick', bug.me);
+    for (const g of [...this.gadgets.values()]) if (g.me) this.onObjectEvent?.('sprinkler', 'tick', g.me);
+  }
+
+  /** Called by the lesson once per tick, after all the scripts. */
   physics() {
     for (const drop of this.drops) {
       drop.x += DROP_SPEED;
-      const hit = this.bugs.find((b) => b.y === drop.y && b.hp > 0 && Math.abs(b.x + 0.5 - drop.x) < 0.45);
+      const hit = this.bugs.find((b) => b.y === drop.y && !b.squashed && Math.abs(b.x + 0.5 - drop.x) < 0.45);
       if (hit) {
         drop.gone = true;
-        hit.hp--;
         hit.hurt = 3;
-        if (hit.hp <= 0) {
-          this.stats.stopped++;
-          this.coins += 5; // a squashed bug leaves a coin
-          this.onScore?.(this.coins);
-          this.puffs.push({ x: hit.x + 0.5, y: hit.y, t: 6 });
-        }
+        // What a hit does is the 🐌 Insekt script's "when water hits me".
+        if (!this.onObjectEvent?.('bug', 'hit', hit.me)) this.stats.hitsIgnored++;
+        if (hit.hp <= 0 && !hit.squashed) this.stats.hpGoneNotSquashed++;
       }
       if (drop.x > COLS) drop.gone = true;
     }
     this.drops = this.drops.filter((d) => !d.gone);
     // Bugs that got all the way into the house leave the board.
-    for (const bug of this.bugs) if (bug.x < -0.9) this.stats.reachedHouse++;
-    this.bugs = this.bugs.filter((b) => b.hp > 0 && b.x >= -0.9);
+    for (const bug of this.bugs) if (bug.x < -0.9 && !bug.squashed) this.stats.reachedHouse++;
+    this.bugs = this.bugs.filter((b) => !b.squashed && b.x >= -0.9);
     for (const b of this.bugs) if (b.hurt) b.hurt--;
     for (const p of this.puffs) p.t--;
     this.puffs = this.puffs.filter((p) => p.t > 0);
@@ -295,7 +367,7 @@ function drawHealth(ctx, px, py, health) {
 }
 
 function drawBug(ctx, px, py, bug, ticks) {
-  const look = BUGS[bug.kind];
+  const look = LOOKS[bug.kind];
   const wiggle = bug.eating ? Math.sin(ticks) * 1.5 : 0;
   const cx = px + 23 + wiggle;
   const cy = py + 26;

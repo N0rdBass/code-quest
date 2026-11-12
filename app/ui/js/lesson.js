@@ -5,10 +5,15 @@
 // Three modes, same lessons: 'blocks', 'both' (blocks + the code they make) and
 // 'code' (typed). Blocks and typed code are saved separately for each lesson,
 // so switching mode never throws work away.
+//
+// Some games (Garden defence) have several scripts: 🏡 Hagen runs the game,
+// 🐌 Insekt is the code every bug follows, 💧 Sprinkler the code every
+// sprinkler follows. Each script has its own tab, blocks/code, toolbox,
+// starter and model solution, and is saved on its own ("garden-3:bug").
 
 import { t, tr } from './i18n.js';
 import * as storage from './storage.js';
-import { defineBlocks, toolboxFor, workspaceCode, workspaceCodeWithIds, codeFromBlocks } from './blocks.js';
+import { defineBlocks, toolboxFor, workspaceCode, workspaceCodeWithIds, codeFromBlocks, runCodeFromBlocks } from './blocks.js';
 import { blocksFor } from './codeblocks.js';
 import { compileTyped, diagnose, countUses, explainJsError, errorLine, CodeProblem } from './kidcode.js';
 import { createEditor } from './editor.js';
@@ -27,6 +32,16 @@ const MAX_OUTPUT_LINES = 200;
 const CHECK_DELAY_MS = 400; // check the code this long after typing stops
 
 const KEYS = { ArrowUp: 'up', ArrowDown: 'down', ArrowLeft: 'left', ArrowRight: 'right' };
+const LOOP_TRAP = 'if (--__loopGuard < 0) throw new __LoopError();\n';
+// The function name each event block becomes in typed code.
+const HAT_NAMES = {
+  event_start: 'whenRunClicked',
+  event_tick: 'everyTick',
+  event_click: 'whenSquareClicked',
+  event_rightclick: 'whenSquareRightClicked',
+  event_created: 'whenCreated',
+  event_hit: 'whenHit',
+};
 
 export function openLesson(root, opts) {
   const ctl = new LessonController(root, opts);
@@ -42,6 +57,10 @@ class LessonController {
     this.timer = null;
     this.keyHandler = null;
     this.mode = storage.mode(profileId);
+    // Several scripts (e.g. garden, bug, sprinkler), or null for one program.
+    this.scriptIds = course.scripts && this.lesson.scripts ? this.lesson.scripts : null;
+    // A lesson can open on the script it's about ("focus"); the tabs keep their order.
+    this.script = this.scriptIds ? (this.scriptIds.includes(this.lesson.focus) ? this.lesson.focus : this.scriptIds[0]) : null;
     this.onKeyDown = (e) => this.handleKey(e);
     window.addEventListener('keydown', this.onKeyDown, true);
   }
@@ -73,7 +92,7 @@ class LessonController {
       h(
         'main',
         { class: 'lesson' },
-        typed ? this.codeWorkspace() : this.blocksWorkspace(),
+        (this.workspaceEl = typed ? this.codeWorkspace() : this.blocksWorkspace()),
         h(
           'aside',
           { class: 'side' },
@@ -117,6 +136,86 @@ class LessonController {
     this.reset();
     if (typed) this.refreshCapacity();
     else this.injectBlockly();
+  }
+
+  // ---- scripts (games with several) ----
+
+  /** A lesson setting for a script: one value for all, or { garden: …, bug: … }. */
+  part(name, script = this.script) {
+    const v = this.lesson[name];
+    return script && v && typeof v === 'object' && !Array.isArray(v) ? v[script] : v;
+  }
+
+  /** Where a script's blocks and code are saved: "garden-3:bug" (or just the lesson id). */
+  stateKey(script = this.script, lessonId = this.lesson.id) {
+    return script ? `${lessonId}:${script}` : lessonId;
+  }
+
+  scriptName(id) {
+    const def = this.course.scripts[id];
+    return `${def.icon} ${tr(def.name)}`;
+  }
+
+  scriptTabs() {
+    if (!this.scriptIds) return null;
+    return h(
+      'div',
+      { class: 'script-tabs', role: 'tablist', 'aria-label': t('scripts.label') },
+      this.scriptIds.map((id) =>
+        h(
+          'button',
+          {
+            class: `script-tab ${id === this.script ? 'active' : ''}`,
+            role: 'tab',
+            'aria-selected': id === this.script ? 'true' : 'false',
+            title: tr(this.course.scripts[id].about),
+            onclick: () => this.setScript(id),
+          },
+          this.scriptName(id),
+        ),
+      ),
+    );
+  }
+
+  /** Show another script. A running game keeps running. */
+  setScript(id) {
+    if (id === this.script || !this.scriptIds?.includes(id)) return;
+    if (this.mistakeEl && !this.mistakeEl.hidden) this.closeHint();
+    this.teardownWorkspace();
+    this.script = id;
+    this.renderWorkspace();
+  }
+
+  renderWorkspace() {
+    const el = this.mode === 'code' ? this.codeWorkspace() : this.blocksWorkspace();
+    this.workspaceEl.replaceWith(el);
+    this.workspaceEl = el;
+    if (this.mode === 'code') this.refreshCapacity();
+    else this.injectBlockly();
+  }
+
+  /** The event blocks a script should have in this lesson, even if the kid's carried code lacks them. */
+  ensureHats(json, script = this.script) {
+    const need = this.part('ensure', script) || [];
+    const blocks = json.blocks?.blocks || [];
+    let added = false;
+    for (const type of need) {
+      if (blocks.some((b) => b.type === type)) continue;
+      blocks.push({ type, x: 40, y: 40 + blocks.length * 140 });
+      added = true;
+    }
+    return { json: { ...json, blocks: { languageVersion: 0, ...json.blocks, blocks } }, added };
+  }
+
+  ensureFunctions(code, script = this.script) {
+    const need = this.part('ensure', script) || [];
+    for (const type of need) {
+      const name = HAT_NAMES[type];
+      if (!name || new RegExp(`function\\s+${name}\\s*\\(`).test(code)) continue;
+      const empty = codeFromBlocks({ blocks: { languageVersion: 0, blocks: [{ type }] } });
+      code = type === 'event_start' ? `${empty}\n${code}` : `${code.replace(/\n*$/, '\n')}\n${empty}`;
+    }
+    return code;
   }
 
   modeSwitch() {
@@ -170,22 +269,22 @@ class LessonController {
     this.codeEl = h('pre', { class: 'code-view' });
     this.codePanel = h('div', { class: 'code-panel', hidden: this.mode !== 'both' }, h('h3', {}, t('lesson.codeTitle')), this.codeEl);
     this.mistakeEl = h('div', { class: 'hint-box', hidden: true, 'aria-live': 'polite' });
-    const find = this.lesson.solution
+    const find = this.part('solution')
       ? h('button', { class: 'btn small ghost find-mistake blocks-find', onclick: () => this.findMistake() }, t('hint.button'))
       : null;
-    return h('section', { class: 'workspace' }, this.blocklyDiv, this.capacityEl, find, this.mistakeEl, this.codePanel);
+    return h('section', { class: `workspace ${this.scriptIds ? 'has-scripts' : ''}` }, this.scriptTabs(), h('div', { class: 'blocks-area' }, this.blocklyDiv, this.capacityEl, find), this.mistakeEl, this.codePanel);
   }
 
   injectBlockly() {
     const L = this.lesson;
     defineBlocks();
     this.ws = Blockly.inject(this.blocklyDiv, {
-      toolbox: toolboxFor(L.toolbox),
+      toolbox: toolboxFor(this.part('toolbox')),
       renderer: 'zelos',
       media: 'vendor/blockly/media/',
       // Limits are per kind of block (e.g. 1 repeat + 2 move). Blockly's overall
       // maxBlocks would also count event blocks and number bubbles, which kids can't see as blocks.
-      maxInstances: { event_start: 1, event_tick: 1, ...(L.limits || {}) },
+      maxInstances: { event_start: 1, event_tick: 1, event_click: 1, event_rightclick: 1, event_created: 1, event_hit: 1, ...(L.limits || {}) },
       trashcan: true,
       sounds: true,
       grid: { spacing: 24, length: 2, colour: '#dfe6ee', snap: true },
@@ -211,19 +310,22 @@ class LessonController {
     this.resizeObserver.observe(this.blocklyDiv);
   }
 
-  initialWorkspace() {
+  /** A script's blocks: the kid's own, else carried from the lesson before, else the starter. */
+  initialWorkspace(script = this.script) {
     const L = this.lesson;
-    const own = storage.lessonState(this.profileId, L.id).workspace;
-    if (own) return { json: own, carried: false };
-    if (L.carryFrom) {
-      const previous = storage.lessonState(this.profileId, L.carryFrom).workspace;
-      if (previous) return { json: previous, carried: true };
+    let json = storage.lessonState(this.profileId, this.stateKey(script)).workspace;
+    let carried = false;
+    if (!json && L.carryFrom) {
+      json = storage.lessonState(this.profileId, this.stateKey(script, L.carryFrom)).workspace;
+      carried = !!json;
     }
-    return { json: { blocks: { languageVersion: 0, blocks: L.starter || [] } }, carried: false };
+    if (!json) json = { blocks: { languageVersion: 0, blocks: structuredClone(this.part('starter', script) || []) } };
+    const { json: ensured, added } = this.ensureHats(structuredClone(json), script);
+    return { json: ensured, carried: carried || added };
   }
 
   saveWorkspace() {
-    storage.lessonState(this.profileId, this.lesson.id).workspace = Blockly.serialization.workspaces.save(this.ws);
+    storage.lessonState(this.profileId, this.stateKey()).workspace = Blockly.serialization.workspaces.save(this.ws);
     storage.save();
   }
 
@@ -262,8 +364,13 @@ class LessonController {
     this.mistakeEl = h('div', { class: 'hint-box', hidden: true, 'aria-live': 'polite' });
     this.problems = [];
     this.explain('', 0);
-    queueMicrotask(() => this.checkCode());
-    const commands = commandsFor(this.lesson, this.course.world).map((c) =>
+    // Check the code once it's shown, unless a failed run has just marked a mistake in it.
+    this.runMarked = false;
+    queueMicrotask(() => {
+      if (!this.runMarked) this.checkCode();
+    });
+    const events = this.script ? this.course.scripts[this.script].events : null;
+    const commands = commandsFor({ toolbox: this.part('toolbox') || [], mode: this.lesson.mode }, this.course.world, events).map((c) =>
       h(
         'button',
         { class: 'command', title: t('code.addCommand'), onclick: () => this.editor.insertSnippet(c.code) },
@@ -287,12 +394,13 @@ class LessonController {
       h(
         'div',
         { class: 'code-main' },
+        this.scriptTabs(),
         h(
           'div',
           { class: 'code-toolbar' },
           h('span', { class: 'code-tip' }, t('code.runTip')),
           this.capacityEl,
-          this.lesson.solution ? h('button', { class: 'btn small ghost find-mistake', onclick: () => this.findMistake() }, t('hint.button')) : null,
+          this.part('solution') ? h('button', { class: 'btn small ghost find-mistake', onclick: () => this.findMistake() }, t('hint.button')) : null,
           h('button', { class: 'btn small ghost', onclick: () => this.restartCode() }, `↺ ${t('code.startOver')}`),
         ),
         this.editor.el,
@@ -307,23 +415,19 @@ class LessonController {
    * Where typed code starts: the kid's own code for this lesson, else their code
    * from the lesson before, else their blocks turned into code, else the starter.
    */
-  initialCode() {
+  initialCode(script = this.script) {
     const L = this.lesson;
-    const own = storage.lessonState(this.profileId, L.id);
-    if (typeof own.code === 'string') return own.code;
-    const prev = L.carryFrom ? storage.lessonState(this.profileId, L.carryFrom) : {};
-    if (typeof prev.code === 'string') return prev.code;
-    return this.codeFromBlocksOrStarter();
+    const own = storage.lessonState(this.profileId, this.stateKey(script));
+    if (typeof own.code === 'string') return this.ensureFunctions(own.code, script);
+    const prev = L.carryFrom ? storage.lessonState(this.profileId, this.stateKey(script, L.carryFrom)) : {};
+    if (typeof prev.code === 'string') return this.ensureFunctions(prev.code, script);
+    return this.codeFromBlocksOrStarter(script);
   }
 
-  codeFromBlocksOrStarter() {
-    const L = this.lesson;
+  codeFromBlocksOrStarter(script = this.script) {
     defineBlocks();
-    const own = storage.lessonState(this.profileId, L.id).workspace;
-    const prev = L.carryFrom && storage.lessonState(this.profileId, L.carryFrom).workspace;
-    const json = own || prev || { blocks: { languageVersion: 0, blocks: L.starter || [] } };
     try {
-      return codeFromBlocks(json);
+      return codeFromBlocks(this.initialWorkspace(script).json);
     } catch (e) {
       console.error('Could not turn blocks into code', e);
       return '';
@@ -334,7 +438,7 @@ class LessonController {
     if (!(await confirmBox(t('code.startOverConfirm'), t('code.startOver')))) return;
     this.stop(true);
     // Start again from the blocks (or the starter), not from the code typed so far.
-    delete storage.lessonState(this.profileId, this.lesson.id).code;
+    delete storage.lessonState(this.profileId, this.stateKey()).code;
     this.editor.value = this.codeFromBlocksOrStarter();
     this.saveCode();
     this.refreshCapacity();
@@ -343,7 +447,7 @@ class LessonController {
 
   saveCode() {
     if (!this.editor) return;
-    storage.lessonState(this.profileId, this.lesson.id).code = this.editor.value;
+    storage.lessonState(this.profileId, this.stateKey()).code = this.editor.value;
     storage.save();
   }
 
@@ -362,7 +466,7 @@ class LessonController {
   /** Check the code like VS Code does while you type, and underline the mistakes. */
   checkCode() {
     if (!this.editor) return;
-    this.problems = diagnose(this.editor.value, { world: this.course.world }).map((p) => this.problemView(p));
+    this.problems = diagnose(this.editor.value, { world: this.course.world, script: this.script }).map((p) => this.problemView(p));
     this.editor.setProblems(this.problems);
   }
 
@@ -409,9 +513,45 @@ class LessonController {
       this.typed = compileTyped(this.editor.value, { world: this.course.world });
       return (events, bit, snake, game, field, garden) => this.typed.run(events, bit, snake, game, kidConsole, alert, field, garden);
     }
-    const code = workspaceCode(this.ws, { loopTrap: 'if (--__loopGuard < 0) throw new __LoopError();\n' });
-    const fn = new Function('__events', 'bit', 'snake', 'game', 'console', '__LoopError', 'field', 'garden', `"use strict";\nlet __loopGuard = 100000;\n${code}`);
+    return this.blocksProgram(workspaceCode(this.ws, { loopTrap: LOOP_TRAP }));
+  }
+
+  /** Runnable blocks code → fn(events, bit, snake, game, field, garden). */
+  blocksProgram(code) {
+    const kidConsole = { log: (...a) => this.log(a), info: (...a) => this.log(a), warn: (...a) => this.log(a), error: (...a) => this.log(a) };
+    const body = `"use strict";\nlet __loopGuard = 100000;\nlet me = null;\n__events.bindMe?.((m) => { me = m; });\n${code}`;
+    const fn = new Function('__events', 'bit', 'snake', 'game', 'console', '__LoopError', 'field', 'garden', body);
     return (events, bit, snake, game, field, garden) => fn(events, bit, snake, game, kidConsole, LoopError, field, garden);
+  }
+
+  /**
+   * Games with several scripts: every script as a program, { garden: fn, bug: fn … }.
+   * The open script comes from the screen, the others from what's saved. A
+   * mistake is thrown with `.script` set, so the right tab can be shown.
+   */
+  compileScripts() {
+    const kidConsole = { log: (...a) => this.log(a), info: (...a) => this.log(a), warn: (...a) => this.log(a), error: (...a) => this.log(a) };
+    const alert = (...a) => this.log(a);
+    defineBlocks();
+    const fns = {};
+    this.typedBy = {};
+    for (const sid of this.scriptIds) {
+      try {
+        if (this.mode === 'code') {
+          const text = sid === this.script ? this.editor.value : this.initialCode(sid);
+          const typed = compileTyped(text, { world: this.course.world, script: sid });
+          this.typedBy[sid] = typed;
+          fns[sid] = (events, bit, snake, game, field, garden) => typed.run(events, bit, snake, game, kidConsole, alert, field, garden);
+        } else {
+          const code = sid === this.script ? workspaceCode(this.ws, { loopTrap: LOOP_TRAP }) : runCodeFromBlocks(this.initialWorkspace(sid).json, LOOP_TRAP);
+          fns[sid] = this.blocksProgram(code);
+        }
+      } catch (e) {
+        e.script = sid;
+        throw e;
+      }
+    }
+    return fns;
   }
 
   /** In code mode, more uses of a limited command than the lesson allows. */
@@ -426,13 +566,18 @@ class LessonController {
   }
 
   makeEvents() {
-    const ev = { start: [], tick: [], keys: { up: [], down: [], left: [], right: [] }, click: [], rightClick: [] };
+    const ev = { start: [], tick: [], keys: { up: [], down: [], left: [], right: [] }, click: [], rightClick: [], created: [], hit: [], bindMe: null };
     const api = {
       onStart: (f) => ev.start.push(f),
       onTick: (f) => ev.tick.push(f),
       onKey: (k, f) => ev.keys[k]?.push(f),
       onClick: (f) => ev.click.push(f),
       onRightClick: (f) => ev.rightClick.push(f),
+      onCreated: (f) => ev.created.push(f),
+      onHit: (f) => ev.hit.push(f),
+      bindMe: (f) => {
+        ev.bindMe = f;
+      },
     };
     return { ev, api };
   }
@@ -453,8 +598,10 @@ class LessonController {
     if (tooMany) return this.fail(...tooMany);
     let fn;
     try {
-      fn = this.compile();
+      fn = this.scriptIds ? this.compileScripts() : this.compile();
     } catch (e) {
+      // A mistake in another script: show that script first.
+      if (e.script && e.script !== this.script) this.setScript(e.script);
       if (e instanceof CodeProblem) return this.failAt(e.line, e.key, e.vars, e);
       return this.fail('msg.error', { error: e.message });
     }
@@ -634,27 +781,72 @@ class LessonController {
 
   // ---- Garden defence ----
 
-  runGarden(fn, id) {
+  /**
+   * Garden defence. `fns` has a program per script: garden (the game), bug (the
+   * code every bug follows) and sprinkler (the code every sprinkler follows).
+   * The world asks for object events ("bug 7 was hit"); this runs that object's
+   * script with `me` set to that object.
+   */
+  runGarden(fns, id) {
     const w = this.world;
     w.reset();
-    const { ev, api } = this.makeEvents();
     const { garden, game } = w.api();
+    const evs = {};
+    // Tag a mistake with the script it happened in, so that tab can be shown.
+    const inScript = (sid, f) => {
+      try {
+        return f();
+      } catch (e) {
+        if (e && typeof e === 'object' && !(e instanceof GameOverSignal) && !e.cqScript) e.cqScript = sid;
+        throw e;
+      }
+    };
     try {
-      fn(api, null, null, game, null, garden);
-      for (const handler of ev.start) handler();
+      for (const [sid, fn] of Object.entries(fns)) {
+        const { ev, api } = this.makeEvents();
+        evs[sid] = ev;
+        inScript(sid, () => fn(api, null, null, game, null, garden));
+      }
+    } catch (e) {
+      return this.handleError(e, id);
+    }
+    w.onObjectEvent = (kind, event, me) => {
+      const ev = evs[kind];
+      const handlers = ev?.[event];
+      if (!handlers?.length) return false;
+      const before = w.handling;
+      w.handling = `${kind}.${event}`;
+      try {
+        inScript(kind, () => {
+          ev.bindMe?.(me);
+          for (const handler of handlers) handler();
+        });
+      } finally {
+        w.handling = before;
+      }
+      return true;
+    };
+    const main = evs.garden;
+    try {
+      inScript('garden', () => {
+        for (const handler of main.start) handler();
+      });
     } catch (e) {
       if (!(e instanceof GameOverSignal)) return this.handleError(e, id);
     }
     w.draw();
-    if (!ev.click.length && !ev.tick.length) return this.fail(this.mode === 'code' ? 'msg.noClickCode' : 'msg.noClick');
-    this.say(t(ev.rightClick.length ? 'lesson.buildFences' : 'lesson.build'), 'info');
+    if (!main.click.length && !main.tick.length) return this.fail(this.mode === 'code' ? 'msg.noClickCode' : 'msg.noClick');
+    this.say(t(main.rightClick.length ? 'lesson.buildFences' : 'lesson.build'), 'info');
     this.houseWarned = 0;
+    this.gardenTold = new Set();
 
     this.clickHandler = (x, y, button) => {
       if (id !== this.runId || w.over) return;
-      const handlers = button === 'right' ? ev.rightClick : ev.click;
+      const handlers = button === 'right' ? main.rightClick : main.click;
       try {
-        for (const handler of handlers) handler(x, y);
+        inScript('garden', () => {
+          for (const handler of handlers) handler(x, y);
+        });
       } catch (e) {
         if (!(e instanceof GameOverSignal)) return this.handleError(e, id);
       }
@@ -662,21 +854,31 @@ class LessonController {
       this.gardenGoalCheck();
     };
 
-    if (!ev.tick.length) return;
     const step = () => {
       if (id !== this.runId) return;
       w.ticks++;
       try {
-        for (const handler of ev.tick) handler();
+        inScript('garden', () => {
+          for (const handler of main.tick) handler();
+        });
+        // Every bug and every sprinkler runs its own script.
+        if (!w.over) w.objectsTick();
+        if (!w.over) w.physics();
       } catch (e) {
         if (!(e instanceof GameOverSignal)) return this.handleError(e, id);
       }
-      if (!w.over) w.physics();
       w.draw();
       if (this.gardenGoalCheck()) return;
       this.timer = setTimeout(step, w.tickMs());
     };
     this.timer = setTimeout(step, w.tickMs());
+  }
+
+  /** Say something about the game once per run (not every tick). */
+  tellOnce(key, kind = 'info') {
+    if (this.gardenTold.has(key)) return;
+    this.gardenTold.add(key);
+    this.say(t(key), kind);
   }
 
   /** Returns true when the run has ended (won or lost). */
@@ -691,8 +893,9 @@ class LessonController {
     const won =
       (goal.type === 'built' && s.sprinklers >= goal.n) ||
       (goal.type === 'bugs' && s.spawned >= goal.n && w.bugs.some((b) => b.x < 8)) ||
+      (goal.type === 'ownBugs' && s.ownBugs >= goal.n) ||
       (goal.type === 'stopped' && s.stopped >= goal.n) ||
-      (goal.type === 'paidFor' && s.stopped >= goal.n && s.spent >= 20) ||
+      (goal.type === 'paidFor' && s.stopped >= goal.n && s.spent >= 20 && s.earnedFromBugs > 0) ||
       (goal.type === 'gameOver' && w.over && w.overReason === goal.reason) ||
       w.overReason === 'win';
     if (won) {
@@ -703,13 +906,17 @@ class LessonController {
       this.fail('msg.bugsWon');
       return true;
     }
+    // Tips about what the scripts don't do yet.
+    if (goal.type === 'bugs' && s.spawned && !w.bugs.some((b) => b.x < 8.9)) this.tellOnce('msg.bugsStandStill');
+    if (goal.type === 'ownBugs' && s.spawned >= goal.n && s.ownBugs < goal.n) this.tellOnce('msg.bugsNotOwn', 'warn');
+    if (s.hitsIgnored) this.tellOnce('msg.hitNothing', goal.type === 'stopped' ? 'warn' : 'info');
+    if (s.hpGoneNotSquashed) this.tellOnce('msg.hpGone', 'warn');
+    if (goal.type === 'paidFor' && s.stopped >= goal.n && s.spent < 20) this.tellOnce('msg.buildingIsFree', 'warn');
+    if (goal.type === 'paidFor' && s.stopped >= goal.n && !s.earnedFromBugs) this.tellOnce('msg.noBugCoins', 'warn');
     if (s.reachedHouse > this.houseWarned) {
       this.houseWarned = s.reachedHouse;
       const noRule = goal.type === 'gameOver';
       this.say(t(noRule ? 'msg.bugInHouseNoRule' : 'msg.bugInHouseYet'), noRule ? 'warn' : 'info');
-    }
-    if (goal.type === 'paidFor' && s.stopped >= goal.n && s.spent < 20) {
-      this.say(t('msg.buildingIsFree'), 'warn');
     }
     return false;
   }
@@ -791,6 +998,11 @@ class LessonController {
   handleError(e, id = this.runId) {
     // Errors from an older run (before Stop/Run was pressed again) don't count.
     if (id !== this.runId || e instanceof StopSignal) return;
+    if (e?.cqScript && this.scriptIds) {
+      // The mistake is in one of several scripts: show that one.
+      if (e.cqScript !== this.script) this.setScript(e.cqScript);
+      this.typed = this.typedBy?.[e.cqScript] ?? this.typed;
+    }
     // Where in the typed code it went wrong. A failing command (bit.move('downn'))
     // or loop knows its own place, in every browser engine; other errors fall
     // back on the stack trace.
@@ -846,7 +1058,7 @@ class LessonController {
 
   /** After a failed run in code mode: a button that opens the hints. */
   offerHint() {
-    if (!this.lesson.solution || (!this.editor && !this.ws)) return;
+    if (!this.part('solution') || (!this.editor && !this.ws)) return;
     this.messageEl.append(' ', h('button', { class: 'btn small ghost', onclick: () => this.findMistake() }, t('hint.offer')));
   }
 
@@ -855,15 +1067,17 @@ class LessonController {
    * difference: first only where it is, then (on "Show me more") what it is.
    */
   findMistake() {
-    if (!this.lesson.solution) return;
+    const solution = this.part('solution');
+    if (!solution) return;
     if (this.ws) {
       // Blocks: compare the blocks' code (with block ids) and point at blocks.
       const { code, blockAt } = workspaceCodeWithIds(this.ws);
       this.blockAt = blockAt;
       this.hintCodeAt = workspaceCode(this.ws, { display: true });
-      this.hints = findHints(code, this.lesson.solution);
+      this.hints = findHints(code, solution);
       this.hintIndex = 0;
       this.hintLevel = 1;
+      if (!this.hints.length && this.showOtherScriptHint()) return;
       return this.showBlockHint();
     }
     if (!this.editor) return;
@@ -871,10 +1085,40 @@ class LessonController {
     const error = this.problems.find((p) => p.severity === 'error');
     this.hints = error
       ? [{ type: 'fixError', line: error.line, start: error.start, end: error.end, vars: { message: error.message } }]
-      : findHints(this.editor.value, this.lesson.solution);
+      : findHints(this.editor.value, solution);
     this.hintIndex = 0;
     this.hintLevel = 1;
+    if (!this.hints.length && this.showOtherScriptHint()) return;
     this.showHint();
+  }
+
+  /**
+   * The open script looks right: is the mistake in another script? Then say
+   * which one, with a button that opens it and looks there.
+   */
+  showOtherScriptHint() {
+    if (!this.scriptIds) return false;
+    defineBlocks();
+    const other = this.scriptIds.find((sid) => {
+      if (sid === this.script || !this.part('solution', sid)) return false;
+      const code = this.mode === 'code' ? this.initialCode(sid) : codeFromBlocks(this.initialWorkspace(sid).json);
+      const error = this.mode === 'code' && diagnose(code, { world: this.course.world, script: sid }).some((p) => p.severity === 'error');
+      return error || findHints(code, this.part('solution', sid)).length > 0;
+    });
+    if (!other) return false;
+    this.editor?.setHint(null);
+    this.clearBlockMarks();
+    this.mistakeEl.hidden = false;
+    this.mistakeEl.replaceChildren(
+      h('p', {}, `🔍 ${t('hint.otherScript', { here: this.scriptName(this.script), there: this.scriptName(other) })}`),
+      h(
+        'div',
+        { class: 'hint-buttons' },
+        h('button', { class: 'btn small', onclick: () => (this.setScript(other), this.findMistake()) }, t('hint.openScript', { name: this.scriptName(other) })),
+        h('button', { class: 'btn small ghost', title: t('hint.close'), onclick: () => this.closeHint() }, '✕'),
+      ),
+    );
+    return true;
   }
 
   showHint() {
@@ -1006,6 +1250,7 @@ class LessonController {
     const text = t(key, vars);
     this.say(line ? t('code.onLine', { line, text }) : text, 'warn');
     if (!this.editor) return;
+    this.runMarked = true;
     if (place?.start != null) {
       const warnings = this.problems.filter((p) => p.severity === 'warning');
       this.editor.setProblems([...warnings, { start: place.start, end: place.end, line, severity: 'error', message: text }]);

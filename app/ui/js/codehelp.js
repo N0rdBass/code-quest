@@ -40,10 +40,16 @@ const SNIPPETS = {
   garden_build: { code: 'garden.build(x, y);¦', help: 'code.help.build' },
   garden_fence: { code: 'garden.buildFence(x, y);¦', help: 'code.help.buildFence' },
   garden_new_bug: { code: 'garden.newBug();¦', help: 'blocks.newBug' },
-  garden_move_bugs: { code: 'garden.moveBugs();¦', help: 'blocks.moveBugs' },
   game_every: { code: 'game.every(30)¦', help: 'code.help.every' },
-  for_sprinklers: { code: 'for (const sprinkler of garden.sprinklers()) {\n  ¦\n}', help: 'code.help.forSprinklers' },
-  garden_shoot: { code: 'garden.shoot(sprinkler.x, sprinkler.y);¦', help: 'code.help.shoot' },
+  event_created: { code: 'function whenCreated() {\n  ¦\n}', help: 'code.help.created' },
+  event_hit: { code: 'function whenHit() {\n  ¦\n}', help: 'code.help.hit' },
+  me_move: { code: 'me.move();¦', help: 'code.help.meMove' },
+  me_set_speed: { code: 'me.speed = 0.05;¦', help: 'code.help.meSpeed' },
+  me_set_hp: { code: 'me.hp = 3;¦', help: 'code.help.meHp' },
+  me_change_hp: { code: 'me.hp = me.hp - 1;¦', help: 'code.help.meChangeHp' },
+  hp_gone: { code: 'me.hp <= 0¦', help: 'code.help.hpGone' },
+  me_squash: { code: 'me.squash();¦', help: 'code.help.meSquash' },
+  me_shoot: { code: 'me.shoot();¦', help: 'code.help.meShoot' },
   coins_change: { code: 'game.changeCoins(-10);¦', help: 'code.help.changeCoins' },
   coins_enough: { code: 'game.coins() >= 10¦', help: 'code.help.coinsEnough' },
   garden_bug_home: { code: 'garden.bugAtHouse()¦', help: 'blocks.bugAtHouse' },
@@ -53,13 +59,19 @@ const SNIPPETS = {
   count_is_zero: { code: 'count == 0¦', help: 'code.help.countZero' },
 };
 
-/** The commands for a lesson: its event functions first, then its toolbox. */
-export function commandsFor(lesson, world) {
+/**
+ * The commands for a lesson: its event functions first, then its toolbox.
+ * `events` (a script's own events, in games with several scripts) replaces the
+ * world's usual ones.
+ */
+export function commandsFor(lesson, world, events = null) {
   const names = [];
-  if (lesson.mode !== 'play') names.push('event_start');
-  if (world === 'snake') names.push('event_tick');
-  if (world === 'garden') names.push('event_tick');
-  if (world === 'minesweeper' || world === 'garden') names.push('event_click');
+  if (events) names.push(...events);
+  else {
+    if (lesson.mode !== 'play') names.push('event_start');
+    if (world === 'snake') names.push('event_tick');
+    if (world === 'minesweeper') names.push('event_click');
+  }
   for (const name of lesson.toolbox) if (!names.includes(name)) names.push(name);
   return names
     .filter((name) => SNIPPETS[name])

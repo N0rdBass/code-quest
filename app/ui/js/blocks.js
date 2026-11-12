@@ -10,7 +10,7 @@
 
 import { t } from './i18n.js';
 
-const COLOUR = { events: 45, robot: 210, snake: 135, score: 25, game: 0, field: 195, where: 290, count: 25, garden: 95, coins: 45 };
+const COLOUR = { events: 45, robot: 210, snake: 135, score: 25, game: 0, field: 195, where: 290, count: 25, garden: 95, coins: 45, me: 330 };
 
 function dirOptions(group) {
   return ['up', 'down', 'left', 'right'].map((d) => [t(`blocks.${group}.${d}`), d]);
@@ -158,9 +158,7 @@ export function defineBlocks() {
     // ---- Garden defence ----
     xyBlock('garden_build', t('blocks.build'), { statement: true, colour: COLOUR.garden }),
     xyBlock('garden_fence', t('blocks.buildFence'), { statement: true, colour: COLOUR.garden }),
-    xyBlock('garden_shoot', t('blocks.shoot'), { statement: true, colour: COLOUR.garden }),
     statement('garden_new_bug', t('blocks.newBug'), COLOUR.garden),
-    statement('garden_move_bugs', t('blocks.moveBugs'), COLOUR.garden),
     question('garden_bug_home', t('blocks.bugAtHouse'), COLOUR.garden),
     reporter('garden_stopped', t('blocks.stopped'), COLOUR.garden),
     {
@@ -171,16 +169,6 @@ export function defineBlocks() {
       colour: COLOUR.events,
     },
     {
-      type: 'for_sprinklers',
-      message0: `${t('blocks.forSprinklers')} %1 %2`,
-      args0: [{ type: 'input_dummy' }, { type: 'input_statement', name: 'DO' }],
-      previousStatement: null,
-      nextStatement: null,
-      colour: 120,
-    },
-    reporter('sprinkler_x', t('blocks.sprinklerX'), COLOUR.where),
-    reporter('sprinkler_y', t('blocks.sprinklerY'), COLOUR.where),
-    {
       type: 'coins_change',
       message0: t('blocks.changeCoins'),
       args0: [{ type: 'field_number', name: 'N', value: -10, precision: 1, min: -100, max: 100 }],
@@ -189,6 +177,48 @@ export function defineBlocks() {
       colour: COLOUR.coins,
     },
     reporter('coins_get', t('blocks.coins'), COLOUR.coins),
+
+    // ---- objects with their own script (`me`) ----
+    {
+      type: 'event_created',
+      message0: `${t('blocks.eventCreated')} %1 %2`,
+      args0: [{ type: 'input_dummy' }, { type: 'input_statement', name: 'DO' }],
+      colour: COLOUR.events,
+    },
+    {
+      type: 'event_hit',
+      message0: `${t('blocks.eventHit')} %1 %2`,
+      args0: [{ type: 'input_dummy' }, { type: 'input_statement', name: 'DO' }],
+      colour: COLOUR.events,
+    },
+    statement('me_move', t('blocks.meMove'), COLOUR.me),
+    statement('me_squash', t('blocks.meSquash'), COLOUR.me),
+    statement('me_shoot', t('blocks.meShoot'), COLOUR.me),
+    {
+      type: 'me_set_speed',
+      message0: t('blocks.meSetSpeed'),
+      args0: [{ type: 'field_number', name: 'N', value: 0.05, precision: 0.01, min: 0, max: 1 }],
+      previousStatement: null,
+      nextStatement: null,
+      colour: COLOUR.me,
+    },
+    {
+      type: 'me_set_hp',
+      message0: t('blocks.meSetHp'),
+      args0: [{ type: 'field_number', name: 'N', value: 3, precision: 1, min: 1, max: 50 }],
+      previousStatement: null,
+      nextStatement: null,
+      colour: COLOUR.me,
+    },
+    {
+      type: 'me_change_hp',
+      message0: t('blocks.meChangeHp'),
+      args0: [{ type: 'field_number', name: 'N', value: -1, precision: 1, min: -50, max: 50 }],
+      previousStatement: null,
+      nextStatement: null,
+      colour: COLOUR.me,
+    },
+    reporter('me_hp', t('blocks.meHp'), COLOUR.me),
 
     statement('count_set', t('blocks.countSet'), COLOUR.count),
     statement('count_add', t('blocks.countAdd'), COLOUR.count),
@@ -305,20 +335,26 @@ export function defineGenerators() {
   // Garden defence
   gen.forBlock['garden_build'] = (b) => `garden.build(${xy(b)});\n`;
   gen.forBlock['garden_fence'] = (b) => `garden.buildFence(${xy(b)});\n`;
-  gen.forBlock['garden_shoot'] = (b) => `garden.shoot(${xy(b)});\n`;
   gen.forBlock['garden_new_bug'] = () => 'garden.newBug();\n';
-  gen.forBlock['garden_move_bugs'] = () => 'garden.moveBugs();\n';
   gen.forBlock['garden_bug_home'] = () => ['garden.bugAtHouse()', Order.FUNCTION_CALL];
   gen.forBlock['garden_stopped'] = () => ['garden.stopped()', Order.FUNCTION_CALL];
   gen.forBlock['game_every'] = (b) => [`game.every(${Number(b.getFieldValue('N')) || 1})`, Order.FUNCTION_CALL];
-  gen.forBlock['sprinkler_x'] = () => ['sprinkler.x', Order.MEMBER];
-  gen.forBlock['sprinkler_y'] = () => ['sprinkler.y', Order.MEMBER];
   gen.forBlock['coins_change'] = (b) => `game.changeCoins(${Number(b.getFieldValue('N')) || 0});\n`;
   gen.forBlock['coins_get'] = () => ['game.coins()', Order.FUNCTION_CALL];
-  gen.forBlock['for_sprinklers'] = (block) => {
-    const branch = gen.addLoopTrap(gen.statementToCode(block, 'DO'), block);
-    return `for (const sprinkler of garden.sprinklers()) {\n${branch}}\n`;
+
+  // Objects with their own script: `me` is the object running it.
+  gen.forBlock['event_created'] = hat(() => 'whenCreated', () => '__events.onCreated(');
+  gen.forBlock['event_hit'] = hat(() => 'whenHit', () => '__events.onHit(');
+  gen.forBlock['me_move'] = () => 'me.move();\n';
+  gen.forBlock['me_squash'] = () => 'me.squash();\n';
+  gen.forBlock['me_shoot'] = () => 'me.shoot();\n';
+  gen.forBlock['me_set_speed'] = (b) => `me.speed = ${Number(b.getFieldValue('N')) || 0};\n`;
+  gen.forBlock['me_set_hp'] = (b) => `me.hp = ${Number(b.getFieldValue('N')) || 0};\n`;
+  gen.forBlock['me_change_hp'] = (b) => {
+    const n = Number(b.getFieldValue('N')) || 0;
+    return `me.hp = me.hp ${n < 0 ? '-' : '+'} ${Math.abs(n)};\n`;
   };
+  gen.forBlock['me_hp'] = () => ['me.hp', Order.MEMBER];
 
   gen.forBlock['count_set'] = () => 'let count = 0;\n';
   gen.forBlock['count_add'] = () => 'count = count + 1;\n';
@@ -328,7 +364,7 @@ export function defineGenerators() {
   };
 }
 
-const HATS = new Set(['event_start', 'event_tick', 'event_key', 'event_click', 'event_rightclick']);
+const HATS = new Set(['event_start', 'event_tick', 'event_key', 'event_click', 'event_rightclick', 'event_created', 'event_hit']);
 
 /**
  * Code for the workspace, using only blocks inside event blocks. Loose blocks
@@ -374,6 +410,17 @@ export function workspaceCodeWithIds(ws) {
   return { code, blockAt };
 }
 
+/** Saved blocks (JSON) as runnable code (with loop guards), without showing them. */
+export function runCodeFromBlocks(json, loopTrap) {
+  const ws = new Blockly.Workspace();
+  try {
+    Blockly.serialization.workspaces.load(json, ws);
+    return workspaceCode(ws, { loopTrap });
+  } finally {
+    ws.dispose();
+  }
+}
+
 /** Saved blocks (JSON) as the code a kid would type, without showing them. */
 export function codeFromBlocks(json) {
   const ws = new Blockly.Workspace();
@@ -413,11 +460,6 @@ const TOOLBOX_ENTRIES = {
   },
   garden_build: xyEntry('garden_build'),
   garden_fence: xyEntry('garden_fence'),
-  garden_shoot: {
-    kind: 'block',
-    type: 'garden_shoot',
-    inputs: { X: { shadow: { type: 'sprinkler_x' } }, Y: { shadow: { type: 'sprinkler_y' } } },
-  },
   coins_enough: {
     kind: 'block',
     type: 'logic_compare',
@@ -429,6 +471,12 @@ const TOOLBOX_ENTRIES = {
     type: 'logic_compare',
     fields: { OP: 'GTE' },
     inputs: { A: { block: { type: 'garden_stopped' } }, B: { shadow: { type: 'math_number', fields: { NUM: 15 } } } },
+  },
+  hp_gone: {
+    kind: 'block',
+    type: 'logic_compare',
+    fields: { OP: 'LTE' },
+    inputs: { A: { block: { type: 'me_hp' } }, B: { shadow: { type: 'math_number', fields: { NUM: 0 } } } },
   },
   count_is_zero: {
     kind: 'block',

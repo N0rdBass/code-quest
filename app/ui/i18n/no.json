@@ -90,7 +90,13 @@
     "bugsWon": "Et insekt kom inn i huset! Spillet er slutt. Trykk Kjør for å prøve igjen.",
     "bugInHouseNoRule": "Et insekt kom inn i huset til Bit, men spillet fortsetter! Legg til regelen: hvis et insekt nådde huset, er spillet slutt.",
     "bugInHouseYet": "Et insekt kom inn i huset til Bit! Vi lager en regel for det i en senere oppgave.",
-    "buildingIsFree": "Du stoppet insektene, men det var gratis å bygge! Få det til å koste 10 mynter."
+    "buildingIsFree": "Du stoppet insektene, men det var gratis å bygge! Få det til å koste 10 mynter.",
+    "badSpeed": "«{speed}» er ikke en fart. Bruk et tall fra 0 til {max}, som 0.05.",
+    "bugsStandStill": "Insektene kom, men de står stille. Åpne fanen 🐌 Insekt: hvert insekt skal flytte seg selv i «hvert spilltikk».",
+    "bugsNotOwn": "Insektene bruker fortsatt vanlig fart og HP. I 🐌 Insekt, gi dem sine egne i «når jeg blir laget».",
+    "hitNothing": "Vannet treffer insektene, men ingenting skjer. I 🐌 Insekt, bestem hva som skjer i «når vann treffer meg».",
+    "hpGone": "Et insekt har 0 HP (eller mindre), men det kryper fortsatt! Knus det når HP er brukt opp.",
+    "noBugCoins": "Du stoppet insektene, men de ga ingen mynter. I 🐌 Insekt, gi 5 mynter når et insekt blir knust."
   },
   "diploma": {
     "title": "Diplom",
@@ -165,17 +171,21 @@
     "countGet": "antall",
     "build": "bygg en sprinkler i kolonne %1 rad %2",
     "buildFence": "bygg et gjerde i kolonne %1 rad %2",
-    "shoot": "sprut vann fra kolonne %1 rad %2",
     "newBug": "send et nytt insekt",
-    "moveBugs": "flytt alle insektene",
     "bugAtHouse": "et insekt nådde huset?",
     "stopped": "insekter stoppet",
     "every": "hvert %1. tikk?",
-    "forSprinklers": "for hver sprinkler",
-    "sprinklerX": "den sprinklerens kolonne",
-    "sprinklerY": "den sprinklerens rad",
     "changeCoins": "endre mynter med %1",
-    "coins": "mynter"
+    "coins": "mynter",
+    "eventCreated": "når jeg blir laget",
+    "eventHit": "når vann treffer meg",
+    "meMove": "flytt meg fremover",
+    "meSquash": "knus meg",
+    "meShoot": "sprut vann",
+    "meSetSpeed": "sett min fart til %1",
+    "meSetHp": "sett mine HP til %1",
+    "meChangeHp": "endre mine HP med %1",
+    "meHp": "mine HP"
   },
   "blockNames": {
     "controls_repeat_ext": "gjenta",
@@ -227,11 +237,18 @@
       "build": "bygg en sprinkler på ruten",
       "buildFence": "bygg et gjerde på ruten",
       "every": "en tidtaker: true én gang hvert 30. tikk (bytt tallet)",
-      "forSprinklers": "en løkke: gjør noe for hver sprinkler",
-      "shoot": "sprut en vanndråpe fra den sprinkleren",
       "changeCoins": "endre myntene (minus for å bruke)",
       "coinsEnough": "spør: har du minst 10 mynter?",
-      "stoppedEnough": "spør: har du stoppet minst 15 insekter?"
+      "stoppedEnough": "spør: har du stoppet minst 15 insekter?",
+      "created": "kjører én gang, når dette objektet blir laget",
+      "hit": "kjører når vann treffer dette insektet",
+      "meMove": "flytt dette insektet fremover (med sin egen fart)",
+      "meSpeed": "farten til dette insektet (større er fortere)",
+      "meHp": "HP til dette insektet: hvor mye det tåler",
+      "meChangeHp": "ta 1 HP fra dette insektet",
+      "hpGone": "spør: er HP til dette insektet 0 eller mindre?",
+      "meSquash": "knus dette insektet: det er stoppet",
+      "meShoot": "denne sprinkleren spruter en dråpe bortover raden sin"
     },
     "err": {
       "string": "Denne teksten mangler en {q} på slutten. Tekst må starte og slutte med {q}.",
@@ -255,7 +272,9 @@
       "unusedQuestion": "{name}(…) stiller et spørsmål, men ingen bruker svaret, så denne linjen gjør ingenting. Legg den inni if ( … ) { } og legg det som skal skje inni { }.",
       "revealInLoop": "Denne åpner ruten mens løkken fortsatt teller, så tallet er ikke ferdig ennå. Flytt den under } på linje {line}, der løkken slutter.",
       "commandInIf": "{name}(…) er en kommando, ikke et spørsmål, så den kan ikke stå inni ( ) til {kw}. Parentesene ( ) holder bare spørsmålet. Flytt kommandoen ut: inn i { } hvis den bare skal skje når svaret er ja, eller under }.",
-      "twoInIf": "Det står to ting ved siden av hverandre inni ( ) til {kw}. Parentesene ( ) holder ett spørsmål. Vil du spørre om to ting, sett && (og) eller || (eller) mellom dem."
+      "twoInIf": "Det står to ting ved siden av hverandre inni ( ) til {kw}. Parentesene ( ) holder ett spørsmål. Vil du spørre om to ting, sett && (og) eller || (eller) mellom dem.",
+      "noMeHere": "me finnes bare i et objekts skript, som 🐌 Insekt eller 💧 Sprinkler. I 🏡 Hagen finnes ingen «me».",
+      "propCalled": "{name} er en verdi, ikke en kommando, så den har ingen ( ) etter seg. Bruk den som en variabel: {name} = 3;"
     },
     "symbols": "Tegn",
     "symbolsTip": "Klikk på et tegn eller ord i koden din for å se hva det betyr der.",
@@ -352,7 +371,18 @@
     "field": "field er minefeltet. Skriv et punktum etter for å bruke en av kommandoene, som field.reveal.",
     "garden": "garden er hagen til Bit. Skriv et punktum etter for å bruke en av kommandoene, som garden.build.",
     "item_x": "{name}.x er kolonnen til den {name} løkken besøker akkurat nå.",
-    "item_y": "{name}.y er raden til den {name} løkken besøker akkurat nå."
+    "item_y": "{name}.y er raden til den {name} løkken besøker akkurat nå.",
+    "me": "me er objektet som kjører dette skriptet akkurat nå: dette insektet, eller denne sprinkleren. Hvert objekt kjører det samme skriptet, hvert med sin egen me.",
+    "me_speed": "me.speed er farten til dette insektet. Et større tall går fortere: 0.1 er dobbelt så fort som 0.05.",
+    "me_hp": "me.hp er HP til dette insektet: hvor mye vann det tåler før det blir knust.",
+    "me_kind": "me.kind er hva slags insekt dette er: 'snail' (snegle) eller 'beetle' (bille).",
+    "me_x": "me.x er kolonnen dette objektet står i akkurat nå.",
+    "me_y": "me.y er raden dette objektet står i.",
+    "me_move": "me.move() flytter dette insektet ett lite steg, så langt farten sier.",
+    "me_squash": "me.squash() knuser dette insektet: det er stoppet og forsvinner.",
+    "me_shoot": "me.shoot() får denne sprinkleren til å sprute en vanndråpe bortover raden sin.",
+    "event_created": "{name} er et spesielt navn: koden kjører én gang for hvert objekt, i det øyeblikket det blir laget.",
+    "event_hit": "{name} er et spesielt navn: koden kjører hver gang vann treffer dette insektet."
   },
   "glossary": {
     "braces": "holder en gruppe kode som hører sammen: koden til en funksjon, en løkke eller en if",
@@ -423,6 +453,11 @@
         "misplacedAfter": "Klossen som står på feil sted skal under denne.",
         "order": "Flytt klossen som kommer for tidlig under denne."
       }
-    }
+    },
+    "otherScript": "{here}-skriptet ser riktig ut! Feilen er i {there}-skriptet.",
+    "openScript": "Åpne {name}"
+  },
+  "scripts": {
+    "label": "Skript"
   }
 }

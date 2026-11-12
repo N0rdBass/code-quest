@@ -156,7 +156,7 @@ function parse(code) {
     const { uses, sets } = ids(from, after);
     const head = text(from, headEnd);
     const isCall = /^stmt:([\w$.]+)\(/.exec(key);
-    const assign = /^(?:stmt|let):(?:let|const|var)?([\w$]+)=/.exec(key);
+    const assign = /^(?:stmt|let):(?:let|const|var)?([\w$.]+)=(?!=)/.exec(key);
     return {
       kind,
       key,

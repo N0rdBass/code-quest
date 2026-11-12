@@ -90,7 +90,13 @@
     "bugsWon": "A bug got into the house! Game over. Press Run to try again.",
     "bugInHouseNoRule": "A bug got into Bit's house, but the game goes on! Add the rule: if a bug reached the house, game over.",
     "bugInHouseYet": "A bug got into Bit's house! We'll add a rule for that in a later lesson.",
-    "buildingIsFree": "You stopped the bugs, but building was free! Make building cost 10 coins."
+    "buildingIsFree": "You stopped the bugs, but building was free! Make building cost 10 coins.",
+    "badSpeed": "\"{speed}\" is not a speed. Use a number from 0 to {max}, like 0.05.",
+    "bugsStandStill": "The bugs came, but they stand still. Open the 🐌 Bug tab: every bug should move itself in its \"every game tick\".",
+    "bugsNotOwn": "The bugs still use the standard speed and HP. In 🐌 Bug, give them their own in \"when I'm created\".",
+    "hitNothing": "Water hits the bugs, but nothing happens. In 🐌 Bug, decide what happens in \"when water hits me\".",
+    "hpGone": "A bug has 0 HP (or less), but it is still crawling! Squash it when its HP runs out.",
+    "noBugCoins": "You stopped the bugs, but they gave no coins. In 🐌 Bug, give 5 coins when a bug is squashed."
   },
   "diploma": {
     "title": "Diploma",
@@ -165,17 +171,21 @@
     "countGet": "count",
     "build": "build a sprinkler at column %1 row %2",
     "buildFence": "build a fence at column %1 row %2",
-    "shoot": "shoot water from column %1 row %2",
     "newBug": "send a new bug",
-    "moveBugs": "move all bugs",
     "bugAtHouse": "a bug reached the house?",
     "stopped": "bugs stopped",
     "every": "every %1 ticks?",
-    "forSprinklers": "for each sprinkler",
-    "sprinklerX": "that sprinkler's column",
-    "sprinklerY": "that sprinkler's row",
     "changeCoins": "change coins by %1",
-    "coins": "coins"
+    "coins": "coins",
+    "eventCreated": "when I'm created",
+    "eventHit": "when water hits me",
+    "meMove": "move me forward",
+    "meSquash": "squash me",
+    "meShoot": "shoot water",
+    "meSetSpeed": "set my speed to %1",
+    "meSetHp": "set my HP to %1",
+    "meChangeHp": "change my HP by %1",
+    "meHp": "my HP"
   },
   "blockNames": {
     "controls_repeat_ext": "repeat",
@@ -227,11 +237,18 @@
       "build": "build a sprinkler on the square",
       "buildFence": "build a fence on the square",
       "every": "a timer: true once every 30 ticks (change the number)",
-      "forSprinklers": "a loop: do something for every sprinkler",
-      "shoot": "shoot a water drop from that sprinkler",
       "changeCoins": "change the coins (minus to spend)",
       "coinsEnough": "asks: do you have at least 10 coins?",
-      "stoppedEnough": "asks: have you stopped at least 15 bugs?"
+      "stoppedEnough": "asks: have you stopped at least 15 bugs?",
+      "created": "runs once, when this object is created",
+      "hit": "runs when water hits this bug",
+      "meMove": "move this bug forward (with its own speed)",
+      "meSpeed": "this bug's speed (bigger is faster)",
+      "meHp": "this bug's HP: how much it can take",
+      "meChangeHp": "take 1 HP away from this bug",
+      "hpGone": "asks: is this bug's HP 0 or less?",
+      "meSquash": "squash this bug: it is stopped",
+      "meShoot": "this sprinkler shoots a drop along its row"
     },
     "err": {
       "string": "This text has no closing {q}. Text must start and end with {q}.",
@@ -255,7 +272,9 @@
       "unusedQuestion": "{name}(…) asks a question, but nothing uses the answer, so this line does nothing. Put it inside if ( … ) { } and put what should happen inside the { }.",
       "revealInLoop": "This opens the square while the loop is still counting, so the number is not finished yet. Move it below the } on line {line}, where the loop ends.",
       "commandInIf": "{name}(…) is a command, not a question, so it can't be inside the ( ) of {kw}. The ( ) only hold the question. Move the command out: into the { } if it should only happen when the answer is yes, or below the }.",
-      "twoInIf": "There are two things next to each other inside the ( ) of {kw}. The ( ) hold one question. To ask two at once, join them with && (and) or || (or)."
+      "twoInIf": "There are two things next to each other inside the ( ) of {kw}. The ( ) hold one question. To ask two at once, join them with && (and) or || (or).",
+      "noMeHere": "me only exists in an object's script, like 🐌 Bug or 💧 Sprinkler. In 🏡 Garden there is no \"me\".",
+      "propCalled": "{name} is a value, not a command, so it has no ( ) after it. Use it like a variable: {name} = 3;"
     },
     "symbols": "Symbols",
     "symbolsTip": "Click on any symbol or word in your code to see what it means there.",
@@ -352,7 +371,18 @@
     "field": "field is the minefield. Write a dot after it to use one of its commands, like field.reveal.",
     "garden": "garden is Bit's garden. Write a dot after it to use one of its commands, like garden.build.",
     "item_x": "{name}.x is the column of the {name} the loop is visiting right now.",
-    "item_y": "{name}.y is the row of the {name} the loop is visiting right now."
+    "item_y": "{name}.y is the row of the {name} the loop is visiting right now.",
+    "me": "me is the object running this script right now: this bug, or this sprinkler. Every object runs the same script, each with its own me.",
+    "me_speed": "me.speed is this bug's speed. A bigger number is faster: 0.1 is twice as fast as 0.05.",
+    "me_hp": "me.hp is this bug's HP: how much water it can take before it is squashed.",
+    "me_kind": "me.kind is what kind of bug this is: 'snail' or 'beetle'.",
+    "me_x": "me.x is the column this object is in right now.",
+    "me_y": "me.y is the row this object is in.",
+    "me_move": "me.move() moves this bug one small step, as far as its speed says.",
+    "me_squash": "me.squash() squashes this bug: it is stopped and disappears.",
+    "me_shoot": "me.shoot() makes this sprinkler shoot a water drop along its row.",
+    "event_created": "{name} is a special name: its code runs once for each object, the moment it is created.",
+    "event_hit": "{name} is a special name: its code runs every time water hits this bug."
   },
   "glossary": {
     "braces": "hold a group of code that belongs together: the code of a function, a loop or an if",
@@ -423,6 +453,11 @@
         "misplacedAfter": "The block in the wrong place should go under this one.",
         "order": "Move the block that comes too early under this one."
       }
-    }
+    },
+    "otherScript": "The {here} script looks right! The mistake is in the {there} script.",
+    "openScript": "Open {name}"
+  },
+  "scripts": {
+    "label": "Scripts"
   }
 }

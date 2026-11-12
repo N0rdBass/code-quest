@@ -3,6 +3,54 @@
   "world": "garden",
   "game": "garden",
   "stars": 3,
+  "scripts": {
+    "garden": {
+      "icon": "🏡",
+      "name": {
+        "en": "Garden",
+        "no": "Hagen"
+      },
+      "about": {
+        "en": "The game itself: building, bugs coming, coins, winning and losing.",
+        "no": "Selve spillet: bygging, insekter som kommer, mynter, å vinne og tape."
+      },
+      "events": [
+        "event_start",
+        "event_tick",
+        "event_click"
+      ]
+    },
+    "bug": {
+      "icon": "🐌",
+      "name": {
+        "en": "Bug",
+        "no": "Insekt"
+      },
+      "about": {
+        "en": "The code every bug follows. \"me\" is this bug.",
+        "no": "Koden hvert insekt følger. «meg» er dette insektet."
+      },
+      "events": [
+        "event_created",
+        "event_tick",
+        "event_hit"
+      ]
+    },
+    "sprinkler": {
+      "icon": "💧",
+      "name": {
+        "en": "Sprinkler",
+        "no": "Sprinkler"
+      },
+      "about": {
+        "en": "The code every sprinkler follows. \"me\" is this sprinkler.",
+        "no": "Koden hver sprinkler følger. «meg» er denne sprinkleren."
+      },
+      "events": [
+        "event_tick"
+      ]
+    }
+  },
   "lessons": [
     {
       "id": "garden-1",
@@ -10,45 +58,54 @@
         "en": "Build!",
         "no": "Bygg!"
       },
+      "scripts": [
+        "garden"
+      ],
       "story": {
-        "en": "Bugs are on their way to Bit's garden! Bit can build sprinklers that spray water at them. First: build them where you click.",
-        "no": "Insekter er på vei til hagen til Bit! Bit kan bygge sprinklere som spruter vann på dem. Først: bygg dem der du klikker."
+        "en": "Bugs are on their way to Bit's garden! Bit can build sprinklers that spray water at them. This game has several scripts, one for each kind of thing. Start in 🏡 Garden: build where you click.",
+        "no": "Insekter er på vei til hagen til Bit! Bit kan bygge sprinklere som spruter vann på dem. Dette spillet har flere skript, ett for hver slags ting. Begynn i 🏡 Hagen: bygg der du klikker."
       },
       "task": {
-        "en": "Put \"build a sprinkler at column x row y\" in \"when a square is clicked\". Press Run, then build 5 sprinklers on the lawn.",
-        "no": "Legg «bygg en sprinkler i kolonne x rad y» i «når en rute klikkes». Trykk Kjør, og bygg 5 sprinklere på plenen."
+        "en": "In 🏡 Garden, put \"build a sprinkler at column x row y\" in \"when a square is clicked\". Press Run, then build 5 sprinklers.",
+        "no": "I 🏡 Hagen, legg «bygg en sprinkler i kolonne x rad y» i «når en rute klikkes». Trykk Kjør, og bygg 5 sprinklere."
       },
       "hint": {
-        "en": "Just like opening squares in Minesweeper: x and y tell your code which square you clicked.",
-        "no": "Akkurat som da du åpnet ruter i Minesveiper: x og y forteller koden din hvilken rute du klikket på."
+        "en": "Just like in Minesweeper: x and y tell your code which square you clicked.",
+        "no": "Akkurat som i Minesveiper: x og y forteller koden din hvilken rute du klikket på."
       },
       "taskCode": {
-        "en": "Write garden.build(x, y); in whenSquareClicked(x, y). Press Run, then build 5 sprinklers.",
-        "no": "Skriv garden.build(x, y); i whenSquareClicked(x, y). Trykk Kjør, og bygg 5 sprinklere."
+        "en": "In 🏡 Garden, write garden.build(x, y); in whenSquareClicked(x, y). Press Run, then build 5 sprinklers.",
+        "no": "I 🏡 Hagen, skriv garden.build(x, y); i whenSquareClicked(x, y). Trykk Kjør, og bygg 5 sprinklere."
       },
       "hintCode": {
         "en": "x and y are the column and row you clicked, like in Minesweeper.",
         "no": "x og y er kolonnen og raden du klikket på, som i Minesveiper."
       },
       "concept": {
-        "en": "You already know clicks and coordinates. Now you use them to build.",
-        "no": "Du kan allerede klikk og koordinater. Nå bruker du dem til å bygge."
+        "en": "A game can have one script for each kind of thing.",
+        "no": "Et spill kan ha ett skript for hver slags ting."
       },
       "goal": {
         "type": "built",
         "n": 5
       },
-      "toolbox": [
-        "garden_build"
-      ],
-      "starter": [
-        {
-          "type": "event_click",
-          "x": 30,
-          "y": 30
-        }
-      ],
-      "solution": "function whenSquareClicked(x, y) {\n  garden.build(x, y);\n}\n"
+      "toolbox": {
+        "garden": [
+          "garden_build"
+        ]
+      },
+      "starter": {
+        "garden": [
+          {
+            "type": "event_click",
+            "x": 30,
+            "y": 30
+          }
+        ]
+      },
+      "solution": {
+        "garden": "function whenSquareClicked(x, y) {\n  garden.build(x, y);\n}\n"
+      }
     },
     {
       "id": "garden-2",
@@ -56,163 +113,325 @@
         "en": "Here come the bugs",
         "no": "Her kommer insektene"
       },
+      "scripts": [
+        "garden",
+        "bug"
+      ],
+      "carryFrom": "garden-1",
       "story": {
-        "en": "A garden game needs bugs! They should come regularly, like a kitchen timer that rings again and again. Every game tick, all bugs crawl a little closer to the house.",
-        "no": "Et hagespill trenger insekter! De skal komme jevnlig, som en kjøkkenklokke som ringer igjen og igjen. Hvert spilltikk kryper alle insektene litt nærmere huset."
+        "en": "Bugs! The 🏡 Garden sends them with a timer, like a kitchen timer that rings again and again. But how a bug moves is in its own script: 🐌 Bug. You write it once, and EVERY bug follows it. In that script, \"me\" means \"this bug\".",
+        "no": "Insekter! 🏡 Hagen sender dem med en tidtaker, som en kjøkkenklokke som ringer igjen og igjen. Men hvordan et insekt beveger seg står i dets eget skript: 🐌 Insekt. Du skriver det én gang, og HVERT insekt følger det. I det skriptet betyr «meg» «dette insektet»."
       },
       "task": {
-        "en": "Add \"every game tick\". Inside it: IF \"every 30 ticks?\", then \"send a new bug\". Under that: \"move all bugs\". Let 3 bugs come!",
-        "no": "Legg til «hvert spilltikk». Inni: HVIS «hvert 30. tikk?», så «send et nytt insekt». Under det: «flytt alle insektene». La 3 insekter komme!"
+        "en": "In 🏡 Garden, \"every game tick\": IF \"every 30 ticks?\", \"send a new bug\". Then open the 🐌 Bug tab: put \"move me forward\" in its \"every game tick\". Let 3 bugs come!",
+        "no": "I 🏡 Hagen, «hvert spilltikk»: HVIS «hvert 30. tikk?», «send et nytt insekt». Åpne så fanen 🐌 Insekt: legg «flytt meg fremover» i dens «hvert spilltikk». La 3 insekter komme!"
       },
       "hint": {
-        "en": "\"every 30 ticks?\" is a timer: it answers yes once every 30 ticks. \"move all bugs\" should happen every tick, so it goes outside the if.",
-        "no": "«hvert 30. tikk?» er en tidtaker: den svarer ja én gang hvert 30. tikk. «flytt alle insektene» skal skje hvert tikk, så den står utenfor hvis-klossen."
+        "en": "Each script has its own blocks: click the tabs above the blocks to switch. Every bug runs the 🐌 Bug script by itself, many times a second.",
+        "no": "Hvert skript har sine egne klosser: klikk på fanene over klossene for å bytte. Hvert insekt kjører 🐌 Insekt-skriptet selv, mange ganger i sekundet."
       },
       "taskCode": {
-        "en": "Add function everyTick() { … } with if (game.every(30)) { garden.newBug(); } and then garden.moveBugs();. Let 3 bugs come!",
-        "no": "Legg til function everyTick() { … } med if (game.every(30)) { garden.newBug(); } og så garden.moveBugs();. La 3 insekter komme!"
+        "en": "In 🏡 Garden: everyTick() with if (game.every(30)) { garden.newBug(); }. In the 🐌 Bug tab: everyTick() with me.move();. Let 3 bugs come!",
+        "no": "I 🏡 Hagen: everyTick() med if (game.every(30)) { garden.newBug(); }. I fanen 🐌 Insekt: everyTick() med me.move();. La 3 insekter komme!"
       },
       "hintCode": {
-        "en": "game.every(30) is true once every 30 ticks. garden.moveBugs(); goes below the if, so the bugs move every tick.",
-        "no": "game.every(30) er true én gang hvert 30. tikk. garden.moveBugs(); står under if-en, så insektene flytter seg hvert tikk."
+        "en": "me is the bug running the code right now. Every bug runs the 🐌 Bug script for itself, so me.move() moves each one.",
+        "no": "me er insektet som kjører koden akkurat nå. Hvert insekt kjører 🐌 Insekt-skriptet for seg selv, så me.move() flytter hvert av dem."
       },
       "concept": {
-        "en": "A timer makes something happen again and again, at a steady pace.",
-        "no": "En tidtaker får noe til å skje igjen og igjen, i jevnt tempo."
+        "en": "An object (a bug) runs its own code. \"me\" is the object itself.",
+        "no": "Et objekt (et insekt) kjører sin egen kode. «meg» er objektet selv."
       },
       "goal": {
         "type": "bugs",
         "n": 3
       },
-      "carryFrom": "garden-1",
-      "toolbox": [
-        "event_tick",
-        "if",
-        "game_every",
-        "garden_new_bug",
-        "garden_move_bugs",
-        "garden_build"
-      ],
-      "solution": "function whenSquareClicked(x, y) {\n  garden.build(x, y);\n}\n\nfunction everyTick() {\n  if (game.every(30)) {\n    garden.newBug();\n  }\n  garden.moveBugs();\n}\n"
+      "toolbox": {
+        "garden": [
+          "if",
+          "game_every",
+          "garden_new_bug",
+          "garden_build"
+        ],
+        "bug": [
+          "me_move"
+        ]
+      },
+      "ensure": {
+        "garden": [
+          "event_tick"
+        ],
+        "bug": [
+          "event_tick"
+        ]
+      },
+      "starter": {
+        "bug": [
+          {
+            "type": "event_tick",
+            "x": 30,
+            "y": 30
+          }
+        ]
+      },
+      "solution": {
+        "garden": "function whenSquareClicked(x, y) {\n  garden.build(x, y);\n}\n\nfunction everyTick() {\n  if (game.every(30)) {\n    garden.newBug();\n  }\n}\n",
+        "bug": "function everyTick() {\n  me.move();\n}\n"
+      },
+      "focus": "bug"
     },
     {
       "id": "garden-3",
       "title": {
+        "en": "My own bug",
+        "no": "Mitt eget insekt"
+      },
+      "scripts": [
+        "garden",
+        "bug"
+      ],
+      "carryFrom": "garden-2",
+      "story": {
+        "en": "Every bug has its own speed and its own HP (how much it can take). They are the bug's own variables, and the bug sets them itself when it is created.",
+        "no": "Hvert insekt har sin egen fart og sine egne HP (hvor mye det tåler). Det er insektets egne variabler, og insektet setter dem selv når det blir laget."
+      },
+      "task": {
+        "en": "In 🐌 Bug, \"when I'm created\": \"set my speed to 0.05\" and \"set my HP to 3\". Try other numbers too! Let 3 of your own bugs come.",
+        "no": "I 🐌 Insekt, «når jeg blir laget»: «sett min fart til 0.05» og «sett mine HP til 3». Prøv andre tall også! La 3 av dine egne insekter komme."
+      },
+      "hint": {
+        "en": "A bigger speed is faster: 0.1 is twice as fast as 0.05. \"When I'm created\" runs once for each bug, the moment it appears.",
+        "no": "Større fart går fortere: 0.1 er dobbelt så fort som 0.05. «Når jeg blir laget» kjører én gang for hvert insekt, i det øyeblikket det dukker opp."
+      },
+      "taskCode": {
+        "en": "In 🐌 Bug, whenCreated(): me.speed = 0.05; and me.hp = 3;. Try other numbers too! Let 3 of your own bugs come.",
+        "no": "I 🐌 Insekt, whenCreated(): me.speed = 0.05; og me.hp = 3;. Prøv andre tall også! La 3 av dine egne insekter komme."
+      },
+      "hintCode": {
+        "en": "me.speed and me.hp belong to the bug: = puts a value in them, like in a variable.",
+        "no": "me.speed og me.hp hører til insektet: = legger en verdi i dem, som i en variabel."
+      },
+      "concept": {
+        "en": "An object can have its own variables (properties), like speed and HP.",
+        "no": "Et objekt kan ha sine egne variabler (egenskaper), som fart og HP."
+      },
+      "goal": {
+        "type": "ownBugs",
+        "n": 3
+      },
+      "toolbox": {
+        "garden": [
+          "if",
+          "game_every",
+          "garden_new_bug",
+          "garden_build"
+        ],
+        "bug": [
+          "me_set_speed",
+          "me_set_hp",
+          "me_move"
+        ]
+      },
+      "ensure": {
+        "bug": [
+          "event_created"
+        ]
+      },
+      "solution": {
+        "garden": "function whenSquareClicked(x, y) {\n  garden.build(x, y);\n}\n\nfunction everyTick() {\n  if (game.every(30)) {\n    garden.newBug();\n  }\n}\n",
+        "bug": "function whenCreated() {\n  me.speed = 0.05;\n  me.hp = 3;\n}\n\nfunction everyTick() {\n  me.move();\n}\n"
+      },
+      "focus": "bug"
+    },
+    {
+      "id": "garden-4",
+      "title": {
         "en": "Water!",
         "no": "Vann!"
       },
+      "scripts": [
+        "garden",
+        "bug",
+        "sprinkler"
+      ],
+      "carryFrom": "garden-3",
       "story": {
-        "en": "The sprinklers just stand there. Every few ticks, EVERY sprinkler should spray a drop of water along its row. Three drops squash a snail, two a beetle.",
-        "no": "Sprinklerne bare står der. Med noen tikks mellomrom skal HVER sprinkler sprute en vanndråpe bortover raden sin. Tre dråper knuser en snegle, to en bille."
+        "en": "Sprinklers get their own script: 💧 Sprinkler. Every sprinkler should spray a drop of water every 10 ticks. And when water hits a bug, the 🐌 Bug script decides what happens.",
+        "no": "Sprinklerne får sitt eget skript: 💧 Sprinkler. Hver sprinkler skal sprute en vanndråpe hvert 10. tikk. Og når vann treffer et insekt, bestemmer 🐌 Insekt-skriptet hva som skjer."
       },
       "task": {
-        "en": "In \"every game tick\": IF \"every 10 ticks?\", then \"for each sprinkler\": \"shoot water from that sprinkler's column and row\". Stop 3 bugs!",
-        "no": "I «hvert spilltikk»: HVIS «hvert 10. tikk?», så «for hver sprinkler»: «sprut vann fra den sprinklerens kolonne og rad». Stopp 3 insekter!"
+        "en": "In 💧 Sprinkler, \"every game tick\": IF \"every 10 ticks?\", \"shoot water\". In 🐌 Bug, \"when water hits me\": \"change my HP by -1\", and IF my HP ≤ 0, \"squash me\". Stop 3 bugs!",
+        "no": "I 💧 Sprinkler, «hvert spilltikk»: HVIS «hvert 10. tikk?», «sprut vann». I 🐌 Insekt, «når vann treffer meg»: «endre mine HP med -1», og HVIS mine HP ≤ 0, «knus meg». Stopp 3 insekter!"
       },
       "hint": {
-        "en": "\"for each sprinkler\" is a loop: the blocks inside run once for every sprinkler you built. Build sprinklers in the rows where bugs come.",
-        "no": "«for hver sprinkler» er en løkke: klossene inni kjører én gang for hver sprinkler du har bygget. Bygg sprinklere i radene der insektene kommer."
+        "en": "Every sprinkler runs the 💧 script for itself, so they all shoot along their own row. Build sprinklers in the rows where bugs come.",
+        "no": "Hver sprinkler kjører 💧-skriptet for seg selv, så alle spruter bortover sin egen rad. Bygg sprinklere i radene der insektene kommer."
       },
       "taskCode": {
-        "en": "In everyTick: if (game.every(10)) { for (const sprinkler of garden.sprinklers()) { garden.shoot(sprinkler.x, sprinkler.y); } }. Stop 3 bugs!",
-        "no": "I everyTick: if (game.every(10)) { for (const sprinkler of garden.sprinklers()) { garden.shoot(sprinkler.x, sprinkler.y); } }. Stopp 3 insekter!"
+        "en": "In 💧 Sprinkler: everyTick() with if (game.every(10)) { me.shoot(); }. In 🐌 Bug: whenHit() with me.hp = me.hp - 1; and if (me.hp <= 0) { me.squash(); }. Stop 3 bugs!",
+        "no": "I 💧 Sprinkler: everyTick() med if (game.every(10)) { me.shoot(); }. I 🐌 Insekt: whenHit() med me.hp = me.hp - 1; og if (me.hp <= 0) { me.squash(); }. Stopp 3 insekter!"
       },
       "hintCode": {
-        "en": "The loop visits every sprinkler, one at a time. sprinkler.x and sprinkler.y are the column and row of the one it is visiting.",
-        "no": "Løkken besøker hver sprinkler, én om gangen. sprinkler.x og sprinkler.y er kolonnen og raden til den den besøker."
+        "en": "In 💧 Sprinkler, me is this sprinkler. In 🐌 Bug, me is this bug. <= means \"less than or the same as\".",
+        "no": "I 💧 Sprinkler er me denne sprinkleren. I 🐌 Insekt er me dette insektet. <= betyr «mindre enn eller lik»."
       },
       "concept": {
-        "en": "A loop can do the same thing for many objects.",
-        "no": "En løkke kan gjøre det samme for mange objekter."
+        "en": "Objects talk through events: water hits → the bug runs its \"when water hits me\".",
+        "no": "Objekter snakker gjennom hendelser: vann treffer → insektet kjører sin «når vann treffer meg»."
       },
       "goal": {
         "type": "stopped",
         "n": 3
       },
-      "carryFrom": "garden-2",
-      "toolbox": [
-        "for_sprinklers",
-        "garden_shoot",
-        "event_tick",
-        "if",
-        "game_every",
-        "garden_new_bug",
-        "garden_move_bugs",
-        "garden_build"
-      ],
-      "solution": "function whenSquareClicked(x, y) {\n  garden.build(x, y);\n}\n\nfunction everyTick() {\n  if (game.every(30)) {\n    garden.newBug();\n  }\n  if (game.every(10)) {\n    for (const sprinkler of garden.sprinklers()) {\n      garden.shoot(sprinkler.x, sprinkler.y);\n    }\n  }\n  garden.moveBugs();\n}\n"
+      "toolbox": {
+        "garden": [
+          "if",
+          "game_every",
+          "garden_new_bug",
+          "garden_build"
+        ],
+        "bug": [
+          "me_change_hp",
+          "if",
+          "hp_gone",
+          "me_squash",
+          "me_set_speed",
+          "me_set_hp",
+          "me_move"
+        ],
+        "sprinkler": [
+          "if",
+          "game_every",
+          "me_shoot"
+        ]
+      },
+      "ensure": {
+        "bug": [
+          "event_hit"
+        ],
+        "sprinkler": [
+          "event_tick"
+        ]
+      },
+      "starter": {
+        "sprinkler": [
+          {
+            "type": "event_tick",
+            "x": 30,
+            "y": 30
+          }
+        ]
+      },
+      "solution": {
+        "garden": "function whenSquareClicked(x, y) {\n  garden.build(x, y);\n}\n\nfunction everyTick() {\n  if (game.every(30)) {\n    garden.newBug();\n  }\n}\n",
+        "bug": "function whenCreated() {\n  me.speed = 0.05;\n  me.hp = 3;\n}\n\nfunction everyTick() {\n  me.move();\n}\n\nfunction whenHit() {\n  me.hp = me.hp - 1;\n  if (me.hp <= 0) {\n    me.squash();\n  }\n}\n",
+        "sprinkler": "function everyTick() {\n  if (game.every(10)) {\n    me.shoot();\n  }\n}\n"
+      },
+      "focus": "sprinkler"
     },
     {
-      "id": "garden-4",
+      "id": "garden-5",
       "title": {
         "en": "Coins",
         "no": "Mynter"
       },
+      "scripts": [
+        "garden",
+        "bug",
+        "sprinkler"
+      ],
+      "carryFrom": "garden-4",
       "story": {
-        "en": "Building for free is too easy! Each sprinkler should cost 10 coins. Every squashed bug leaves a coin worth 5.",
-        "no": "Det er for lett å bygge gratis! Hver sprinkler skal koste 10 mynter. Hvert knust insekt etterlater en mynt verdt 5."
+        "en": "Building for free is too easy! A sprinkler should cost 10 coins, and a squashed bug should give 5.",
+        "no": "Det er for lett å bygge gratis! En sprinkler skal koste 10 mynter, og et knust insekt skal gi 5."
       },
       "task": {
-        "en": "When Run is clicked: \"change coins by 50\". When a square is clicked: IF coins ≥ 10, build the sprinkler and \"change coins by -10\". Stop 5 bugs without going below 0 coins!",
-        "no": "Når Kjør trykkes: «endre mynter med 50». Når en rute klikkes: HVIS mynter ≥ 10, bygg sprinkleren og «endre mynter med -10». Stopp 5 insekter uten å gå under 0 mynter!"
+        "en": "🏡 Garden: when Run is clicked, \"change coins by 50\". When a square is clicked: IF coins ≥ 10, build and \"change coins by -10\". 🐌 Bug: when it is squashed, \"change coins by 5\". Stop 5 bugs without going below 0!",
+        "no": "🏡 Hagen: når Kjør trykkes, «endre mynter med 50». Når en rute klikkes: HVIS mynter ≥ 10, bygg og «endre mynter med -10». 🐌 Insekt: når det blir knust, «endre mynter med 5». Stopp 5 insekter uten å gå under 0!"
       },
       "hint": {
-        "en": "Coins are a variable: a number the game remembers. The if checks that you can afford it before you build.",
-        "no": "Mynter er en variabel: et tall spillet husker. Hvis-klossen sjekker at du har råd før du bygger."
+        "en": "The coins belong to the whole game, so both scripts can change them. Put \"change coins by 5\" inside the if where the bug is squashed.",
+        "no": "Myntene hører til hele spillet, så begge skriptene kan endre dem. Legg «endre mynter med 5» inni hvis-klossen der insektet blir knust."
       },
       "taskCode": {
-        "en": "In whenRunClicked: game.changeCoins(50);. In whenSquareClicked: if (game.coins() >= 10) { garden.build(x, y); game.changeCoins(-10); }. Stop 5 bugs!",
-        "no": "I whenRunClicked: game.changeCoins(50);. I whenSquareClicked: if (game.coins() >= 10) { garden.build(x, y); game.changeCoins(-10); }. Stopp 5 insekter!"
+        "en": "🏡 Garden: whenRunClicked() with game.changeCoins(50);, and in whenSquareClicked: if (game.coins() >= 10) { garden.build(x, y); game.changeCoins(-10); }. 🐌 Bug: game.changeCoins(5); next to me.squash();. Stop 5 bugs!",
+        "no": "🏡 Hagen: whenRunClicked() med game.changeCoins(50);, og i whenSquareClicked: if (game.coins() >= 10) { garden.build(x, y); game.changeCoins(-10); }. 🐌 Insekt: game.changeCoins(5); ved siden av me.squash();. Stopp 5 insekter!"
       },
       "hintCode": {
-        "en": ">= means \"more than or the same as\". Spending is changing by a minus number: game.changeCoins(-10).",
-        "no": ">= betyr «større enn eller lik». Å bruke penger er å endre med et minustall: game.changeCoins(-10)."
+        "en": "game is the whole game, so game.coins() is the same number in every script.",
+        "no": "game er hele spillet, så game.coins() er det samme tallet i alle skriptene."
       },
       "concept": {
-        "en": "A variable can be money: you add to it and spend from it.",
-        "no": "En variabel kan være penger: du legger til og bruker av den."
+        "en": "Some variables belong to one object (me.hp), some to the whole game (coins).",
+        "no": "Noen variabler hører til ett objekt (me.hp), andre til hele spillet (mynter)."
       },
       "goal": {
         "type": "paidFor",
         "n": 5
       },
-      "carryFrom": "garden-3",
-      "toolbox": [
-        "coins_enough",
-        "coins_change",
-        "event_start",
-        "for_sprinklers",
-        "garden_shoot",
-        "event_tick",
-        "if",
-        "game_every",
-        "garden_new_bug",
-        "garden_move_bugs",
-        "garden_build"
-      ],
-      "solution": "function whenRunClicked() {\n  game.changeCoins(50);\n}\n\nfunction whenSquareClicked(x, y) {\n  if (game.coins() >= 10) {\n    garden.build(x, y);\n    game.changeCoins(-10);\n  }\n}\n\nfunction everyTick() {\n  if (game.every(30)) {\n    garden.newBug();\n  }\n  if (game.every(10)) {\n    for (const sprinkler of garden.sprinklers()) {\n      garden.shoot(sprinkler.x, sprinkler.y);\n    }\n  }\n  garden.moveBugs();\n}\n"
+      "toolbox": {
+        "garden": [
+          "coins_enough",
+          "coins_change",
+          "if",
+          "game_every",
+          "garden_new_bug",
+          "garden_build"
+        ],
+        "bug": [
+          "coins_change",
+          "me_change_hp",
+          "if",
+          "hp_gone",
+          "me_squash",
+          "me_set_speed",
+          "me_set_hp",
+          "me_move"
+        ],
+        "sprinkler": [
+          "if",
+          "game_every",
+          "me_shoot"
+        ]
+      },
+      "ensure": {
+        "garden": [
+          "event_start"
+        ]
+      },
+      "solution": {
+        "garden": "function whenRunClicked() {\n  game.changeCoins(50);\n}\n\nfunction whenSquareClicked(x, y) {\n  if (game.coins() >= 10) {\n    garden.build(x, y);\n    game.changeCoins(-10);\n  }\n}\n\nfunction everyTick() {\n  if (game.every(30)) {\n    garden.newBug();\n  }\n}\n",
+        "bug": "function whenCreated() {\n  me.speed = 0.05;\n  me.hp = 3;\n}\n\nfunction everyTick() {\n  me.move();\n}\n\nfunction whenHit() {\n  me.hp = me.hp - 1;\n  if (me.hp <= 0) {\n    me.squash();\n    game.changeCoins(5);\n  }\n}\n",
+        "sprinkler": "function everyTick() {\n  if (game.every(10)) {\n    me.shoot();\n  }\n}\n"
+      }
     },
     {
-      "id": "garden-5",
+      "id": "garden-6",
       "title": {
         "en": "Protect the house",
         "no": "Beskytt huset"
       },
+      "scripts": [
+        "garden",
+        "bug",
+        "sprinkler"
+      ],
+      "carryFrom": "garden-5",
       "story": {
         "en": "If a bug gets into Bit's house, the game should be over. Right now they just walk in!",
         "no": "Hvis et insekt kommer inn i huset til Bit, skal spillet være slutt. Akkurat nå går de bare rett inn!"
       },
       "task": {
-        "en": "In \"every game tick\": IF \"a bug reached the house?\", then \"game over\". Test it: let a bug get through!",
-        "no": "I «hvert spilltikk»: HVIS «et insekt nådde huset?», så «spillet er slutt». Test det: la et insekt slippe gjennom!"
+        "en": "In 🏡 Garden, \"every game tick\": IF \"a bug reached the house?\", \"game over\". Test it: let a bug get through!",
+        "no": "I 🏡 Hagen, «hvert spilltikk»: HVIS «et insekt nådde huset?», «spillet er slutt». Test det: la et insekt slippe gjennom!"
       },
       "hint": {
-        "en": "Put the new if under \"move all bugs\", so it checks after the bugs have moved.",
-        "no": "Legg den nye hvis-klossen under «flytt alle insektene», så den sjekker etter at insektene har flyttet seg."
+        "en": "This is a rule for the whole game, so it goes in 🏡 Garden, not in 🐌 Bug.",
+        "no": "Dette er en regel for hele spillet, så den hører hjemme i 🏡 Hagen, ikke i 🐌 Insekt."
       },
       "taskCode": {
-        "en": "In everyTick, after garden.moveBugs();: if (garden.bugAtHouse()) { game.over(); }. Let a bug get through to test it!",
-        "no": "I everyTick, etter garden.moveBugs();: if (garden.bugAtHouse()) { game.over(); }. La et insekt slippe gjennom for å teste!"
+        "en": "In 🏡 Garden, everyTick(): if (garden.bugAtHouse()) { game.over(); }. Let a bug get through to test it!",
+        "no": "I 🏡 Hagen, everyTick(): if (garden.bugAtHouse()) { game.over(); }. La et insekt slippe gjennom for å teste!"
       },
       "hintCode": {
         "en": "garden.bugAtHouse() asks: has any bug reached the house?",
@@ -226,79 +445,113 @@
         "type": "gameOver",
         "reason": "house"
       },
-      "carryFrom": "garden-4",
-      "toolbox": [
-        "garden_bug_home",
-        "game_over",
-        "coins_enough",
-        "coins_change",
-        "event_start",
-        "for_sprinklers",
-        "garden_shoot",
-        "event_tick",
-        "if",
-        "game_every",
-        "garden_new_bug",
-        "garden_move_bugs",
-        "garden_build"
-      ],
-      "solution": "function whenRunClicked() {\n  game.changeCoins(50);\n}\n\nfunction whenSquareClicked(x, y) {\n  if (game.coins() >= 10) {\n    garden.build(x, y);\n    game.changeCoins(-10);\n  }\n}\n\nfunction everyTick() {\n  if (game.every(30)) {\n    garden.newBug();\n  }\n  if (game.every(10)) {\n    for (const sprinkler of garden.sprinklers()) {\n      garden.shoot(sprinkler.x, sprinkler.y);\n    }\n  }\n  garden.moveBugs();\n  if (garden.bugAtHouse()) {\n    game.over();\n  }\n}\n"
+      "toolbox": {
+        "garden": [
+          "garden_bug_home",
+          "game_over",
+          "coins_enough",
+          "coins_change",
+          "if",
+          "game_every",
+          "garden_new_bug",
+          "garden_build"
+        ],
+        "bug": [
+          "coins_change",
+          "me_change_hp",
+          "if",
+          "hp_gone",
+          "me_squash",
+          "me_set_speed",
+          "me_set_hp",
+          "me_move"
+        ],
+        "sprinkler": [
+          "if",
+          "game_every",
+          "me_shoot"
+        ]
+      },
+      "solution": {
+        "garden": "function whenRunClicked() {\n  game.changeCoins(50);\n}\n\nfunction whenSquareClicked(x, y) {\n  if (game.coins() >= 10) {\n    garden.build(x, y);\n    game.changeCoins(-10);\n  }\n}\n\nfunction everyTick() {\n  if (game.every(30)) {\n    garden.newBug();\n  }\n  if (garden.bugAtHouse()) {\n    game.over();\n  }\n}\n",
+        "bug": "function whenCreated() {\n  me.speed = 0.05;\n  me.hp = 3;\n}\n\nfunction everyTick() {\n  me.move();\n}\n\nfunction whenHit() {\n  me.hp = me.hp - 1;\n  if (me.hp <= 0) {\n    me.squash();\n    game.changeCoins(5);\n  }\n}\n",
+        "sprinkler": "function everyTick() {\n  if (game.every(10)) {\n    me.shoot();\n  }\n}\n"
+      }
     },
     {
-      "id": "garden-6",
+      "id": "garden-7",
       "title": {
         "en": "You win!",
         "no": "Du vant!"
       },
+      "scripts": [
+        "garden",
+        "bug",
+        "sprinkler"
+      ],
+      "carryFrom": "garden-6",
+      "final": true,
       "story": {
-        "en": "Last two things: fences that hold bugs back (right-click, 5 coins), and a way to win: stop 10 bugs!",
-        "no": "To ting til slutt: gjerder som holder insektene tilbake (høyreklikk, 5 mynter), og en måte å vinne på: stopp 10 insekter!"
+        "en": "The last rule: you win when you have stopped 10 bugs. Then make the game your own: change the speed, HP, prices and timers!",
+        "no": "Den siste regelen: du vinner når du har stoppet 10 insekter. Gjør så spillet til ditt eget: endre fart, HP, priser og tidtakere!"
       },
       "task": {
-        "en": "Add \"when a square is right-clicked\": IF coins ≥ 5, \"build a fence\" and \"change coins by -5\". In \"every game tick\": IF bugs stopped ≥ 10, \"you win!\". Then win!",
-        "no": "Legg til «når en rute høyreklikkes»: HVIS mynter ≥ 5, «bygg et gjerde» og «endre mynter med -5». I «hvert spilltikk»: HVIS insekter stoppet ≥ 10, «du vant!». Vinn så!"
+        "en": "In 🏡 Garden, \"every game tick\": IF bugs stopped ≥ 10, \"you win!\". Then win the game!",
+        "no": "I 🏡 Hagen, «hvert spilltikk»: HVIS insekter stoppet ≥ 10, «du vant!». Vinn så spillet!"
       },
       "hint": {
-        "en": "Fences are cheap and slow the bugs down while the sprinklers spray. Put them in front of the sprinklers.",
-        "no": "Gjerder er billige og holder insektene igjen mens sprinklerne spruter. Sett dem foran sprinklerne."
+        "en": "Build one sprinkler in each row first, then save up coins.",
+        "no": "Bygg én sprinkler i hver rad først, og spar så opp mynter."
       },
       "taskCode": {
-        "en": "Add function whenSquareRightClicked(x, y) with if (game.coins() >= 5) { garden.buildFence(x, y); game.changeCoins(-5); }. In everyTick: if (garden.stopped() >= 10) { game.win(); }. Then win!",
-        "no": "Legg til function whenSquareRightClicked(x, y) med if (game.coins() >= 5) { garden.buildFence(x, y); game.changeCoins(-5); }. I everyTick: if (garden.stopped() >= 10) { game.win(); }. Vinn så!"
+        "en": "In 🏡 Garden, everyTick(): if (garden.stopped() >= 10) { game.win(); }. Then win the game!",
+        "no": "I 🏡 Hagen, everyTick(): if (garden.stopped() >= 10) { game.win(); }. Vinn så spillet!"
       },
       "hintCode": {
         "en": "garden.stopped() is how many bugs you have stopped so far.",
         "no": "garden.stopped() er hvor mange insekter du har stoppet så langt."
       },
       "concept": {
-        "en": "A game needs a way to win, too. You built a whole defence game!",
-        "no": "Et spill trenger også en måte å vinne på. Du har laget et helt forsvarsspill!"
+        "en": "You built a whole game out of objects that each run their own code!",
+        "no": "Du har laget et helt spill av objekter som kjører hver sin kode!"
       },
       "goal": {
         "type": "win"
       },
-      "final": true,
-      "carryFrom": "garden-5",
-      "toolbox": [
-        "event_rightclick",
-        "garden_fence",
-        "stopped_enough",
-        "game_win",
-        "garden_bug_home",
-        "game_over",
-        "coins_enough",
-        "coins_change",
-        "event_start",
-        "for_sprinklers",
-        "garden_shoot",
-        "event_tick",
-        "if",
-        "game_every",
-        "garden_new_bug",
-        "garden_move_bugs",
-        "garden_build"
-      ],
-      "solution": "function whenRunClicked() {\n  game.changeCoins(50);\n}\n\nfunction whenSquareClicked(x, y) {\n  if (game.coins() >= 10) {\n    garden.build(x, y);\n    game.changeCoins(-10);\n  }\n}\n\nfunction everyTick() {\n  if (game.every(30)) {\n    garden.newBug();\n  }\n  if (game.every(10)) {\n    for (const sprinkler of garden.sprinklers()) {\n      garden.shoot(sprinkler.x, sprinkler.y);\n    }\n  }\n  garden.moveBugs();\n  if (garden.bugAtHouse()) {\n    game.over();\n  }\n  if (garden.stopped() >= 10) {\n    game.win();\n  }\n}\n\nfunction whenSquareRightClicked(x, y) {\n  if (game.coins() >= 5) {\n    garden.buildFence(x, y);\n    game.changeCoins(-5);\n  }\n}\n"
+      "toolbox": {
+        "garden": [
+          "stopped_enough",
+          "game_win",
+          "garden_bug_home",
+          "game_over",
+          "coins_enough",
+          "coins_change",
+          "if",
+          "game_every",
+          "garden_new_bug",
+          "garden_build"
+        ],
+        "bug": [
+          "coins_change",
+          "me_change_hp",
+          "if",
+          "hp_gone",
+          "me_squash",
+          "me_set_speed",
+          "me_set_hp",
+          "me_move"
+        ],
+        "sprinkler": [
+          "if",
+          "game_every",
+          "me_shoot"
+        ]
+      },
+      "solution": {
+        "garden": "function whenRunClicked() {\n  game.changeCoins(50);\n}\n\nfunction whenSquareClicked(x, y) {\n  if (game.coins() >= 10) {\n    garden.build(x, y);\n    game.changeCoins(-10);\n  }\n}\n\nfunction everyTick() {\n  if (game.every(30)) {\n    garden.newBug();\n  }\n  if (garden.bugAtHouse()) {\n    game.over();\n  }\n  if (garden.stopped() >= 10) {\n    game.win();\n  }\n}\n",
+        "bug": "function whenCreated() {\n  me.speed = 0.05;\n  me.hp = 3;\n}\n\nfunction everyTick() {\n  me.move();\n}\n\nfunction whenHit() {\n  me.hp = me.hp - 1;\n  if (me.hp <= 0) {\n    me.squash();\n    game.changeCoins(5);\n  }\n}\n",
+        "sprinkler": "function everyTick() {\n  if (game.every(10)) {\n    me.shoot();\n  }\n}\n"
+      }
     }
   ]
 }

@@ -10,6 +10,8 @@ const HATS = {
   everyTick: { type: 'event_tick' },
   whenSquareClicked: { type: 'event_click' },
   whenSquareRightClicked: { type: 'event_rightclick' },
+  whenCreated: { type: 'event_created' },
+  whenHit: { type: 'event_hit' },
   whenKeyUp: { type: 'event_key', fields: { KEY: 'up' } },
   whenKeyDown: { type: 'event_key', fields: { KEY: 'down' } },
   whenKeyLeft: { type: 'event_key', fields: { KEY: 'left' } },
@@ -43,9 +45,10 @@ const CALLS = {
   'field.allSafeOpen': { type: 'field_all_open' },
   'garden.build': { type: 'garden_build', xy: true },
   'garden.buildFence': { type: 'garden_fence', xy: true },
-  'garden.shoot': { type: 'garden_shoot', xy: true },
   'garden.newBug': { type: 'garden_new_bug' },
-  'garden.moveBugs': { type: 'garden_move_bugs' },
+  'me.move': { type: 'me_move' },
+  'me.squash': { type: 'me_squash' },
+  'me.shoot': { type: 'me_shoot' },
   'garden.bugAtHouse': { type: 'garden_bug_home' },
   'garden.stopped': { type: 'garden_stopped' },
   'game.every': { type: 'game_every', field: 'N' },
@@ -61,6 +64,7 @@ const VALUES = {
   x: { type: 'click_x' },
   y: { type: 'click_y' },
   count: { type: 'count_get' },
+  'me.hp': { type: 'me_hp' },
 };
 
 /** Split "a,b(c,d),e" at the commas that aren't inside brackets. */
@@ -140,10 +144,13 @@ function statement(node) {
       const [x, y] = splitArgs(around[1]);
       return { type: 'for_neighbours', inputs: { X: input(x), Y: input(y), DO: inLoop('square', node) } };
     }
-    if (/^const\$\d+ofgarden\.sprinklers\(\)$/.test(body)) return { type: 'for_sprinklers', inputs: { DO: inLoop('sprinkler', node) } };
     return null;
   }
   if (node.kind === 'let' && /^letcount=0$/.test(body)) return { type: 'count_set' };
+  let m;
+  if ((m = /^me\.speed=(-?[\d.]+)$/.exec(body))) return { type: 'me_set_speed', fields: { N: Number(m[1]) } };
+  if ((m = /^me\.hp=(-?\d+)$/.exec(body))) return { type: 'me_set_hp', fields: { N: Number(m[1]) } };
+  if ((m = /^me\.hp=me\.hp([+-])(\d+)$/.exec(body))) return { type: 'me_change_hp', fields: { N: Number(m[2]) * (m[1] === '-' ? -1 : 1) } };
   if (body === 'count=count+1') return { type: 'count_add' };
   return callBlock(body);
 }
