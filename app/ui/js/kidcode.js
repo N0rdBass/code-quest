@@ -261,7 +261,7 @@ const API = {
   game: { changeScore: null, over: null, faster: null, win: null, changeCoins: null, coins: null, every: null },
   garden: { build: null, buildFence: null, isEmpty: null, newBug: null, bugAtHouse: null, stopped: null },
   me: {}, // depends on the script: see ME_API
-  map: { put: ['grass', 'rock', 'flowers'] },
+  map: { create: null, put: ['grass', 'rock', 'flowers'], house: null, rows: null, columns: null },
   field: { placeMines: null, reveal: null, hasMine: null, showMines: null, toggleFlag: null, hasFlag: null, neighbours: null, clickAround: null, allSafeOpen: null },
   console: { log: null, info: null, warn: null, error: null },
 };
@@ -340,7 +340,7 @@ function checkApi(sig, world, script) {
 const QUESTIONS = new Set([
   'bit.isOnCoin', 'snake.isOnFood', 'snake.hitsWall', 'snake.bitesItself',
   'field.hasMine', 'field.hasFlag', 'field.allSafeOpen', 'field.neighbours',
-  'garden.isEmpty', 'garden.bugAtHouse', 'garden.stopped', 'game.coins', 'game.every',
+  'garden.isEmpty', 'garden.bugAtHouse', 'garden.stopped', 'game.coins', 'game.every', 'map.rows', 'map.columns',
 ]);
 
 /** Is this use of an object the start of a command (not part of a bigger expression)? */

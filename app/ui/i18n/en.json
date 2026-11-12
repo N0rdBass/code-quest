@@ -98,11 +98,14 @@
     "hpGone": "A bug has 0 HP (or less), but it is still crawling! Squash it when its HP runs out.",
     "noBugCoins": "You stopped the bugs, but they gave no coins. In 🐌 Bug, give 5 coins when a bug is squashed.",
     "badTile": "\"{tile}\" is not something you can put on the map. Use one of: {list}.",
-    "noMap": "Put your blocks inside \"when ▶ Run is clicked\" in 🗺️ Map.",
-    "noMapCode": "Put your map code inside function whenRunClicked() { … } in 🗺️ Map.",
+    "noMap": "Start with \"when ▶ Run is clicked\" in 🗺️ Map, and make a map inside it.",
+    "noMapCode": "Write function whenRunClicked() { … } in 🗺️ Map, and make a map inside it with map.create(9, 5);",
     "mapNotFull": "Only {n} of the {all} squares have something on them. Use two loops so every row and every column gets grass.",
     "mapNoExtras": "Lovely lawn! Now put at least one rock or some flowers on the map, wherever you like.",
-    "notGrass": "Sprinklers can only be built on grass. Click a grass square (or give the 🗺️ Map more grass)."
+    "notGrass": "Sprinklers can only be built on grass. Click a grass square (or give the 🗺️ Map more grass).",
+    "noMapYet": "There is no map yet. Start the 🗺️ Map script with map.create(9, 5).",
+    "badMapSize": "A map of {cols} × {rows} is not possible. Use {c0} to {c1} columns and {r0} to {r1} rows.",
+    "mapNoHouse": "Your map is ready, but where does Bit live? Put Bit's house in a row."
   },
   "diploma": {
     "title": "Diploma",
@@ -199,7 +202,9 @@
       "flowers": "flowers"
     },
     "forRows": "for each row y",
-    "forColumns": "for each column x"
+    "forColumns": "for each column x",
+    "mapCreate": "make a map with %1 columns and %2 rows",
+    "mapHouse": "put Bit's house in row %1"
   },
   "blockNames": {
     "controls_repeat_ext": "repeat",
@@ -264,8 +269,10 @@
       "meSquash": "squash this bug: it is stopped",
       "meShoot": "this sprinkler shoots a drop along its row",
       "mapPut": "put 'grass', 'rock' or 'flowers' on a square",
-      "forRows": "a loop over every row: y is 0, 1, 2, 3, 4",
-      "forColumns": "a loop over every column: x is 0, 1, … 8"
+      "forRows": "a loop over every row of the map: y = 0, 1, 2 …",
+      "forColumns": "a loop over every column of the map: x = 0, 1, 2 …",
+      "mapCreate": "make an empty map: columns, rows",
+      "mapHouse": "put Bit's house at the left end of a row (bugs come in that row)"
     },
     "err": {
       "string": "This text has no closing {q}. Text must start and end with {q}.",
@@ -401,8 +408,8 @@
     "event_created": "{name} is a special name: its code runs once for each object, the moment it is created.",
     "event_hit": "{name} is a special name: its code runs every time water hits this bug.",
     "map": "map is the map of the garden. map.put puts grass, a rock or flowers on a square.",
-    "gridCounter_x": "x is the column counter: the loop runs once for each column, with x = 0, 1, 2 … 8.",
-    "gridCounter_y": "y is the row counter: the loop runs once for each row, with y = 0, 1, 2, 3, 4."
+    "gridCounter_x": "x is the column counter: the loop runs once for each column, with x = 0, 1, 2 … up to the last column.",
+    "gridCounter_y": "y is the row counter: the loop runs once for each row, with y = 0, 1, 2 … up to the last row."
   },
   "glossary": {
     "braces": "hold a group of code that belongs together: the code of a function, a loop or an if",

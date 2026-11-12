@@ -55,6 +55,8 @@ const CALLS = {
   'game.changeCoins': { type: 'coins_change', field: 'N' },
   'game.coins': { type: 'coins_get' },
   'map.put': { type: 'map_put', field: 'TILE', xyFrom: 1 },
+  'map.house': { type: 'map_house', inputs: ['Y'] },
+  'map.create': { type: 'map_create', fields: ['COLS', 'ROWS'] },
 };
 
 // Inside "for each sprinkler" a loop variable's .x means the sprinkler's column;
@@ -120,6 +122,9 @@ function callBlock(s) {
   if (!spec) return null;
   const block = { type: spec.withN && c.args.length > 2 ? spec.withN : spec.type };
   if (spec.field && c.args[0] != null) block.fields = { [spec.field]: c.args[0].replace(/^'|'$/g, '') };
+  // Several numbers in fields (map.create(9, 5)) or in named inputs (map.house(2)).
+  if (spec.fields) block.fields = Object.fromEntries(spec.fields.map((f, i) => [f, Number(c.args[i])]));
+  if (spec.inputs) block.inputs = Object.fromEntries(spec.inputs.map((name, i) => [name, input(c.args[i])]));
   if (spec.xyFrom != null) block.inputs = { X: input(c.args[spec.xyFrom]), Y: input(c.args[spec.xyFrom + 1]) };
   if (spec.xy) {
     block.inputs = { X: input(c.args[0]), Y: input(c.args[1]) };
@@ -140,7 +145,7 @@ function statement(node) {
   }
   if (node.kind === 'for') {
     // The map's loops: for (let y = 0; y < 5; y++) / for (let x = 0; x < 9; x++)
-    const grid = /^for \(let ([xy]) = 0; \1 < \d+; \1\+\+\)/.exec(node.show);
+    const grid = /^for \(let ([xy]) = 0; \1 < (?:\d+|map\.(?:rows|columns)\(\)); \1\+\+\)/.exec(node.show);
     const renamed = /^let(\$\d+)=0;/.exec(body);
     if (grid && renamed) {
       gridVars[renamed[1]] = grid[1] === 'x' ? 'click_x' : 'click_y';

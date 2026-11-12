@@ -3,9 +3,12 @@
 // beetles crawl in from the right. Bit builds sprinklers that shoot water
 // drops along their row.
 //
-// The 🗺️ Kart script draws the map: the lawn starts as bare soil, and the kid
-// puts grass, rocks and flowers on it (usually with two loops). Sprinklers can
-// only be built on grass, so every kid's map makes a slightly different game.
+// The 🗺️ Kart script makes the map. Before it runs there is only an empty grey
+// square. map.create(columns, rows) makes a field of bare soil, map.put() puts
+// grass, rocks and flowers on it (usually with two loops), and map.house(row)
+// puts Bit's house at the left end of a row. Bugs head for the house, so they
+// come in the house rows. Sprinklers can only be built on grass. So every
+// kid's map makes a slightly different game.
 //
 // Every bug and every sprinkler is an object that runs its own script: the kid
 // writes the 🐌 Insekt script once, and each bug follows it with `me` meaning
@@ -17,8 +20,8 @@
 
 import { GameOverSignal, KidError } from '../errors.js';
 
-const COLS = 9;
-const ROWS = 5;
+const SIZE = { cols: [5, 12], rows: [3, 7] }; // what map.create allows
+const PLACEHOLDER = { cols: 9, rows: 5 }; // the grey square before a map exists
 const CELL = 46;
 const LEFT = 58; // the house strip + row numbers
 const TOP = 20; // column numbers
@@ -39,8 +42,6 @@ export class GardenWorld {
   constructor(canvas) {
     this.canvas = canvas;
     this.ctx = canvas.getContext('2d');
-    canvas.width = LEFT + COLS * CELL + 4;
-    canvas.height = TOP + ROWS * CELL + 4;
     this.hover = null;
     // Set by the lesson: runs an object's script event, e.g. ('bug', 'hit', me).
     // Returns true if the script has code for that event.
@@ -49,6 +50,10 @@ export class GardenWorld {
   }
 
   reset() {
+    this.cols = null; // no map yet: map.create(columns, rows) makes one
+    this.rows = null;
+    this.houses = new Set(); // rows with Bit's house at their left end
+    this.sizeCanvas(PLACEHOLDER.cols, PLACEHOLDER.rows);
     this.tiles = new Map(); // key → 'grass' | 'rock' | 'flowers' (no tile = bare soil)
     this.gadgets = new Map(); // key → { type, x, y, hp, me }
     this.bugs = [];
@@ -77,11 +82,25 @@ export class GardenWorld {
   api() {
     return {
       map: {
+        create: (cols, rows) => this.createMap(cols, rows),
         put: (type, x, y) => {
           if (!TILES.includes(type)) throw new KidError('msg.badTile', { tile: String(type), list: TILES.map((t) => `'${t}'`).join(', ') });
           this.check(x, y);
           this.tiles.set(key(x, y), type);
           this.draw();
+        },
+        house: (y) => {
+          this.check(0, y);
+          this.houses.add(y);
+          this.draw();
+        },
+        columns: () => {
+          this.needMap();
+          return this.cols;
+        },
+        rows: () => {
+          this.needMap();
+          return this.rows;
         },
       },
       garden: {
@@ -129,9 +148,33 @@ export class GardenWorld {
     };
   }
 
+  createMap(cols, rows) {
+    const [c0, c1] = SIZE.cols;
+    const [r0, r1] = SIZE.rows;
+    if (!Number.isInteger(cols) || !Number.isInteger(rows) || cols < c0 || cols > c1 || rows < r0 || rows > r1) {
+      throw new KidError('msg.badMapSize', { cols: String(cols), rows: String(rows), c0, c1, r0, r1 });
+    }
+    this.cols = cols;
+    this.rows = rows;
+    this.tiles = new Map();
+    this.houses = new Set();
+    this.sizeCanvas(cols, rows);
+    this.draw();
+  }
+
+  sizeCanvas(cols, rows) {
+    this.canvas.width = LEFT + cols * CELL + 4;
+    this.canvas.height = TOP + rows * CELL + 4;
+  }
+
+  needMap() {
+    if (!this.cols) throw new KidError('msg.noMapYet');
+  }
+
   check(x, y) {
-    if (!Number.isInteger(x) || !Number.isInteger(y) || x < 0 || y < 0 || x >= COLS || y >= ROWS) {
-      throw new KidError('msg.offField', { x: String(x), y: String(y), maxX: COLS - 1, maxY: ROWS - 1 });
+    this.needMap();
+    if (!Number.isInteger(x) || !Number.isInteger(y) || x < 0 || y < 0 || x >= this.cols || y >= this.rows) {
+      throw new KidError('msg.offField', { x: String(x), y: String(y), maxX: this.cols - 1, maxY: this.rows - 1 });
     }
   }
 
@@ -153,8 +196,11 @@ export class GardenWorld {
 
   newBug() {
     const kind = Math.random() < 0.4 ? 'beetle' : 'snail';
-    const y = Math.floor(Math.random() * ROWS);
-    const bug = { id: this.nextId++, kind, y, x: COLS - 0.01, hp: DEFAULT_BUG.hp, speed: DEFAULT_BUG.speed, own: false, eating: false, hurt: 0, squashed: false };
+    this.needMap();
+    // Bugs head for Bit's house: they come in the rows where it stands.
+    const lanes = this.houses.size ? [...this.houses] : [...Array(this.rows).keys()];
+    const y = lanes[Math.floor(Math.random() * lanes.length)];
+    const bug = { id: this.nextId++, kind, y, x: this.cols - 0.01, hp: DEFAULT_BUG.hp, speed: DEFAULT_BUG.speed, own: false, eating: false, hurt: 0, squashed: false };
     bug.me = this.bugMe(bug);
     this.bugs.push(bug);
     this.stats.spawned++;
@@ -186,7 +232,7 @@ export class GardenWorld {
         return bug.kind;
       },
       get x() {
-        return Math.max(0, Math.min(COLS - 1, Math.floor(bug.x)));
+        return Math.max(0, Math.min(world.cols - 1, Math.floor(bug.x)));
       },
       get y() {
         return bug.y;
@@ -258,7 +304,7 @@ export class GardenWorld {
         if (!this.onObjectEvent?.('bug', 'hit', hit.me)) this.stats.hitsIgnored++;
         if (hit.hp <= 0 && !hit.squashed) this.stats.hpGoneNotSquashed++;
       }
-      if (drop.x > COLS) drop.gone = true;
+      if (drop.x > this.cols) drop.gone = true;
     }
     this.drops = this.drops.filter((d) => !d.gone);
     // Bugs that got all the way into the house leave the board.
@@ -276,7 +322,7 @@ export class GardenWorld {
     const sy = ((clientY - r.top) * this.canvas.height) / r.height - TOP;
     const x = Math.floor(sx / CELL);
     const y = Math.floor(sy / CELL);
-    return x >= 0 && y >= 0 && x < COLS && y < ROWS ? { x, y } : null;
+    return this.cols && x >= 0 && y >= 0 && x < this.cols && y < this.rows ? { x, y } : null;
   }
 
   // ---- drawing ----
@@ -287,15 +333,30 @@ export class GardenWorld {
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.font = '700 12px Nunito, "Segoe UI", sans-serif';
-    for (let x = 0; x < COLS; x++) {
+    if (!this.cols) {
+      // No map yet: just an empty grey square, waiting for the 🗺️ Map script.
+      ctx.fillStyle = '#d5dbe3';
+      ctx.beginPath();
+      ctx.roundRect(4, 4, this.canvas.width - 8, this.canvas.height - 8, 12);
+      ctx.fill();
+      return;
+    }
+    for (let x = 0; x < this.cols; x++) {
       ctx.fillStyle = this.hover?.x === x ? '#2e6fda' : '#5b6b82';
       ctx.fillText(String(x), LEFT + x * CELL + CELL / 2, TOP / 2 + 1);
     }
-    drawHouse(ctx, 2, TOP, LEFT - 22, ROWS * CELL);
-    for (let y = 0; y < ROWS; y++) {
+    // Bit's house: one building for each group of house rows next to each other.
+    const rowsWithHouse = [...this.houses].sort((a, b) => a - b);
+    for (let i = 0; i < rowsWithHouse.length; i++) {
+      let j = i;
+      while (rowsWithHouse[j + 1] === rowsWithHouse[j] + 1) j++;
+      drawHouse(ctx, 2, TOP + rowsWithHouse[i] * CELL + 2, LEFT - 22, (j - i + 1) * CELL - 4);
+      i = j;
+    }
+    for (let y = 0; y < this.rows; y++) {
       ctx.fillStyle = this.hover?.y === y ? '#2e6fda' : '#5b6b82';
       ctx.fillText(String(y), LEFT - 10, TOP + y * CELL + CELL / 2);
-      for (let x = 0; x < COLS; x++) {
+      for (let x = 0; x < this.cols; x++) {
         const hovered = this.hover?.x === x && this.hover?.y === y;
         const tile = this.tiles.get(key(x, y));
         const px = LEFT + x * CELL;
@@ -331,7 +392,7 @@ export class GardenWorld {
     }
     if (this.over) {
       ctx.fillStyle = this.overReason === 'win' ? 'rgba(47, 158, 68, 0.2)' : 'rgba(0, 0, 0, 0.25)';
-      ctx.fillRect(LEFT, TOP, COLS * CELL, ROWS * CELL);
+      ctx.fillRect(LEFT, TOP, this.cols * CELL, this.rows * CELL);
     }
   }
 }
@@ -363,19 +424,23 @@ function drawFlowers(ctx, px, py) {
 }
 
 function drawHouse(ctx, x, y, w, h) {
+  const roof = 13;
   ctx.fillStyle = '#f1e3c8';
-  ctx.fillRect(x, y + 14, w, h - 14);
+  ctx.fillRect(x, y + roof - 2, w, h - roof + 2);
   ctx.fillStyle = '#c0392b';
   ctx.beginPath();
-  ctx.moveTo(x - 2, y + 16);
+  ctx.moveTo(x - 2, y + roof);
   ctx.lineTo(x + w / 2, y);
-  ctx.lineTo(x + w + 2, y + 16);
+  ctx.lineTo(x + w + 2, y + roof);
   ctx.closePath();
   ctx.fill();
+  const door = Math.min(24, h - roof - 4);
   ctx.fillStyle = '#8d5a2b';
-  ctx.fillRect(x + w / 2 - 7, y + h - 26, 14, 26);
-  ctx.fillStyle = '#7ec8f2';
-  ctx.fillRect(x + w / 2 - 8, y + h / 2 - 20, 16, 14);
+  ctx.fillRect(x + w / 2 - 6, y + h - door, 12, door);
+  if (h > 60) {
+    ctx.fillStyle = '#7ec8f2';
+    ctx.fillRect(x + w / 2 - 8, y + roof + 8, 16, 12);
+  }
 }
 
 function drawSprinkler(ctx, px, py, health) {

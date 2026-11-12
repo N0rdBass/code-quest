@@ -76,50 +76,44 @@
         "map"
       ],
       "story": {
-        "en": "Before the bugs come, Bit needs a garden! Right now there's only bare soil. In the 🗺️ Map script you draw the map, square by square. A computer is great at doing the same thing for every square: with two loops, one inside the other.",
-        "no": "Før insektene kommer, trenger Bit en hage! Akkurat nå er det bare bar jord. I 🗺️ Kart-skriptet tegner du kartet, rute for rute. En datamaskin er flink til å gjøre det samme for hver rute: med to løkker, den ene inni den andre."
+        "en": "Before the bugs come, Bit needs a garden! But there is nothing here yet: just an empty grey square. In the 🗺️ Map script you make the whole map with code, from nothing.",
+        "no": "Før insektene kommer, trenger Bit en hage! Men her finnes ingenting ennå: bare en tom, grå firkant. I 🗺️ Kart-skriptet lager du hele kartet med kode, fra ingenting."
       },
       "task": {
-        "en": "In 🗺️ Map, \"when ▶ Run is clicked\": \"for each row y\", inside it \"for each column x\", and inside that \"put grass at column x row y\". Then put at least one rock or some flowers where you like. Press Run!",
-        "no": "I 🗺️ Kart, «når ▶ Kjør trykkes»: «for hver rad y», inni den «for hver kolonne x», og inni den igjen «legg gress i kolonne x rad y». Legg så minst én stein eller noen blomster der du vil. Trykk Kjør!"
+        "en": "In 🗺️ Map, start with \"when ▶ Run is clicked\". Make a map with 9 columns and 5 rows. Then \"for each row y\", inside it \"for each column x\", inside that \"put grass at column x row y\". Add at least one rock or some flowers, and \"put Bit's house in row …\". Press Run!",
+        "no": "I 🗺️ Kart, begynn med «når ▶ Kjør trykkes». Lag et kart med 9 kolonner og 5 rader. Så «for hver rad y», inni den «for hver kolonne x», og inni den igjen «legg gress i kolonne x rad y». Legg til minst én stein eller noen blomster, og «sett huset til Bit i rad …». Trykk Kjør!"
       },
       "hint": {
-        "en": "The outer loop goes through the 5 rows. For each row, the inner loop goes through all 9 columns: 5 × 9 = 45 squares! Put rocks and flowers below the loops, with your own numbers.",
-        "no": "Den ytre løkken går gjennom de 5 radene. For hver rad går den indre løkken gjennom alle de 9 kolonnene: 5 × 9 = 45 ruter! Legg steiner og blomster under løkkene, med dine egne tall."
+        "en": "The outer loop goes through every row. For each row, the inner loop goes through every column: 5 × 9 = 45 squares! Rocks, flowers and the house go below the loops, with your own numbers. Bugs come in the rows where the house stands.",
+        "no": "Den ytre løkken går gjennom hver rad. For hver rad går den indre løkken gjennom hver kolonne: 5 × 9 = 45 ruter! Steiner, blomster og huset legger du under løkkene, med dine egne tall. Insektene kommer i radene der huset står."
       },
       "taskCode": {
-        "en": "In 🗺️ Map, whenRunClicked(): for (let y = 0; y < 5; y++) { for (let x = 0; x < 9; x++) { map.put('grass', x, y); } }. Then add map.put('rock', 4, 2); or 'flowers' where you like. Press Run!",
-        "no": "I 🗺️ Kart, whenRunClicked(): for (let y = 0; y < 5; y++) { for (let x = 0; x < 9; x++) { map.put('grass', x, y); } }. Legg så til map.put('rock', 4, 2); eller 'flowers' der du vil. Trykk Kjør!"
+        "en": "In 🗺️ Map, write function whenRunClicked() { } yourself. Inside: map.create(9, 5);, then for (let y = 0; y < map.rows(); y++) { for (let x = 0; x < map.columns(); x++) { map.put('grass', x, y); } }. Add map.put('rock', 4, 2); or 'flowers', and map.house(2);. Press Run!",
+        "no": "I 🗺️ Kart, skriv function whenRunClicked() { } selv. Inni: map.create(9, 5);, så for (let y = 0; y < map.rows(); y++) { for (let x = 0; x < map.columns(); x++) { map.put('grass', x, y); } }. Legg til map.put('rock', 4, 2); eller 'flowers', og map.house(2);. Trykk Kjør!"
       },
       "hintCode": {
-        "en": "The outer loop counts the rows (y = 0 to 4), and for each row the inner loop counts the columns (x = 0 to 8). Sprinklers can only stand on grass, so think about where you put rocks!",
-        "no": "Den ytre løkken teller radene (y = 0 til 4), og for hver rad teller den indre løkken kolonnene (x = 0 til 8). Sprinklere kan bare stå på gress, så tenk på hvor du legger steiner!"
+        "en": "Click \"function whenRunClicked()\" in the Commands list to start. map.rows() and map.columns() ask the map how big it is, so the loops fill any size. Bugs come in the rows where the house stands, and sprinklers can only stand on grass.",
+        "no": "Klikk «function whenRunClicked()» i kommandolisten for å begynne. map.rows() og map.columns() spør kartet hvor stort det er, så løkkene fyller alle størrelser. Insektene kommer i radene der huset står, og sprinklere kan bare stå på gress."
       },
       "concept": {
-        "en": "Two loops inside each other visit every square of a grid.",
-        "no": "To løkker inni hverandre besøker hver rute i et rutenett."
+        "en": "Code can build a whole world from nothing. Two loops inside each other visit every square of a grid.",
+        "no": "Kode kan bygge en hel verden fra ingenting. To løkker inni hverandre besøker hver rute i et rutenett."
       },
       "goal": {
         "type": "map"
       },
       "toolbox": {
         "map": [
+          "event_start",
+          "map_create",
           "map_for_rows",
           "map_for_columns",
-          "map_put"
-        ]
-      },
-      "starter": {
-        "map": [
-          {
-            "type": "event_start",
-            "x": 30,
-            "y": 30
-          }
+          "map_put",
+          "map_house"
         ]
       },
       "solution": {
-        "map": "function whenRunClicked() {\n  for (let y = 0; y < 5; y++) {\n    for (let x = 0; x < 9; x++) {\n      map.put('grass', x, y);\n    }\n  }\n}\n"
+        "map": "function whenRunClicked() {\n  map.create(9, 5);\n  for (let y = 0; y < map.rows(); y++) {\n    for (let x = 0; x < map.columns(); x++) {\n      map.put('grass', x, y);\n    }\n  }\n}\n"
       }
     },
     {
@@ -162,9 +156,12 @@
       },
       "toolbox": {
         "map": [
+          "event_start",
+          "map_create",
           "map_for_rows",
           "map_for_columns",
-          "map_put"
+          "map_put",
+          "map_house"
         ],
         "garden": [
           "garden_build"
@@ -180,7 +177,7 @@
         ]
       },
       "solution": {
-        "map": "function whenRunClicked() {\n  for (let y = 0; y < 5; y++) {\n    for (let x = 0; x < 9; x++) {\n      map.put('grass', x, y);\n    }\n  }\n}\n",
+        "map": "function whenRunClicked() {\n  map.create(9, 5);\n  for (let y = 0; y < map.rows(); y++) {\n    for (let x = 0; x < map.columns(); x++) {\n      map.put('grass', x, y);\n    }\n  }\n}\n",
         "garden": "function whenSquareClicked(x, y) {\n  garden.build(x, y);\n}\n"
       },
       "carryFrom": "garden-1",
@@ -228,9 +225,12 @@
       },
       "toolbox": {
         "map": [
+          "event_start",
+          "map_create",
           "map_for_rows",
           "map_for_columns",
-          "map_put"
+          "map_put",
+          "map_house"
         ],
         "garden": [
           "if",
@@ -260,7 +260,7 @@
         ]
       },
       "solution": {
-        "map": "function whenRunClicked() {\n  for (let y = 0; y < 5; y++) {\n    for (let x = 0; x < 9; x++) {\n      map.put('grass', x, y);\n    }\n  }\n}\n",
+        "map": "function whenRunClicked() {\n  map.create(9, 5);\n  for (let y = 0; y < map.rows(); y++) {\n    for (let x = 0; x < map.columns(); x++) {\n      map.put('grass', x, y);\n    }\n  }\n}\n",
         "garden": "function whenSquareClicked(x, y) {\n  garden.build(x, y);\n}\n\nfunction everyTick() {\n  if (game.every(30)) {\n    garden.newBug();\n  }\n}\n",
         "bug": "function everyTick() {\n  me.move();\n}\n"
       },
@@ -308,9 +308,12 @@
       },
       "toolbox": {
         "map": [
+          "event_start",
+          "map_create",
           "map_for_rows",
           "map_for_columns",
-          "map_put"
+          "map_put",
+          "map_house"
         ],
         "garden": [
           "if",
@@ -330,7 +333,7 @@
         ]
       },
       "solution": {
-        "map": "function whenRunClicked() {\n  for (let y = 0; y < 5; y++) {\n    for (let x = 0; x < 9; x++) {\n      map.put('grass', x, y);\n    }\n  }\n}\n",
+        "map": "function whenRunClicked() {\n  map.create(9, 5);\n  for (let y = 0; y < map.rows(); y++) {\n    for (let x = 0; x < map.columns(); x++) {\n      map.put('grass', x, y);\n    }\n  }\n}\n",
         "garden": "function whenSquareClicked(x, y) {\n  garden.build(x, y);\n}\n\nfunction everyTick() {\n  if (game.every(30)) {\n    garden.newBug();\n  }\n}\n",
         "bug": "function whenCreated() {\n  me.speed = 0.05;\n  me.hp = 3;\n}\n\nfunction everyTick() {\n  me.move();\n}\n"
       },
@@ -379,9 +382,12 @@
       },
       "toolbox": {
         "map": [
+          "event_start",
+          "map_create",
           "map_for_rows",
           "map_for_columns",
-          "map_put"
+          "map_put",
+          "map_house"
         ],
         "garden": [
           "if",
@@ -422,7 +428,7 @@
         ]
       },
       "solution": {
-        "map": "function whenRunClicked() {\n  for (let y = 0; y < 5; y++) {\n    for (let x = 0; x < 9; x++) {\n      map.put('grass', x, y);\n    }\n  }\n}\n",
+        "map": "function whenRunClicked() {\n  map.create(9, 5);\n  for (let y = 0; y < map.rows(); y++) {\n    for (let x = 0; x < map.columns(); x++) {\n      map.put('grass', x, y);\n    }\n  }\n}\n",
         "garden": "function whenSquareClicked(x, y) {\n  garden.build(x, y);\n}\n\nfunction everyTick() {\n  if (game.every(30)) {\n    garden.newBug();\n  }\n}\n",
         "bug": "function whenCreated() {\n  me.speed = 0.05;\n  me.hp = 3;\n}\n\nfunction everyTick() {\n  me.move();\n}\n\nfunction whenHit() {\n  me.hp = me.hp - 1;\n  if (me.hp <= 0) {\n    me.squash();\n  }\n}\n",
         "sprinkler": "function everyTick() {\n  if (game.every(10)) {\n    me.shoot();\n  }\n}\n"
@@ -472,9 +478,12 @@
       },
       "toolbox": {
         "map": [
+          "event_start",
+          "map_create",
           "map_for_rows",
           "map_for_columns",
-          "map_put"
+          "map_put",
+          "map_house"
         ],
         "garden": [
           "coins_enough",
@@ -506,7 +515,7 @@
         ]
       },
       "solution": {
-        "map": "function whenRunClicked() {\n  for (let y = 0; y < 5; y++) {\n    for (let x = 0; x < 9; x++) {\n      map.put('grass', x, y);\n    }\n  }\n}\n",
+        "map": "function whenRunClicked() {\n  map.create(9, 5);\n  for (let y = 0; y < map.rows(); y++) {\n    for (let x = 0; x < map.columns(); x++) {\n      map.put('grass', x, y);\n    }\n  }\n}\n",
         "garden": "function whenRunClicked() {\n  game.changeCoins(50);\n}\n\nfunction whenSquareClicked(x, y) {\n  if (game.coins() >= 10) {\n    garden.build(x, y);\n    game.changeCoins(-10);\n  }\n}\n\nfunction everyTick() {\n  if (game.every(30)) {\n    garden.newBug();\n  }\n}\n",
         "bug": "function whenCreated() {\n  me.speed = 0.05;\n  me.hp = 3;\n}\n\nfunction everyTick() {\n  me.move();\n}\n\nfunction whenHit() {\n  me.hp = me.hp - 1;\n  if (me.hp <= 0) {\n    me.squash();\n    game.changeCoins(5);\n  }\n}\n",
         "sprinkler": "function everyTick() {\n  if (game.every(10)) {\n    me.shoot();\n  }\n}\n"
@@ -556,9 +565,12 @@
       },
       "toolbox": {
         "map": [
+          "event_start",
+          "map_create",
           "map_for_rows",
           "map_for_columns",
-          "map_put"
+          "map_put",
+          "map_house"
         ],
         "garden": [
           "garden_bug_home",
@@ -587,7 +599,7 @@
         ]
       },
       "solution": {
-        "map": "function whenRunClicked() {\n  for (let y = 0; y < 5; y++) {\n    for (let x = 0; x < 9; x++) {\n      map.put('grass', x, y);\n    }\n  }\n}\n",
+        "map": "function whenRunClicked() {\n  map.create(9, 5);\n  for (let y = 0; y < map.rows(); y++) {\n    for (let x = 0; x < map.columns(); x++) {\n      map.put('grass', x, y);\n    }\n  }\n}\n",
         "garden": "function whenRunClicked() {\n  game.changeCoins(50);\n}\n\nfunction whenSquareClicked(x, y) {\n  if (game.coins() >= 10) {\n    garden.build(x, y);\n    game.changeCoins(-10);\n  }\n}\n\nfunction everyTick() {\n  if (game.every(30)) {\n    garden.newBug();\n  }\n  if (garden.bugAtHouse()) {\n    game.over();\n  }\n}\n",
         "bug": "function whenCreated() {\n  me.speed = 0.05;\n  me.hp = 3;\n}\n\nfunction everyTick() {\n  me.move();\n}\n\nfunction whenHit() {\n  me.hp = me.hp - 1;\n  if (me.hp <= 0) {\n    me.squash();\n    game.changeCoins(5);\n  }\n}\n",
         "sprinkler": "function everyTick() {\n  if (game.every(10)) {\n    me.shoot();\n  }\n}\n"
@@ -637,9 +649,12 @@
       },
       "toolbox": {
         "map": [
+          "event_start",
+          "map_create",
           "map_for_rows",
           "map_for_columns",
-          "map_put"
+          "map_put",
+          "map_house"
         ],
         "garden": [
           "stopped_enough",
@@ -670,7 +685,7 @@
         ]
       },
       "solution": {
-        "map": "function whenRunClicked() {\n  for (let y = 0; y < 5; y++) {\n    for (let x = 0; x < 9; x++) {\n      map.put('grass', x, y);\n    }\n  }\n}\n",
+        "map": "function whenRunClicked() {\n  map.create(9, 5);\n  for (let y = 0; y < map.rows(); y++) {\n    for (let x = 0; x < map.columns(); x++) {\n      map.put('grass', x, y);\n    }\n  }\n}\n",
         "garden": "function whenRunClicked() {\n  game.changeCoins(50);\n}\n\nfunction whenSquareClicked(x, y) {\n  if (game.coins() >= 10) {\n    garden.build(x, y);\n    game.changeCoins(-10);\n  }\n}\n\nfunction everyTick() {\n  if (game.every(30)) {\n    garden.newBug();\n  }\n  if (garden.bugAtHouse()) {\n    game.over();\n  }\n  if (garden.stopped() >= 10) {\n    game.win();\n  }\n}\n",
         "bug": "function whenCreated() {\n  me.speed = 0.05;\n  me.hp = 3;\n}\n\nfunction everyTick() {\n  me.move();\n}\n\nfunction whenHit() {\n  me.hp = me.hp - 1;\n  if (me.hp <= 0) {\n    me.squash();\n    game.changeCoins(5);\n  }\n}\n",
         "sprinkler": "function everyTick() {\n  if (game.every(10)) {\n    me.shoot();\n  }\n}\n"

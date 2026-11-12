@@ -881,15 +881,19 @@ class LessonController {
     this.timer = setTimeout(step, w.tickMs());
   }
 
-  /** Lesson 1: every square has grass, a rock or flowers, and there's at least one rock or flowers. */
+  /**
+   * Lesson 1: the map exists, every square has grass, a rock or flowers, there
+   * is at least one rock or flowers, and Bit's house stands in at least one row.
+   */
   mapGoalCheck() {
     const w = this.world;
-    const all = 9 * 5;
+    if (!w.cols) return this.fail(this.mode === 'code' ? 'msg.noMapCode' : 'msg.noMap');
+    const all = w.cols * w.rows;
     const filled = w.tiles.size;
     const extras = [...w.tiles.values()].filter((t) => t !== 'grass').length;
-    if (!evsHadMap(w)) return this.fail(this.mode === 'code' ? 'msg.noMapCode' : 'msg.noMap');
     if (filled < all) return this.fail('msg.mapNotFull', { n: filled, all });
     if (!extras) return this.fail('msg.mapNoExtras');
+    if (!w.houses.size) return this.fail('msg.mapNoHouse');
     this.succeed();
   }
 
@@ -911,7 +915,7 @@ class LessonController {
     }
     const won =
       (goal.type === 'built' && s.sprinklers >= goal.n) ||
-      (goal.type === 'bugs' && s.spawned >= goal.n && w.bugs.some((b) => b.x < 8)) ||
+      (goal.type === 'bugs' && s.spawned >= goal.n && w.bugs.some((b) => b.x < w.cols - 1)) ||
       (goal.type === 'ownBugs' && s.ownBugs >= goal.n) ||
       (goal.type === 'stopped' && s.stopped >= goal.n) ||
       (goal.type === 'paidFor' && s.stopped >= goal.n && s.spent >= 20 && s.earnedFromBugs > 0) ||
@@ -926,7 +930,7 @@ class LessonController {
       return true;
     }
     // Tips about what the scripts don't do yet.
-    if (goal.type === 'bugs' && s.spawned && !w.bugs.some((b) => b.x < 8.9)) this.tellOnce('msg.bugsStandStill');
+    if (goal.type === 'bugs' && s.spawned && !w.bugs.some((b) => b.x < w.cols - 0.1)) this.tellOnce('msg.bugsStandStill');
     if (goal.type === 'ownBugs' && s.spawned >= goal.n && s.ownBugs < goal.n) this.tellOnce('msg.bugsNotOwn', 'warn');
     if (s.hitsIgnored) this.tellOnce('msg.hitNothing', goal.type === 'stopped' ? 'warn' : 'info');
     if (s.notGrass) this.tellOnce('msg.notGrass', 'warn');
@@ -1315,10 +1319,6 @@ class LessonController {
     window.removeEventListener('keydown', this.onKeyDown, true);
     this.teardownWorkspace();
   }
-}
-
-function evsHadMap(world) {
-  return world.tiles.size > 0;
 }
 
 function safeString(v) {

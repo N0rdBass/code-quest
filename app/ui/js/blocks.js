@@ -180,6 +180,26 @@ export function defineBlocks() {
 
     // ---- the map (Garden defence's 🗺️ Kart script) ----
     {
+      type: 'map_create',
+      message0: t('blocks.mapCreate'),
+      args0: [
+        { type: 'field_number', name: 'COLS', value: 9, precision: 1, min: 5, max: 12 },
+        { type: 'field_number', name: 'ROWS', value: 5, precision: 1, min: 3, max: 7 },
+      ],
+      previousStatement: null,
+      nextStatement: null,
+      colour: COLOUR.map,
+    },
+    {
+      type: 'map_house',
+      message0: t('blocks.mapHouse'),
+      args0: [{ type: 'input_value', name: 'Y', check: 'Number' }],
+      inputsInline: true,
+      previousStatement: null,
+      nextStatement: null,
+      colour: COLOUR.map,
+    },
+    {
       type: 'map_put',
       message0: t('blocks.mapPut'),
       args0: [
@@ -374,13 +394,16 @@ export function defineGenerators() {
   gen.forBlock['coins_get'] = () => ['game.coins()', Order.FUNCTION_CALL];
 
   // The map: two loops visit every row and, inside, every column.
+  gen.forBlock['map_create'] = (b) => `map.create(${Number(b.getFieldValue('COLS')) || 9}, ${Number(b.getFieldValue('ROWS')) || 5});\n`;
   gen.forBlock['map_put'] = (b) => `map.put('${b.getFieldValue('TILE')}', ${xy(b)});\n`;
-  const gridLoop = (v, n) => (block) => {
+  gen.forBlock['map_house'] = (b) => `map.house(${gen.valueToCode(b, 'Y', Order.NONE) || '0'});\n`;
+  // The loops ask the map how big it is, so any size gets filled.
+  const gridLoop = (v, size) => (block) => {
     const branch = gen.addLoopTrap(gen.statementToCode(block, 'DO'), block);
-    return `for (let ${v} = 0; ${v} < ${n}; ${v}++) {\n${branch}}\n`;
+    return `for (let ${v} = 0; ${v} < map.${size}(); ${v}++) {\n${branch}}\n`;
   };
-  gen.forBlock['map_for_rows'] = gridLoop('y', 5);
-  gen.forBlock['map_for_columns'] = gridLoop('x', 9);
+  gen.forBlock['map_for_rows'] = gridLoop('y', 'rows');
+  gen.forBlock['map_for_columns'] = gridLoop('x', 'columns');
 
   // Objects with their own script: `me` is the object running it.
   gen.forBlock['event_created'] = hat(() => 'whenCreated', () => '__events.onCreated(');
@@ -513,6 +536,7 @@ const TOOLBOX_ENTRIES = {
     inputs: { A: { block: { type: 'garden_stopped' } }, B: { shadow: { type: 'math_number', fields: { NUM: 15 } } } },
   },
   map_put: xyEntry('map_put'),
+  map_house: { kind: 'block', type: 'map_house', inputs: { Y: { shadow: { type: 'math_number', fields: { NUM: 2 } } } } },
   hp_gone: {
     kind: 'block',
     type: 'logic_compare',

@@ -98,11 +98,14 @@
     "hpGone": "Et insekt har 0 HP (eller mindre), men det kryper fortsatt! Knus det når HP er brukt opp.",
     "noBugCoins": "Du stoppet insektene, men de ga ingen mynter. I 🐌 Insekt, gi 5 mynter når et insekt blir knust.",
     "badTile": "«{tile}» er ikke noe du kan legge på kartet. Bruk en av: {list}.",
-    "noMap": "Legg klossene dine inni «når ▶ Kjør trykkes» i 🗺️ Kart.",
-    "noMapCode": "Legg kart-koden din inni function whenRunClicked() { … } i 🗺️ Kart.",
+    "noMap": "Begynn med «når ▶ Kjør trykkes» i 🗺️ Kart, og lag et kart inni den.",
+    "noMapCode": "Skriv function whenRunClicked() { … } i 🗺️ Kart, og lag et kart inni den med map.create(9, 5);",
     "mapNotFull": "Bare {n} av de {all} rutene har noe på seg. Bruk to løkker så hver rad og hver kolonne får gress.",
     "mapNoExtras": "Fin plen! Legg nå minst én stein eller noen blomster på kartet, der du vil.",
-    "notGrass": "Sprinklere kan bare bygges på gress. Klikk på en gressrute (eller gi 🗺️ Kart mer gress)."
+    "notGrass": "Sprinklere kan bare bygges på gress. Klikk på en gressrute (eller gi 🗺️ Kart mer gress).",
+    "noMapYet": "Det finnes ikke noe kart ennå. Begynn 🗺️ Kart-skriptet med map.create(9, 5).",
+    "badMapSize": "Et kart på {cols} × {rows} går ikke. Bruk {c0} til {c1} kolonner og {r0} til {r1} rader.",
+    "mapNoHouse": "Kartet ditt er klart, men hvor bor Bit? Sett huset til Bit i en rad."
   },
   "diploma": {
     "title": "Diplom",
@@ -199,7 +202,9 @@
       "flowers": "blomster"
     },
     "forRows": "for hver rad y",
-    "forColumns": "for hver kolonne x"
+    "forColumns": "for hver kolonne x",
+    "mapCreate": "lag et kart med %1 kolonner og %2 rader",
+    "mapHouse": "sett huset til Bit i rad %1"
   },
   "blockNames": {
     "controls_repeat_ext": "gjenta",
@@ -264,8 +269,10 @@
       "meSquash": "knus dette insektet: det er stoppet",
       "meShoot": "denne sprinkleren spruter en dråpe bortover raden sin",
       "mapPut": "legg 'grass' (gress), 'rock' (stein) eller 'flowers' (blomster) på en rute",
-      "forRows": "en løkke over hver rad: y er 0, 1, 2, 3, 4",
-      "forColumns": "en løkke over hver kolonne: x er 0, 1, … 8"
+      "forRows": "en løkke over hver rad i kartet: y = 0, 1, 2 …",
+      "forColumns": "en løkke over hver kolonne i kartet: x = 0, 1, 2 …",
+      "mapCreate": "lag et tomt kart: kolonner, rader",
+      "mapHouse": "sett huset til Bit ytterst til venstre i en rad (insektene kommer i den raden)"
     },
     "err": {
       "string": "Denne teksten mangler en {q} på slutten. Tekst må starte og slutte med {q}.",
@@ -401,8 +408,8 @@
     "event_created": "{name} er et spesielt navn: koden kjører én gang for hvert objekt, i det øyeblikket det blir laget.",
     "event_hit": "{name} er et spesielt navn: koden kjører hver gang vann treffer dette insektet.",
     "map": "map er kartet over hagen. map.put legger gress, en stein eller blomster på en rute.",
-    "gridCounter_x": "x er kolonne-telleren: løkken kjører én gang for hver kolonne, med x = 0, 1, 2 … 8.",
-    "gridCounter_y": "y er rad-telleren: løkken kjører én gang for hver rad, med y = 0, 1, 2, 3, 4."
+    "gridCounter_x": "x er kolonne-telleren: løkken kjører én gang for hver kolonne, med x = 0, 1, 2 … til siste kolonne.",
+    "gridCounter_y": "y er rad-telleren: løkken kjører én gang for hver rad, med y = 0, 1, 2 … til siste rad."
   },
   "glossary": {
     "braces": "holder en gruppe kode som hører sammen: koden til en funksjon, en løkke eller en if",
