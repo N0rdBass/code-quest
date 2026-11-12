@@ -4,6 +4,20 @@
   "game": "garden",
   "stars": 3,
   "scripts": {
+    "map": {
+      "icon": "🗺️",
+      "name": {
+        "en": "Map",
+        "no": "Kart"
+      },
+      "about": {
+        "en": "How the map looks: grass, rocks and flowers.",
+        "no": "Hvordan kartet ser ut: gress, steiner og blomster."
+      },
+      "events": [
+        "event_start"
+      ]
+    },
     "garden": {
       "icon": "🏡",
       "name": {
@@ -55,23 +69,80 @@
     {
       "id": "garden-1",
       "title": {
+        "en": "Make the map",
+        "no": "Lag kartet"
+      },
+      "scripts": [
+        "map"
+      ],
+      "story": {
+        "en": "Before the bugs come, Bit needs a garden! Right now there's only bare soil. In the 🗺️ Map script you draw the map, square by square. A computer is great at doing the same thing for every square: with two loops, one inside the other.",
+        "no": "Før insektene kommer, trenger Bit en hage! Akkurat nå er det bare bar jord. I 🗺️ Kart-skriptet tegner du kartet, rute for rute. En datamaskin er flink til å gjøre det samme for hver rute: med to løkker, den ene inni den andre."
+      },
+      "task": {
+        "en": "In 🗺️ Map, \"when ▶ Run is clicked\": \"for each row y\", inside it \"for each column x\", and inside that \"put grass at column x row y\". Then put at least one rock or some flowers where you like. Press Run!",
+        "no": "I 🗺️ Kart, «når ▶ Kjør trykkes»: «for hver rad y», inni den «for hver kolonne x», og inni den igjen «legg gress i kolonne x rad y». Legg så minst én stein eller noen blomster der du vil. Trykk Kjør!"
+      },
+      "hint": {
+        "en": "The outer loop goes through the 5 rows. For each row, the inner loop goes through all 9 columns: 5 × 9 = 45 squares! Put rocks and flowers below the loops, with your own numbers.",
+        "no": "Den ytre løkken går gjennom de 5 radene. For hver rad går den indre løkken gjennom alle de 9 kolonnene: 5 × 9 = 45 ruter! Legg steiner og blomster under løkkene, med dine egne tall."
+      },
+      "taskCode": {
+        "en": "In 🗺️ Map, whenRunClicked(): for (let y = 0; y < 5; y++) { for (let x = 0; x < 9; x++) { map.put('grass', x, y); } }. Then add map.put('rock', 4, 2); or 'flowers' where you like. Press Run!",
+        "no": "I 🗺️ Kart, whenRunClicked(): for (let y = 0; y < 5; y++) { for (let x = 0; x < 9; x++) { map.put('grass', x, y); } }. Legg så til map.put('rock', 4, 2); eller 'flowers' der du vil. Trykk Kjør!"
+      },
+      "hintCode": {
+        "en": "The outer loop counts the rows (y = 0 to 4), and for each row the inner loop counts the columns (x = 0 to 8). Sprinklers can only stand on grass, so think about where you put rocks!",
+        "no": "Den ytre løkken teller radene (y = 0 til 4), og for hver rad teller den indre løkken kolonnene (x = 0 til 8). Sprinklere kan bare stå på gress, så tenk på hvor du legger steiner!"
+      },
+      "concept": {
+        "en": "Two loops inside each other visit every square of a grid.",
+        "no": "To løkker inni hverandre besøker hver rute i et rutenett."
+      },
+      "goal": {
+        "type": "map"
+      },
+      "toolbox": {
+        "map": [
+          "map_for_rows",
+          "map_for_columns",
+          "map_put"
+        ]
+      },
+      "starter": {
+        "map": [
+          {
+            "type": "event_start",
+            "x": 30,
+            "y": 30
+          }
+        ]
+      },
+      "solution": {
+        "map": "function whenRunClicked() {\n  for (let y = 0; y < 5; y++) {\n    for (let x = 0; x < 9; x++) {\n      map.put('grass', x, y);\n    }\n  }\n}\n"
+      }
+    },
+    {
+      "id": "garden-2",
+      "title": {
         "en": "Build!",
         "no": "Bygg!"
       },
       "scripts": [
+        "map",
         "garden"
       ],
       "story": {
-        "en": "Bugs are on their way to Bit's garden! Bit can build sprinklers that spray water at them. This game has several scripts, one for each kind of thing. Start in 🏡 Garden: build where you click.",
-        "no": "Insekter er på vei til hagen til Bit! Bit kan bygge sprinklere som spruter vann på dem. Dette spillet har flere skript, ett for hver slags ting. Begynn i 🏡 Hagen: bygg der du klikker."
+        "en": "The garden has grass now! Bit can build sprinklers that spray water at bugs, but only on grass. In 🏡 Garden: build where you click.",
+        "no": "Nå har hagen gress! Bit kan bygge sprinklere som spruter vann på insekter, men bare på gress. I 🏡 Hagen: bygg der du klikker."
       },
       "task": {
         "en": "In 🏡 Garden, put \"build a sprinkler at column x row y\" in \"when a square is clicked\". Press Run, then build 5 sprinklers.",
         "no": "I 🏡 Hagen, legg «bygg en sprinkler i kolonne x rad y» i «når en rute klikkes». Trykk Kjør, og bygg 5 sprinklere."
       },
       "hint": {
-        "en": "Just like in Minesweeper: x and y tell your code which square you clicked.",
-        "no": "Akkurat som i Minesveiper: x og y forteller koden din hvilken rute du klikket på."
+        "en": "Just like in Minesweeper: x and y tell your code which square you clicked. Clicking soil, a rock or flowers builds nothing.",
+        "no": "Akkurat som i Minesveiper: x og y forteller koden din hvilken rute du klikket på. Klikker du på jord, en stein eller blomster, blir ingenting bygget."
       },
       "taskCode": {
         "en": "In 🏡 Garden, write garden.build(x, y); in whenSquareClicked(x, y). Press Run, then build 5 sprinklers.",
@@ -90,6 +161,11 @@
         "n": 5
       },
       "toolbox": {
+        "map": [
+          "map_for_rows",
+          "map_for_columns",
+          "map_put"
+        ],
         "garden": [
           "garden_build"
         ]
@@ -104,20 +180,24 @@
         ]
       },
       "solution": {
+        "map": "function whenRunClicked() {\n  for (let y = 0; y < 5; y++) {\n    for (let x = 0; x < 9; x++) {\n      map.put('grass', x, y);\n    }\n  }\n}\n",
         "garden": "function whenSquareClicked(x, y) {\n  garden.build(x, y);\n}\n"
-      }
+      },
+      "carryFrom": "garden-1",
+      "focus": "garden"
     },
     {
-      "id": "garden-2",
+      "id": "garden-3",
       "title": {
         "en": "Here come the bugs",
         "no": "Her kommer insektene"
       },
       "scripts": [
+        "map",
         "garden",
         "bug"
       ],
-      "carryFrom": "garden-1",
+      "carryFrom": "garden-2",
       "story": {
         "en": "Bugs! The 🏡 Garden sends them with a timer, like a kitchen timer that rings again and again. But how a bug moves is in its own script: 🐌 Bug. You write it once, and EVERY bug follows it. In that script, \"me\" means \"this bug\".",
         "no": "Insekter! 🏡 Hagen sender dem med en tidtaker, som en kjøkkenklokke som ringer igjen og igjen. Men hvordan et insekt beveger seg står i dets eget skript: 🐌 Insekt. Du skriver det én gang, og HVERT insekt følger det. I det skriptet betyr «meg» «dette insektet»."
@@ -147,6 +227,11 @@
         "n": 3
       },
       "toolbox": {
+        "map": [
+          "map_for_rows",
+          "map_for_columns",
+          "map_put"
+        ],
         "garden": [
           "if",
           "game_every",
@@ -175,22 +260,24 @@
         ]
       },
       "solution": {
+        "map": "function whenRunClicked() {\n  for (let y = 0; y < 5; y++) {\n    for (let x = 0; x < 9; x++) {\n      map.put('grass', x, y);\n    }\n  }\n}\n",
         "garden": "function whenSquareClicked(x, y) {\n  garden.build(x, y);\n}\n\nfunction everyTick() {\n  if (game.every(30)) {\n    garden.newBug();\n  }\n}\n",
         "bug": "function everyTick() {\n  me.move();\n}\n"
       },
       "focus": "bug"
     },
     {
-      "id": "garden-3",
+      "id": "garden-4",
       "title": {
         "en": "My own bug",
         "no": "Mitt eget insekt"
       },
       "scripts": [
+        "map",
         "garden",
         "bug"
       ],
-      "carryFrom": "garden-2",
+      "carryFrom": "garden-3",
       "story": {
         "en": "Every bug has its own speed and its own HP (how much it can take). They are the bug's own variables, and the bug sets them itself when it is created.",
         "no": "Hvert insekt har sin egen fart og sine egne HP (hvor mye det tåler). Det er insektets egne variabler, og insektet setter dem selv når det blir laget."
@@ -220,6 +307,11 @@
         "n": 3
       },
       "toolbox": {
+        "map": [
+          "map_for_rows",
+          "map_for_columns",
+          "map_put"
+        ],
         "garden": [
           "if",
           "game_every",
@@ -238,23 +330,25 @@
         ]
       },
       "solution": {
+        "map": "function whenRunClicked() {\n  for (let y = 0; y < 5; y++) {\n    for (let x = 0; x < 9; x++) {\n      map.put('grass', x, y);\n    }\n  }\n}\n",
         "garden": "function whenSquareClicked(x, y) {\n  garden.build(x, y);\n}\n\nfunction everyTick() {\n  if (game.every(30)) {\n    garden.newBug();\n  }\n}\n",
         "bug": "function whenCreated() {\n  me.speed = 0.05;\n  me.hp = 3;\n}\n\nfunction everyTick() {\n  me.move();\n}\n"
       },
       "focus": "bug"
     },
     {
-      "id": "garden-4",
+      "id": "garden-5",
       "title": {
         "en": "Water!",
         "no": "Vann!"
       },
       "scripts": [
+        "map",
         "garden",
         "bug",
         "sprinkler"
       ],
-      "carryFrom": "garden-3",
+      "carryFrom": "garden-4",
       "story": {
         "en": "Sprinklers get their own script: 💧 Sprinkler. Every sprinkler should spray a drop of water every 10 ticks. And when water hits a bug, the 🐌 Bug script decides what happens.",
         "no": "Sprinklerne får sitt eget skript: 💧 Sprinkler. Hver sprinkler skal sprute en vanndråpe hvert 10. tikk. Og når vann treffer et insekt, bestemmer 🐌 Insekt-skriptet hva som skjer."
@@ -284,6 +378,11 @@
         "n": 3
       },
       "toolbox": {
+        "map": [
+          "map_for_rows",
+          "map_for_columns",
+          "map_put"
+        ],
         "garden": [
           "if",
           "game_every",
@@ -323,6 +422,7 @@
         ]
       },
       "solution": {
+        "map": "function whenRunClicked() {\n  for (let y = 0; y < 5; y++) {\n    for (let x = 0; x < 9; x++) {\n      map.put('grass', x, y);\n    }\n  }\n}\n",
         "garden": "function whenSquareClicked(x, y) {\n  garden.build(x, y);\n}\n\nfunction everyTick() {\n  if (game.every(30)) {\n    garden.newBug();\n  }\n}\n",
         "bug": "function whenCreated() {\n  me.speed = 0.05;\n  me.hp = 3;\n}\n\nfunction everyTick() {\n  me.move();\n}\n\nfunction whenHit() {\n  me.hp = me.hp - 1;\n  if (me.hp <= 0) {\n    me.squash();\n  }\n}\n",
         "sprinkler": "function everyTick() {\n  if (game.every(10)) {\n    me.shoot();\n  }\n}\n"
@@ -330,17 +430,18 @@
       "focus": "sprinkler"
     },
     {
-      "id": "garden-5",
+      "id": "garden-6",
       "title": {
         "en": "Coins",
         "no": "Mynter"
       },
       "scripts": [
+        "map",
         "garden",
         "bug",
         "sprinkler"
       ],
-      "carryFrom": "garden-4",
+      "carryFrom": "garden-5",
       "story": {
         "en": "Building for free is too easy! A sprinkler should cost 10 coins, and a squashed bug should give 5.",
         "no": "Det er for lett å bygge gratis! En sprinkler skal koste 10 mynter, og et knust insekt skal gi 5."
@@ -370,6 +471,11 @@
         "n": 5
       },
       "toolbox": {
+        "map": [
+          "map_for_rows",
+          "map_for_columns",
+          "map_put"
+        ],
         "garden": [
           "coins_enough",
           "coins_change",
@@ -400,23 +506,26 @@
         ]
       },
       "solution": {
+        "map": "function whenRunClicked() {\n  for (let y = 0; y < 5; y++) {\n    for (let x = 0; x < 9; x++) {\n      map.put('grass', x, y);\n    }\n  }\n}\n",
         "garden": "function whenRunClicked() {\n  game.changeCoins(50);\n}\n\nfunction whenSquareClicked(x, y) {\n  if (game.coins() >= 10) {\n    garden.build(x, y);\n    game.changeCoins(-10);\n  }\n}\n\nfunction everyTick() {\n  if (game.every(30)) {\n    garden.newBug();\n  }\n}\n",
         "bug": "function whenCreated() {\n  me.speed = 0.05;\n  me.hp = 3;\n}\n\nfunction everyTick() {\n  me.move();\n}\n\nfunction whenHit() {\n  me.hp = me.hp - 1;\n  if (me.hp <= 0) {\n    me.squash();\n    game.changeCoins(5);\n  }\n}\n",
         "sprinkler": "function everyTick() {\n  if (game.every(10)) {\n    me.shoot();\n  }\n}\n"
-      }
+      },
+      "focus": "garden"
     },
     {
-      "id": "garden-6",
+      "id": "garden-7",
       "title": {
         "en": "Protect the house",
         "no": "Beskytt huset"
       },
       "scripts": [
+        "map",
         "garden",
         "bug",
         "sprinkler"
       ],
-      "carryFrom": "garden-5",
+      "carryFrom": "garden-6",
       "story": {
         "en": "If a bug gets into Bit's house, the game should be over. Right now they just walk in!",
         "no": "Hvis et insekt kommer inn i huset til Bit, skal spillet være slutt. Akkurat nå går de bare rett inn!"
@@ -446,6 +555,11 @@
         "reason": "house"
       },
       "toolbox": {
+        "map": [
+          "map_for_rows",
+          "map_for_columns",
+          "map_put"
+        ],
         "garden": [
           "garden_bug_home",
           "game_over",
@@ -473,23 +587,26 @@
         ]
       },
       "solution": {
+        "map": "function whenRunClicked() {\n  for (let y = 0; y < 5; y++) {\n    for (let x = 0; x < 9; x++) {\n      map.put('grass', x, y);\n    }\n  }\n}\n",
         "garden": "function whenRunClicked() {\n  game.changeCoins(50);\n}\n\nfunction whenSquareClicked(x, y) {\n  if (game.coins() >= 10) {\n    garden.build(x, y);\n    game.changeCoins(-10);\n  }\n}\n\nfunction everyTick() {\n  if (game.every(30)) {\n    garden.newBug();\n  }\n  if (garden.bugAtHouse()) {\n    game.over();\n  }\n}\n",
         "bug": "function whenCreated() {\n  me.speed = 0.05;\n  me.hp = 3;\n}\n\nfunction everyTick() {\n  me.move();\n}\n\nfunction whenHit() {\n  me.hp = me.hp - 1;\n  if (me.hp <= 0) {\n    me.squash();\n    game.changeCoins(5);\n  }\n}\n",
         "sprinkler": "function everyTick() {\n  if (game.every(10)) {\n    me.shoot();\n  }\n}\n"
-      }
+      },
+      "focus": "garden"
     },
     {
-      "id": "garden-7",
+      "id": "garden-8",
       "title": {
         "en": "You win!",
         "no": "Du vant!"
       },
       "scripts": [
+        "map",
         "garden",
         "bug",
         "sprinkler"
       ],
-      "carryFrom": "garden-6",
+      "carryFrom": "garden-7",
       "final": true,
       "story": {
         "en": "The last rule: you win when you have stopped 10 bugs. Then make the game your own: change the speed, HP, prices and timers!",
@@ -519,6 +636,11 @@
         "type": "win"
       },
       "toolbox": {
+        "map": [
+          "map_for_rows",
+          "map_for_columns",
+          "map_put"
+        ],
         "garden": [
           "stopped_enough",
           "game_win",
@@ -548,10 +670,12 @@
         ]
       },
       "solution": {
+        "map": "function whenRunClicked() {\n  for (let y = 0; y < 5; y++) {\n    for (let x = 0; x < 9; x++) {\n      map.put('grass', x, y);\n    }\n  }\n}\n",
         "garden": "function whenRunClicked() {\n  game.changeCoins(50);\n}\n\nfunction whenSquareClicked(x, y) {\n  if (game.coins() >= 10) {\n    garden.build(x, y);\n    game.changeCoins(-10);\n  }\n}\n\nfunction everyTick() {\n  if (game.every(30)) {\n    garden.newBug();\n  }\n  if (garden.bugAtHouse()) {\n    game.over();\n  }\n  if (garden.stopped() >= 10) {\n    game.win();\n  }\n}\n",
         "bug": "function whenCreated() {\n  me.speed = 0.05;\n  me.hp = 3;\n}\n\nfunction everyTick() {\n  me.move();\n}\n\nfunction whenHit() {\n  me.hp = me.hp - 1;\n  if (me.hp <= 0) {\n    me.squash();\n    game.changeCoins(5);\n  }\n}\n",
         "sprinkler": "function everyTick() {\n  if (game.every(10)) {\n    me.shoot();\n  }\n}\n"
-      }
+      },
+      "focus": "garden"
     }
   ]
 }

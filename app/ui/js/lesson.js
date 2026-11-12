@@ -511,7 +511,7 @@ class LessonController {
     const alert = (...a) => this.log(a);
     if (this.mode === 'code') {
       this.typed = compileTyped(this.editor.value, { world: this.course.world });
-      return (events, bit, snake, game, field, garden) => this.typed.run(events, bit, snake, game, kidConsole, alert, field, garden);
+      return (events, bit, snake, game, field, garden, map) => this.typed.run(events, bit, snake, game, kidConsole, alert, field, garden, map);
     }
     return this.blocksProgram(workspaceCode(this.ws, { loopTrap: LOOP_TRAP }));
   }
@@ -520,8 +520,8 @@ class LessonController {
   blocksProgram(code) {
     const kidConsole = { log: (...a) => this.log(a), info: (...a) => this.log(a), warn: (...a) => this.log(a), error: (...a) => this.log(a) };
     const body = `"use strict";\nlet __loopGuard = 100000;\nlet me = null;\n__events.bindMe?.((m) => { me = m; });\n${code}`;
-    const fn = new Function('__events', 'bit', 'snake', 'game', 'console', '__LoopError', 'field', 'garden', body);
-    return (events, bit, snake, game, field, garden) => fn(events, bit, snake, game, kidConsole, LoopError, field, garden);
+    const fn = new Function('__events', 'bit', 'snake', 'game', 'console', '__LoopError', 'field', 'garden', 'map', body);
+    return (events, bit, snake, game, field, garden, map) => fn(events, bit, snake, game, kidConsole, LoopError, field, garden, map);
   }
 
   /**
@@ -541,7 +541,7 @@ class LessonController {
           const text = sid === this.script ? this.editor.value : this.initialCode(sid);
           const typed = compileTyped(text, { world: this.course.world, script: sid });
           this.typedBy[sid] = typed;
-          fns[sid] = (events, bit, snake, game, field, garden) => typed.run(events, bit, snake, game, kidConsole, alert, field, garden);
+          fns[sid] = (events, bit, snake, game, field, garden, map) => typed.run(events, bit, snake, game, kidConsole, alert, field, garden, map);
         } else {
           const code = sid === this.script ? workspaceCode(this.ws, { loopTrap: LOOP_TRAP }) : runCodeFromBlocks(this.initialWorkspace(sid).json, LOOP_TRAP);
           fns[sid] = this.blocksProgram(code);
@@ -790,7 +790,7 @@ class LessonController {
   runGarden(fns, id) {
     const w = this.world;
     w.reset();
-    const { garden, game } = w.api();
+    const { map, garden, game } = w.api();
     const evs = {};
     // Tag a mistake with the script it happened in, so that tab can be shown.
     const inScript = (sid, f) => {
@@ -805,7 +805,7 @@ class LessonController {
       for (const [sid, fn] of Object.entries(fns)) {
         const { ev, api } = this.makeEvents();
         evs[sid] = ev;
-        inScript(sid, () => fn(api, null, null, game, null, garden));
+        inScript(sid, () => fn(api, null, null, game, null, garden, map));
       }
     } catch (e) {
       return this.handleError(e, id);
@@ -826,8 +826,14 @@ class LessonController {
       }
       return true;
     };
-    const main = evs.garden;
+    const main = evs.garden || this.makeEvents().ev;
     try {
+      // First the 🗺️ map is drawn, then the 🏡 garden starts.
+      if (evs.map) {
+        inScript('map', () => {
+          for (const handler of evs.map.start) handler();
+        });
+      }
       inScript('garden', () => {
         for (const handler of main.start) handler();
       });
@@ -835,6 +841,7 @@ class LessonController {
       if (!(e instanceof GameOverSignal)) return this.handleError(e, id);
     }
     w.draw();
+    if (this.lesson.goal?.type === 'map') return this.mapGoalCheck();
     if (!main.click.length && !main.tick.length) return this.fail(this.mode === 'code' ? 'msg.noClickCode' : 'msg.noClick');
     this.say(t(main.rightClick.length ? 'lesson.buildFences' : 'lesson.build'), 'info');
     this.houseWarned = 0;
@@ -874,6 +881,18 @@ class LessonController {
     this.timer = setTimeout(step, w.tickMs());
   }
 
+  /** Lesson 1: every square has grass, a rock or flowers, and there's at least one rock or flowers. */
+  mapGoalCheck() {
+    const w = this.world;
+    const all = 9 * 5;
+    const filled = w.tiles.size;
+    const extras = [...w.tiles.values()].filter((t) => t !== 'grass').length;
+    if (!evsHadMap(w)) return this.fail(this.mode === 'code' ? 'msg.noMapCode' : 'msg.noMap');
+    if (filled < all) return this.fail('msg.mapNotFull', { n: filled, all });
+    if (!extras) return this.fail('msg.mapNoExtras');
+    this.succeed();
+  }
+
   /** Say something about the game once per run (not every tick). */
   tellOnce(key, kind = 'info') {
     if (this.gardenTold.has(key)) return;
@@ -910,6 +929,7 @@ class LessonController {
     if (goal.type === 'bugs' && s.spawned && !w.bugs.some((b) => b.x < 8.9)) this.tellOnce('msg.bugsStandStill');
     if (goal.type === 'ownBugs' && s.spawned >= goal.n && s.ownBugs < goal.n) this.tellOnce('msg.bugsNotOwn', 'warn');
     if (s.hitsIgnored) this.tellOnce('msg.hitNothing', goal.type === 'stopped' ? 'warn' : 'info');
+    if (s.notGrass) this.tellOnce('msg.notGrass', 'warn');
     if (s.hpGoneNotSquashed) this.tellOnce('msg.hpGone', 'warn');
     if (goal.type === 'paidFor' && s.stopped >= goal.n && s.spent < 20) this.tellOnce('msg.buildingIsFree', 'warn');
     if (goal.type === 'paidFor' && s.stopped >= goal.n && !s.earnedFromBugs) this.tellOnce('msg.noBugCoins', 'warn');
@@ -1295,6 +1315,10 @@ class LessonController {
     window.removeEventListener('keydown', this.onKeyDown, true);
     this.teardownWorkspace();
   }
+}
+
+function evsHadMap(world) {
+  return world.tiles.size > 0;
 }
 
 function safeString(v) {

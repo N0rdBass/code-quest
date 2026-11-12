@@ -26,7 +26,7 @@ const WORD_KEYS = {
 // What `me` can have and do, in an object's script (Garden defence).
 const ME_WORDS = new Set(['speed', 'hp', 'kind', 'x', 'y', 'move', 'squash', 'shoot']);
 
-const OBJECT_KEYS = { bit: 'bit', snake: 'snake', game: 'game', console: 'console', Math: 'math', field: 'field', garden: 'garden', me: 'me' };
+const OBJECT_KEYS = { bit: 'bit', snake: 'snake', game: 'game', console: 'console', Math: 'math', field: 'field', garden: 'garden', me: 'me', map: 'map' };
 const SKIP = new Set(['ws', 'nl']);
 
 export function explainAt(code, pos) {
@@ -155,6 +155,8 @@ function explainWord(sig, j) {
   }
   if (OBJECT_KEYS[word]) return { key: `explain.${OBJECT_KEYS[word]}` };
   if (prev?.value === 'function') return { key: 'explain.ownFunction', vars: { name: word } };
+  // In the map's loops, x and y are counters: every column, every row.
+  if ((word === 'x' || word === 'y') && isLoopCounter(sig, word)) return { key: `explain.gridCounter_${word}` };
   if (word === 'x' || word === 'y') return { key: `explain.coord_${word}` };
   if (isLoopItem(sig, word)) return { key: 'explain.loopItem', vars: { name: word } };
   if (isLoopCounter(sig, word)) return { key: 'explain.counter', vars: { name: word } };

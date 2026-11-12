@@ -96,7 +96,13 @@
     "bugsNotOwn": "The bugs still use the standard speed and HP. In 🐌 Bug, give them their own in \"when I'm created\".",
     "hitNothing": "Water hits the bugs, but nothing happens. In 🐌 Bug, decide what happens in \"when water hits me\".",
     "hpGone": "A bug has 0 HP (or less), but it is still crawling! Squash it when its HP runs out.",
-    "noBugCoins": "You stopped the bugs, but they gave no coins. In 🐌 Bug, give 5 coins when a bug is squashed."
+    "noBugCoins": "You stopped the bugs, but they gave no coins. In 🐌 Bug, give 5 coins when a bug is squashed.",
+    "badTile": "\"{tile}\" is not something you can put on the map. Use one of: {list}.",
+    "noMap": "Put your blocks inside \"when ▶ Run is clicked\" in 🗺️ Map.",
+    "noMapCode": "Put your map code inside function whenRunClicked() { … } in 🗺️ Map.",
+    "mapNotFull": "Only {n} of the {all} squares have something on them. Use two loops so every row and every column gets grass.",
+    "mapNoExtras": "Lovely lawn! Now put at least one rock or some flowers on the map, wherever you like.",
+    "notGrass": "Sprinklers can only be built on grass. Click a grass square (or give the 🗺️ Map more grass)."
   },
   "diploma": {
     "title": "Diploma",
@@ -185,7 +191,15 @@
     "meSetSpeed": "set my speed to %1",
     "meSetHp": "set my HP to %1",
     "meChangeHp": "change my HP by %1",
-    "meHp": "my HP"
+    "meHp": "my HP",
+    "mapPut": "put %1 at column %2 row %3",
+    "tile": {
+      "grass": "grass",
+      "rock": "a rock",
+      "flowers": "flowers"
+    },
+    "forRows": "for each row y",
+    "forColumns": "for each column x"
   },
   "blockNames": {
     "controls_repeat_ext": "repeat",
@@ -248,7 +262,10 @@
       "meChangeHp": "take 1 HP away from this bug",
       "hpGone": "asks: is this bug's HP 0 or less?",
       "meSquash": "squash this bug: it is stopped",
-      "meShoot": "this sprinkler shoots a drop along its row"
+      "meShoot": "this sprinkler shoots a drop along its row",
+      "mapPut": "put 'grass', 'rock' or 'flowers' on a square",
+      "forRows": "a loop over every row: y is 0, 1, 2, 3, 4",
+      "forColumns": "a loop over every column: x is 0, 1, … 8"
     },
     "err": {
       "string": "This text has no closing {q}. Text must start and end with {q}.",
@@ -382,7 +399,10 @@
     "me_squash": "me.squash() squashes this bug: it is stopped and disappears.",
     "me_shoot": "me.shoot() makes this sprinkler shoot a water drop along its row.",
     "event_created": "{name} is a special name: its code runs once for each object, the moment it is created.",
-    "event_hit": "{name} is a special name: its code runs every time water hits this bug."
+    "event_hit": "{name} is a special name: its code runs every time water hits this bug.",
+    "map": "map is the map of the garden. map.put puts grass, a rock or flowers on a square.",
+    "gridCounter_x": "x is the column counter: the loop runs once for each column, with x = 0, 1, 2 … 8.",
+    "gridCounter_y": "y is the row counter: the loop runs once for each row, with y = 0, 1, 2, 3, 4."
   },
   "glossary": {
     "braces": "hold a group of code that belongs together: the code of a function, a loop or an if",

@@ -3,6 +3,10 @@
 // beetles crawl in from the right. Bit builds sprinklers that shoot water
 // drops along their row.
 //
+// The 🗺️ Kart script draws the map: the lawn starts as bare soil, and the kid
+// puts grass, rocks and flowers on it (usually with two loops). Sprinklers can
+// only be built on grass, so every kid's map makes a slightly different game.
+//
 // Every bug and every sprinkler is an object that runs its own script: the kid
 // writes the 🐌 Insekt script once, and each bug follows it with `me` meaning
 // "this bug". The 🏡 Hagen script runs the game itself (building, waves, coins,
@@ -27,6 +31,7 @@ const LOOKS = {
   beetle: { body: '#1e293b', shell: '#e03131' },
 };
 const GADGET_HP = { sprinkler: 15, fence: 60 };
+export const TILES = ['grass', 'rock', 'flowers'];
 
 const key = (x, y) => `${x},${y}`;
 
@@ -44,6 +49,7 @@ export class GardenWorld {
   }
 
   reset() {
+    this.tiles = new Map(); // key → 'grass' | 'rock' | 'flowers' (no tile = bare soil)
     this.gadgets = new Map(); // key → { type, x, y, hp, me }
     this.bugs = [];
     this.drops = [];
@@ -56,7 +62,7 @@ export class GardenWorld {
     this.handling = null; // e.g. 'bug.hit' while a bug's "when water hits me" runs
     this.stats = {
       built: 0, sprinklers: 0, fences: 0, spawned: 0, ownBugs: 0, stopped: 0, reachedHouse: 0,
-      shots: 0, hitsIgnored: 0, hpGoneNotSquashed: 0, coinsWentNegative: false, spent: 0, earnedFromBugs: 0,
+      notGrass: 0, shots: 0, hitsIgnored: 0, hpGoneNotSquashed: 0, coinsWentNegative: false, spent: 0, earnedFromBugs: 0,
     };
     this.onScore?.(this.coins);
     this.draw();
@@ -70,6 +76,14 @@ export class GardenWorld {
 
   api() {
     return {
+      map: {
+        put: (type, x, y) => {
+          if (!TILES.includes(type)) throw new KidError('msg.badTile', { tile: String(type), list: TILES.map((t) => `'${t}'`).join(', ') });
+          this.check(x, y);
+          this.tiles.set(key(x, y), type);
+          this.draw();
+        },
+      },
       garden: {
         build: (x, y) => this.build('sprinkler', x, y),
         buildFence: (x, y) => this.build('fence', x, y),
@@ -124,6 +138,11 @@ export class GardenWorld {
   build(type, x, y) {
     this.check(x, y);
     if (this.gadgets.has(key(x, y))) return;
+    // Only on grass: soil, rocks and flowers can't hold a sprinkler.
+    if (this.tiles.get(key(x, y)) !== 'grass') {
+      this.stats.notGrass++;
+      return;
+    }
     const g = { type, x, y, hp: GADGET_HP[type] };
     if (type === 'sprinkler') g.me = this.sprinklerMe(g);
     this.gadgets.set(key(x, y), g);
@@ -278,8 +297,22 @@ export class GardenWorld {
       ctx.fillText(String(y), LEFT - 10, TOP + y * CELL + CELL / 2);
       for (let x = 0; x < COLS; x++) {
         const hovered = this.hover?.x === x && this.hover?.y === y;
-        ctx.fillStyle = hovered ? '#c3eba0' : (x + y) % 2 ? '#a9d977' : '#b5e085';
-        ctx.fillRect(LEFT + x * CELL, TOP + y * CELL, CELL, CELL);
+        const tile = this.tiles.get(key(x, y));
+        const px = LEFT + x * CELL;
+        const py = TOP + y * CELL;
+        if (!tile) {
+          ctx.fillStyle = (x + y) % 2 ? '#a07850' : '#ab835a'; // bare soil
+          ctx.fillRect(px, py, CELL, CELL);
+        } else {
+          ctx.fillStyle = (x + y) % 2 ? '#a9d977' : '#b5e085';
+          ctx.fillRect(px, py, CELL, CELL);
+          if (tile === 'rock') drawRock(ctx, px, py);
+          if (tile === 'flowers') drawFlowers(ctx, px, py);
+        }
+        if (hovered) {
+          ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+          ctx.fillRect(px, py, CELL, CELL);
+        }
       }
     }
     for (const g of this.gadgets.values()) (g.type === 'fence' ? drawFence : drawSprinkler)(ctx, LEFT + g.x * CELL, TOP + g.y * CELL, g.hp / GADGET_HP[g.type]);
@@ -300,6 +333,32 @@ export class GardenWorld {
       ctx.fillStyle = this.overReason === 'win' ? 'rgba(47, 158, 68, 0.2)' : 'rgba(0, 0, 0, 0.25)';
       ctx.fillRect(LEFT, TOP, COLS * CELL, ROWS * CELL);
     }
+  }
+}
+
+function drawRock(ctx, px, py) {
+  ctx.fillStyle = '#8a94a3';
+  ctx.beginPath();
+  ctx.ellipse(px + 23, py + 27, 16, 12, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = '#a7b0bd';
+  ctx.beginPath();
+  ctx.ellipse(px + 19, py + 23, 7, 4, -0.3, 0, Math.PI * 2);
+  ctx.fill();
+}
+
+function drawFlowers(ctx, px, py) {
+  for (const [dx, dy, c] of [[12, 14, '#f783ac'], [30, 12, '#ffd43b'], [22, 28, '#ffffff'], [34, 32, '#f783ac'], [10, 34, '#ffd43b']]) {
+    ctx.fillStyle = c;
+    for (let a = 0; a < 5; a++) {
+      ctx.beginPath();
+      ctx.arc(px + dx + Math.cos((a * 2 * Math.PI) / 5) * 3, py + dy + Math.sin((a * 2 * Math.PI) / 5) * 3, 2.2, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.fillStyle = '#f59f00';
+    ctx.beginPath();
+    ctx.arc(px + dx, py + dy, 1.6, 0, Math.PI * 2);
+    ctx.fill();
   }
 }
 

@@ -10,7 +10,7 @@
 
 import { t } from './i18n.js';
 
-const COLOUR = { events: 45, robot: 210, snake: 135, score: 25, game: 0, field: 195, where: 290, count: 25, garden: 95, coins: 45, me: 330 };
+const COLOUR = { events: 45, robot: 210, snake: 135, score: 25, game: 0, field: 195, where: 290, count: 25, garden: 95, coins: 45, me: 330, map: 160 };
 
 function dirOptions(group) {
   return ['up', 'down', 'left', 'right'].map((d) => [t(`blocks.${group}.${d}`), d]);
@@ -178,6 +178,37 @@ export function defineBlocks() {
     },
     reporter('coins_get', t('blocks.coins'), COLOUR.coins),
 
+    // ---- the map (Garden defence's 🗺️ Kart script) ----
+    {
+      type: 'map_put',
+      message0: t('blocks.mapPut'),
+      args0: [
+        { type: 'field_dropdown', name: 'TILE', options: ['grass', 'rock', 'flowers'].map((k) => [t(`blocks.tile.${k}`), k]) },
+        { type: 'input_value', name: 'X', check: 'Number' },
+        { type: 'input_value', name: 'Y', check: 'Number' },
+      ],
+      inputsInline: true,
+      previousStatement: null,
+      nextStatement: null,
+      colour: COLOUR.map,
+    },
+    {
+      type: 'map_for_rows',
+      message0: `${t('blocks.forRows')} %1 %2`,
+      args0: [{ type: 'input_dummy' }, { type: 'input_statement', name: 'DO' }],
+      previousStatement: null,
+      nextStatement: null,
+      colour: 120,
+    },
+    {
+      type: 'map_for_columns',
+      message0: `${t('blocks.forColumns')} %1 %2`,
+      args0: [{ type: 'input_dummy' }, { type: 'input_statement', name: 'DO' }],
+      previousStatement: null,
+      nextStatement: null,
+      colour: 120,
+    },
+
     // ---- objects with their own script (`me`) ----
     {
       type: 'event_created',
@@ -342,6 +373,15 @@ export function defineGenerators() {
   gen.forBlock['coins_change'] = (b) => `game.changeCoins(${Number(b.getFieldValue('N')) || 0});\n`;
   gen.forBlock['coins_get'] = () => ['game.coins()', Order.FUNCTION_CALL];
 
+  // The map: two loops visit every row and, inside, every column.
+  gen.forBlock['map_put'] = (b) => `map.put('${b.getFieldValue('TILE')}', ${xy(b)});\n`;
+  const gridLoop = (v, n) => (block) => {
+    const branch = gen.addLoopTrap(gen.statementToCode(block, 'DO'), block);
+    return `for (let ${v} = 0; ${v} < ${n}; ${v}++) {\n${branch}}\n`;
+  };
+  gen.forBlock['map_for_rows'] = gridLoop('y', 5);
+  gen.forBlock['map_for_columns'] = gridLoop('x', 9);
+
   // Objects with their own script: `me` is the object running it.
   gen.forBlock['event_created'] = hat(() => 'whenCreated', () => '__events.onCreated(');
   gen.forBlock['event_hit'] = hat(() => 'whenHit', () => '__events.onHit(');
@@ -472,6 +512,7 @@ const TOOLBOX_ENTRIES = {
     fields: { OP: 'GTE' },
     inputs: { A: { block: { type: 'garden_stopped' } }, B: { shadow: { type: 'math_number', fields: { NUM: 15 } } } },
   },
+  map_put: xyEntry('map_put'),
   hp_gone: {
     kind: 'block',
     type: 'logic_compare',

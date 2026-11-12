@@ -29,7 +29,7 @@ const KEYWORDS = new Set([
   'function', 'for', 'while', 'do', 'if', 'else', 'let', 'const', 'var', 'return',
   'true', 'false', 'null', 'undefined', 'break', 'continue', 'new', 'of', 'in', 'typeof',
 ]);
-const OBJECTS = new Set(['bit', 'snake', 'game', 'console', 'Math', 'field', 'garden', 'me']);
+const OBJECTS = new Set(['bit', 'snake', 'game', 'console', 'Math', 'field', 'garden', 'me', 'map']);
 const PAIRS = { '(': ')', '[': ']', '{': '}' };
 const CLOSERS = new Set([')', ']', '}']);
 
@@ -261,6 +261,7 @@ const API = {
   game: { changeScore: null, over: null, faster: null, win: null, changeCoins: null, coins: null, every: null },
   garden: { build: null, buildFence: null, isEmpty: null, newBug: null, bugAtHouse: null, stopped: null },
   me: {}, // depends on the script: see ME_API
+  map: { put: ['grass', 'rock', 'flowers'] },
   field: { placeMines: null, reveal: null, hasMine: null, showMines: null, toggleFlag: null, hasFlag: null, neighbours: null, clickAround: null, allSafeOpen: null },
   console: { log: null, info: null, warn: null, error: null },
 };
@@ -270,6 +271,7 @@ const WORLD_OBJECTS = { robot: ['bit', 'game', 'console'], snake: ['snake', 'gam
 // object's script, `me` is the object running it ("this bug", "this sprinkler").
 // 'prop' marks a value (me.speed), not a command, so it takes no ( ).
 const SCRIPT_OBJECTS = {
+  map: ['map', 'console'],
   garden: ['garden', 'game', 'console'],
   bug: ['me', 'game', 'garden', 'console'],
   sprinkler: ['me', 'game', 'garden', 'console'],
@@ -525,7 +527,7 @@ export function countUses(code, limits) {
 // Globals kid code shouldn't reach by accident. Not a real sandbox (kids run
 // their own code on their own computer), but it keeps mistakes harmless.
 const HIDDEN = ['window', 'document', 'globalThis', 'self', 'top', 'parent', 'localStorage', 'sessionStorage', 'fetch', 'prompt', 'confirm', '__TAURI__'];
-const PARAMS = ['__events', 'bit', 'snake', 'game', 'console', '__LoopError', '__trace', 'alert', 'field', 'garden', ...HIDDEN];
+const PARAMS = ['__events', 'bit', 'snake', 'game', 'console', '__LoopError', '__trace', 'alert', 'field', 'garden', 'map', ...HIDDEN];
 
 function wrap(body) {
   const returns = Object.keys(EVENT_FUNCS)
@@ -632,9 +634,9 @@ export function compileTyped(code, { world, script } = {}) {
   const fn = make(tagged);
   const trace = { at: null };
   return {
-    run(events, bit, snake, game, console, alert, field, garden) {
+    run(events, bit, snake, game, console, alert, field, garden, map) {
       trace.at = null;
-      return fn(events, bit, snake, game, console, LoopError, trace, alert, field, garden);
+      return fn(events, bit, snake, game, console, LoopError, trace, alert, field, garden, map);
     },
     /** Where the last tagged command was: { line, start, end }, or null. */
     lastPlace: () => (trace.at == null ? null : places[trace.at]),

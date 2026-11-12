@@ -7,7 +7,7 @@ It runs offline from a USB stick or a laptop, with no accounts and no internet.
 
 **Status: prototype (v0.1.0, 2026-10-30; code mode added 2026-11-05).** Built so
 far: the basics course (5 lessons), Snake (6 lessons), Minesweeper (6 lessons) and
-Garden defence / Hageforsvar (7 lessons),
+Garden defence / Hageforsvar (8 lessons),
 in all three modes: blocks, blocks + code, and typed code.
 
 ## What's in the prototype
@@ -20,7 +20,7 @@ in all three modes: blocks, blocks + code, and typed code.
 | Three modes | A switch at the top of every lesson: **Blocks** (drag and drop), **Both** (blocks with the real JavaScript they make next to them) and **Code** (type JavaScript). The choice is saved per player. |
 | Code mode | A kid-friendly editor (line numbers, colours, auto-indent, red/yellow squiggly lines under mistakes while typing, with the message on hover), a list of the lesson's commands to click in, and mistakes explained in plain words with the line marked in red. Switching to code the first time starts from the kid's own blocks, turned into code. `console.log` prints below the editor. Clicking any symbol or word (`{ }`, `( )`, `' '`, `;`, `for`, `i` …) explains what it means there, and a Symbols list sums them up. |
 | Minesweeper (6 lessons) | The minefield (grid, coordinates x/y, click events), Boom! (if → game over), How many mines? (a loop over the 8 neighbours and a counter; wrong numbers are caught), Flags (right-click event), Open the empty areas (recursion as a ready-made block: `field.clickAround` runs the kid's own click code again), You win! Numbers along the edges and "column 3, row 5" on hover teach coordinates. The first click is never a mine. |
-| Garden defence (7 lessons) | Bit's garden vs bugs, built from **objects with their own scripts**: tabs for 🏡 Garden (the game: building, waves, coins, winning, losing), 🐌 Bug (the code every bug follows: `whenCreated` sets `me.speed`/`me.hp`, `everyTick` does `me.move()`, `whenHit` loses HP and squashes) and 💧 Sprinkler (`me.shoot()` on a timer). `me` is the object running the script. Lessons: Build!, Here come the bugs, My own bug, Water!, Coins, Protect the house, You win! |
+| Garden defence (8 lessons) | Bit's garden vs bugs, built from **objects with their own scripts**: tabs for 🗺️ Map (draw the lawn square by square with two loops, plus your own rocks and flowers; sprinklers can only stand on grass), 🏡 Garden (the game: building, waves, coins, winning, losing), 🐌 Bug (the code every bug follows: `whenCreated` sets `me.speed`/`me.hp`, `everyTick` does `me.move()`, `whenHit` loses HP and squashes) and 💧 Sprinkler (`me.shoot()` on a timer). `me` is the object running the script. Lessons: Make the map, Build!, Here come the bugs, My own bug, Water!, Coins, Protect the house, You win! |
 | Diploma | Printable diploma with the kid's name after finishing a game. |
 | Languages | Norsk / English switch on the start screen and the map. |
 | Portable saves | Progress is saved in `code-quest-data/` next to the app, so it travels on the USB stick. |

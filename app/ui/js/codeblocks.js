@@ -54,6 +54,7 @@ const CALLS = {
   'game.every': { type: 'game_every', field: 'N' },
   'game.changeCoins': { type: 'coins_change', field: 'N' },
   'game.coins': { type: 'coins_get' },
+  'map.put': { type: 'map_put', field: 'TILE', xyFrom: 1 },
 };
 
 // Inside "for each sprinkler" a loop variable's .x means the sprinkler's column;
@@ -90,7 +91,12 @@ function call(s) {
   return m ? { name: m[1], args: splitArgs(m[2]) } : null;
 }
 
+// Inside the map's row/column loops, the loop variables ($0, $1 …) are the
+// "row y" / "column x" blocks.
+const gridVars = {};
+
 function value(s) {
+  if (gridVars[s]) return { type: gridVars[s] };
   if (VALUES[s]) return { ...VALUES[s] };
   if (/^\$\d+\.x$/.test(s)) return { type: `${loopItem}_x` };
   if (/^\$\d+\.y$/.test(s)) return { type: `${loopItem}_y` };
@@ -114,6 +120,7 @@ function callBlock(s) {
   if (!spec) return null;
   const block = { type: spec.withN && c.args.length > 2 ? spec.withN : spec.type };
   if (spec.field && c.args[0] != null) block.fields = { [spec.field]: c.args[0].replace(/^'|'$/g, '') };
+  if (spec.xyFrom != null) block.inputs = { X: input(c.args[spec.xyFrom]), Y: input(c.args[spec.xyFrom + 1]) };
   if (spec.xy) {
     block.inputs = { X: input(c.args[0]), Y: input(c.args[1]) };
     if (c.args[2] != null) block.inputs.N = input(c.args[2]);
@@ -132,6 +139,17 @@ function statement(node) {
     return { type: 'controls_if', inputs: { IF0: input(body), DO0: chain(node.body || []) } };
   }
   if (node.kind === 'for') {
+    // The map's loops: for (let y = 0; y < 5; y++) / for (let x = 0; x < 9; x++)
+    const grid = /^for \(let ([xy]) = 0; \1 < \d+; \1\+\+\)/.exec(node.show);
+    const renamed = /^let(\$\d+)=0;/.exec(body);
+    if (grid && renamed) {
+      gridVars[renamed[1]] = grid[1] === 'x' ? 'click_x' : 'click_y';
+      try {
+        return { type: grid[1] === 'x' ? 'map_for_columns' : 'map_for_rows', inputs: { DO: chain(node.body || []) } };
+      } finally {
+        delete gridVars[renamed[1]];
+      }
+    }
     const times = /^let\$\d+=0;\$\d+<(\d+);\$\d+\+\+$/.exec(body);
     if (times) {
       return {
