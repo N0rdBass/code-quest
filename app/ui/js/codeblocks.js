@@ -41,7 +41,21 @@ const CALLS = {
   'field.clickAround': { type: 'field_click_around', xy: true },
   'field.showMines': { type: 'field_show_mines' },
   'field.allSafeOpen': { type: 'field_all_open' },
+  'garden.build': { type: 'garden_build', xy: true },
+  'garden.buildFence': { type: 'garden_fence', xy: true },
+  'garden.shoot': { type: 'garden_shoot', xy: true },
+  'garden.newBug': { type: 'garden_new_bug' },
+  'garden.moveBugs': { type: 'garden_move_bugs' },
+  'garden.bugAtHouse': { type: 'garden_bug_home' },
+  'garden.stopped': { type: 'garden_stopped' },
+  'game.every': { type: 'game_every', field: 'N' },
+  'game.changeCoins': { type: 'coins_change', field: 'N' },
+  'game.coins': { type: 'coins_get' },
 };
+
+// Inside "for each sprinkler" a loop variable's .x means the sprinkler's column;
+// inside "for each square around" it means that square's column.
+let loopItem = 'square';
 
 const VALUES = {
   x: { type: 'click_x' },
@@ -74,8 +88,8 @@ function call(s) {
 
 function value(s) {
   if (VALUES[s]) return { ...VALUES[s] };
-  if (/^\$\d+\.x$/.test(s)) return { type: 'square_x' };
-  if (/^\$\d+\.y$/.test(s)) return { type: 'square_y' };
+  if (/^\$\d+\.x$/.test(s)) return { type: `${loopItem}_x` };
+  if (/^\$\d+\.y$/.test(s)) return { type: `${loopItem}_y` };
   if (/^-?\d+(\.\d+)?$/.test(s)) return { type: 'math_number', fields: { NUM: Number(s) } };
   const cmp = /^(.+?)(==|!=|<=|>=|<|>)(.+)$/.exec(s);
   if (cmp) {
@@ -124,13 +138,24 @@ function statement(node) {
     const around = /^const\$\d+offield\.neighbours\((.*)\)$/.exec(body);
     if (around) {
       const [x, y] = splitArgs(around[1]);
-      return { type: 'for_neighbours', inputs: { X: input(x), Y: input(y), DO: chain(node.body || []) } };
+      return { type: 'for_neighbours', inputs: { X: input(x), Y: input(y), DO: inLoop('square', node) } };
     }
+    if (/^const\$\d+ofgarden\.sprinklers\(\)$/.test(body)) return { type: 'for_sprinklers', inputs: { DO: inLoop('sprinkler', node) } };
     return null;
   }
   if (node.kind === 'let' && /^letcount=0$/.test(body)) return { type: 'count_set' };
   if (body === 'count=count+1') return { type: 'count_add' };
   return callBlock(body);
+}
+
+function inLoop(item, node) {
+  const outer = loopItem;
+  loopItem = item;
+  try {
+    return chain(node.body || []);
+  } finally {
+    loopItem = outer;
+  }
 }
 
 /** Statements → one stack of blocks (each one's `next` is the one after it). */

@@ -10,7 +10,7 @@
 
 import { t } from './i18n.js';
 
-const COLOUR = { events: 45, robot: 210, snake: 135, score: 25, game: 0, field: 195, where: 290, count: 25 };
+const COLOUR = { events: 45, robot: 210, snake: 135, score: 25, game: 0, field: 195, where: 290, count: 25, garden: 95, coins: 45 };
 
 function dirOptions(group) {
   return ['up', 'down', 'left', 'right'].map((d) => [t(`blocks.${group}.${d}`), d]);
@@ -155,6 +155,41 @@ export function defineBlocks() {
       nextStatement: null,
       colour: 120,
     },
+    // ---- Garden defence ----
+    xyBlock('garden_build', t('blocks.build'), { statement: true, colour: COLOUR.garden }),
+    xyBlock('garden_fence', t('blocks.buildFence'), { statement: true, colour: COLOUR.garden }),
+    xyBlock('garden_shoot', t('blocks.shoot'), { statement: true, colour: COLOUR.garden }),
+    statement('garden_new_bug', t('blocks.newBug'), COLOUR.garden),
+    statement('garden_move_bugs', t('blocks.moveBugs'), COLOUR.garden),
+    question('garden_bug_home', t('blocks.bugAtHouse'), COLOUR.garden),
+    reporter('garden_stopped', t('blocks.stopped'), COLOUR.garden),
+    {
+      type: 'game_every',
+      message0: t('blocks.every'),
+      args0: [{ type: 'field_number', name: 'N', value: 30, precision: 1, min: 1, max: 500 }],
+      output: 'Boolean',
+      colour: COLOUR.events,
+    },
+    {
+      type: 'for_sprinklers',
+      message0: `${t('blocks.forSprinklers')} %1 %2`,
+      args0: [{ type: 'input_dummy' }, { type: 'input_statement', name: 'DO' }],
+      previousStatement: null,
+      nextStatement: null,
+      colour: 120,
+    },
+    reporter('sprinkler_x', t('blocks.sprinklerX'), COLOUR.where),
+    reporter('sprinkler_y', t('blocks.sprinklerY'), COLOUR.where),
+    {
+      type: 'coins_change',
+      message0: t('blocks.changeCoins'),
+      args0: [{ type: 'field_number', name: 'N', value: -10, precision: 1, min: -100, max: 100 }],
+      previousStatement: null,
+      nextStatement: null,
+      colour: COLOUR.coins,
+    },
+    reporter('coins_get', t('blocks.coins'), COLOUR.coins),
+
     statement('count_set', t('blocks.countSet'), COLOUR.count),
     statement('count_add', t('blocks.countAdd'), COLOUR.count),
     reporter('count_get', t('blocks.countGet'), COLOUR.count),
@@ -162,13 +197,13 @@ export function defineBlocks() {
 }
 
 /** A block with "column [x] row [y]" inputs. */
-function xyBlock(type, label, { statement: isStatement, output, extra = [] }) {
+function xyBlock(type, label, { statement: isStatement, output, extra = [], colour = COLOUR.field }) {
   const def = {
     type,
     message0: label,
     args0: [{ type: 'input_value', name: 'X', check: 'Number' }, { type: 'input_value', name: 'Y', check: 'Number' }, ...extra],
     inputsInline: true,
-    colour: COLOUR.field,
+    colour,
   };
   if (isStatement) Object.assign(def, { previousStatement: null, nextStatement: null });
   if (output) def.output = output;
@@ -267,6 +302,24 @@ export function defineGenerators() {
   gen.forBlock['field_show_mines'] = () => 'field.showMines();\n';
   gen.forBlock['field_all_open'] = () => ['field.allSafeOpen()', Order.FUNCTION_CALL];
   gen.forBlock['game_win'] = () => 'game.win();\n';
+  // Garden defence
+  gen.forBlock['garden_build'] = (b) => `garden.build(${xy(b)});\n`;
+  gen.forBlock['garden_fence'] = (b) => `garden.buildFence(${xy(b)});\n`;
+  gen.forBlock['garden_shoot'] = (b) => `garden.shoot(${xy(b)});\n`;
+  gen.forBlock['garden_new_bug'] = () => 'garden.newBug();\n';
+  gen.forBlock['garden_move_bugs'] = () => 'garden.moveBugs();\n';
+  gen.forBlock['garden_bug_home'] = () => ['garden.bugAtHouse()', Order.FUNCTION_CALL];
+  gen.forBlock['garden_stopped'] = () => ['garden.stopped()', Order.FUNCTION_CALL];
+  gen.forBlock['game_every'] = (b) => [`game.every(${Number(b.getFieldValue('N')) || 1})`, Order.FUNCTION_CALL];
+  gen.forBlock['sprinkler_x'] = () => ['sprinkler.x', Order.MEMBER];
+  gen.forBlock['sprinkler_y'] = () => ['sprinkler.y', Order.MEMBER];
+  gen.forBlock['coins_change'] = (b) => `game.changeCoins(${Number(b.getFieldValue('N')) || 0});\n`;
+  gen.forBlock['coins_get'] = () => ['game.coins()', Order.FUNCTION_CALL];
+  gen.forBlock['for_sprinklers'] = (block) => {
+    const branch = gen.addLoopTrap(gen.statementToCode(block, 'DO'), block);
+    return `for (const sprinkler of garden.sprinklers()) {\n${branch}}\n`;
+  };
+
   gen.forBlock['count_set'] = () => 'let count = 0;\n';
   gen.forBlock['count_add'] = () => 'count = count + 1;\n';
   gen.forBlock['for_neighbours'] = (block) => {
@@ -357,6 +410,25 @@ const TOOLBOX_ENTRIES = {
     kind: 'block',
     type: 'field_has_mine',
     inputs: { X: { shadow: { type: 'square_x' } }, Y: { shadow: { type: 'square_y' } } },
+  },
+  garden_build: xyEntry('garden_build'),
+  garden_fence: xyEntry('garden_fence'),
+  garden_shoot: {
+    kind: 'block',
+    type: 'garden_shoot',
+    inputs: { X: { shadow: { type: 'sprinkler_x' } }, Y: { shadow: { type: 'sprinkler_y' } } },
+  },
+  coins_enough: {
+    kind: 'block',
+    type: 'logic_compare',
+    fields: { OP: 'GTE' },
+    inputs: { A: { block: { type: 'coins_get' } }, B: { shadow: { type: 'math_number', fields: { NUM: 10 } } } },
+  },
+  stopped_enough: {
+    kind: 'block',
+    type: 'logic_compare',
+    fields: { OP: 'GTE' },
+    inputs: { A: { block: { type: 'garden_stopped' } }, B: { shadow: { type: 'math_number', fields: { NUM: 15 } } } },
   },
   count_is_zero: {
     kind: 'block',

@@ -41,7 +41,10 @@
     "diploma": "Get your diploma",
     "square": "Column {x}, row {y}",
     "clickSquares": "Click the squares!",
-    "clickSquaresFlags": "Click the squares! Right-click to place a flag."
+    "clickSquaresFlags": "Click the squares! Right-click to place a flag.",
+    "coins": "Coins",
+    "build": "Click the lawn to build!",
+    "buildFences": "Click the lawn to build! Right-click for a fence."
   },
   "msg": {
     "success": "Great job!",
@@ -80,7 +83,14 @@
     "mineNoRule": "You opened a mine, but the game goes on! Add the rule: if there is a mine, game over.",
     "mineNoRuleYet": "That was a mine, but nothing happened. We'll fix that in the next lesson!",
     "wrongNumberLow": "Column {x}, row {y} shows {shown}, but the right number is {real}. The count was too low when the square was opened: is count = count + 1 inside the if? And is field.reveal below the loop, after counting is done?",
-    "wrongNumberHigh": "Column {x}, row {y} shows {shown}, but the right number is {real}. The count was too high: does count start at 0, and do you add 1 only when there is a mine?"
+    "wrongNumberHigh": "Column {x}, row {y} shows {shown}, but the right number is {real}. The count was too high: does count start at 0, and do you add 1 only when there is a mine?",
+    "badEvery": "\"{n}\" is not a number of ticks. Use a whole number like 10 or 20.",
+    "noSprinkler": "There is no sprinkler at column {x}, row {y}, so no water can come from there.",
+    "coinsNegative": "Your coins went below 0! You can only build when you can afford it: check with if (coins ≥ 10) first.",
+    "bugsWon": "A bug got into the house! Game over. Press Run to try again.",
+    "bugInHouseNoRule": "A bug got into Bit's house, but the game goes on! Add the rule: if a bug reached the house, game over.",
+    "bugInHouseYet": "A bug got into Bit's house! We'll add a rule for that in a later lesson.",
+    "buildingIsFree": "You stopped the bugs, but building was free! Make building cost 10 coins."
   },
   "diploma": {
     "title": "Diploma",
@@ -152,7 +162,20 @@
     "forNeighbours": "for each square around column %1 row %2",
     "countSet": "set count to 0",
     "countAdd": "add 1 to count",
-    "countGet": "count"
+    "countGet": "count",
+    "build": "build a sprinkler at column %1 row %2",
+    "buildFence": "build a fence at column %1 row %2",
+    "shoot": "shoot water from column %1 row %2",
+    "newBug": "send a new bug",
+    "moveBugs": "move all bugs",
+    "bugAtHouse": "a bug reached the house?",
+    "stopped": "bugs stopped",
+    "every": "every %1 ticks?",
+    "forSprinklers": "for each sprinkler",
+    "sprinklerX": "that sprinkler's column",
+    "sprinklerY": "that sprinkler's row",
+    "changeCoins": "change coins by %1",
+    "coins": "coins"
   },
   "blockNames": {
     "controls_repeat_ext": "repeat",
@@ -200,7 +223,15 @@
       "neighbours": "a loop: visit the 8 squares around, one at a time",
       "countSet": "make a variable called count, starting at 0",
       "countAdd": "add 1 to count",
-      "countZero": "asks: is count the same as 0?"
+      "countZero": "asks: is count the same as 0?",
+      "build": "build a sprinkler on the square",
+      "buildFence": "build a fence on the square",
+      "every": "a timer: true once every 30 ticks (change the number)",
+      "forSprinklers": "a loop: do something for every sprinkler",
+      "shoot": "shoot a water drop from that sprinkler",
+      "changeCoins": "change the coins (minus to spend)",
+      "coinsEnough": "asks: do you have at least 10 coins?",
+      "stoppedEnough": "asks: have you stopped at least 15 bugs?"
     },
     "err": {
       "string": "This text has no closing {q}. Text must start and end with {q}.",
@@ -318,7 +349,10 @@
     "loopItem": "{name} is each thing in the list, one at a time: each time round the loop it is the next one.",
     "of": "for (… of …) visits every thing in a list, one at a time.",
     "parenForOf": "( ) after for say what to visit: for (const square of list) visits each thing in the list, calling it square.",
-    "field": "field is the minefield. Write a dot after it to use one of its commands, like field.reveal."
+    "field": "field is the minefield. Write a dot after it to use one of its commands, like field.reveal.",
+    "garden": "garden is Bit's garden. Write a dot after it to use one of its commands, like garden.build.",
+    "item_x": "{name}.x is the column of the {name} the loop is visiting right now.",
+    "item_y": "{name}.y is the row of the {name} the loop is visiting right now."
   },
   "glossary": {
     "braces": "hold a group of code that belongs together: the code of a function, a loop or an if",

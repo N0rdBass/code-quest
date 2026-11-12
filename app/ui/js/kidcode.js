@@ -27,7 +27,7 @@ const KEYWORDS = new Set([
   'function', 'for', 'while', 'do', 'if', 'else', 'let', 'const', 'var', 'return',
   'true', 'false', 'null', 'undefined', 'break', 'continue', 'new', 'of', 'in', 'typeof',
 ]);
-const OBJECTS = new Set(['bit', 'snake', 'game', 'console', 'Math', 'field']);
+const OBJECTS = new Set(['bit', 'snake', 'game', 'console', 'Math', 'field', 'garden']);
 const PAIRS = { '(': ')', '[': ']', '{': '}' };
 const CLOSERS = new Set([')', ']', '}']);
 
@@ -256,11 +256,12 @@ const COLOURS = ['green', 'blue', 'purple', 'orange', 'pink'];
 const API = {
   bit: { move: DIRECTIONS, pickUpCoin: null, isOnCoin: null },
   snake: { move: null, turn: DIRECTIONS, grow: null, placeFood: null, isOnFood: null, hitsWall: null, bitesItself: null, setColour: COLOURS },
-  game: { changeScore: null, over: null, faster: null, win: null },
+  game: { changeScore: null, over: null, faster: null, win: null, changeCoins: null, coins: null, every: null },
+  garden: { build: null, buildFence: null, isEmpty: null, newBug: null, moveBugs: null, sprinklers: null, shoot: null, bugAtHouse: null, stopped: null },
   field: { placeMines: null, reveal: null, hasMine: null, showMines: null, toggleFlag: null, hasFlag: null, neighbours: null, clickAround: null, allSafeOpen: null },
   console: { log: null, info: null, warn: null, error: null },
 };
-const WORLD_OBJECTS = { robot: ['bit', 'game', 'console'], snake: ['snake', 'game', 'console'], minesweeper: ['field', 'game', 'console'] };
+const WORLD_OBJECTS = { robot: ['bit', 'game', 'console'], snake: ['snake', 'game', 'console'], minesweeper: ['field', 'game', 'console'], garden: ['garden', 'game', 'console'] };
 
 /** Each use of an object, like `bit.move('right')`: where it is and what's in it. */
 function apiUses(sig) {
@@ -315,6 +316,7 @@ function checkApi(sig, world) {
 const QUESTIONS = new Set([
   'bit.isOnCoin', 'snake.isOnFood', 'snake.hitsWall', 'snake.bitesItself',
   'field.hasMine', 'field.hasFlag', 'field.allSafeOpen', 'field.neighbours',
+  'garden.isEmpty', 'garden.sprinklers', 'garden.bugAtHouse', 'garden.stopped', 'game.coins', 'game.every',
 ]);
 
 /** Is this use of an object the start of a command (not part of a bigger expression)? */
@@ -501,7 +503,7 @@ export function countUses(code, limits) {
 // Globals kid code shouldn't reach by accident. Not a real sandbox (kids run
 // their own code on their own computer), but it keeps mistakes harmless.
 const HIDDEN = ['window', 'document', 'globalThis', 'self', 'top', 'parent', 'localStorage', 'sessionStorage', 'fetch', 'prompt', 'confirm', '__TAURI__'];
-const PARAMS = ['__events', 'bit', 'snake', 'game', 'console', '__LoopError', '__trace', 'alert', 'field', ...HIDDEN];
+const PARAMS = ['__events', 'bit', 'snake', 'game', 'console', '__LoopError', '__trace', 'alert', 'field', 'garden', ...HIDDEN];
 
 function wrap(body) {
   const returns = Object.keys(EVENT_FUNCS)
@@ -603,9 +605,9 @@ export function compileTyped(code, { world } = {}) {
   const fn = make(tagged);
   const trace = { at: null };
   return {
-    run(events, bit, snake, game, console, alert, field) {
+    run(events, bit, snake, game, console, alert, field, garden) {
       trace.at = null;
-      return fn(events, bit, snake, game, console, LoopError, trace, alert, field);
+      return fn(events, bit, snake, game, console, LoopError, trace, alert, field, garden);
     },
     /** Where the last tagged command was: { line, start, end }, or null. */
     lastPlace: () => (trace.at == null ? null : places[trace.at]),

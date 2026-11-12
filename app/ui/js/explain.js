@@ -23,7 +23,7 @@ const WORD_KEYS = {
   null: 'nothing', undefined: 'nothing', of: 'of',
 };
 
-const OBJECT_KEYS = { bit: 'bit', snake: 'snake', game: 'game', console: 'console', Math: 'math', field: 'field' };
+const OBJECT_KEYS = { bit: 'bit', snake: 'snake', game: 'game', console: 'console', Math: 'math', field: 'field', garden: 'garden' };
 const SKIP = new Set(['ws', 'nl']);
 
 export function explainAt(code, pos) {
@@ -139,6 +139,7 @@ function explainWord(sig, j) {
   if (prev?.value === '.') {
     const obj = sig[j - 2]?.value ?? '';
     if (obj === 'square' && (word === 'x' || word === 'y')) return { key: `explain.square_${word}` };
+    if ((word === 'x' || word === 'y') && isLoopItem(sig, obj)) return { key: `explain.item_${word}`, vars: { name: obj } };
     const help = memberHelpKey(obj, word);
     return help ? { key: 'explain.member', vars: { name: `${obj}.${word}`, helpKey: help } } : { key: 'explain.memberUnknown', vars: { name: `${obj}.${word}`, obj } };
   }

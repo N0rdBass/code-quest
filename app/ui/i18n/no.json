@@ -41,7 +41,10 @@
     "diploma": "Hent diplomet ditt",
     "square": "Kolonne {x}, rad {y}",
     "clickSquares": "Klikk på rutene!",
-    "clickSquaresFlags": "Klikk på rutene! Høyreklikk for å sette et flagg."
+    "clickSquaresFlags": "Klikk på rutene! Høyreklikk for å sette et flagg.",
+    "coins": "Mynter",
+    "build": "Klikk på plenen for å bygge!",
+    "buildFences": "Klikk på plenen for å bygge! Høyreklikk for et gjerde."
   },
   "msg": {
     "success": "Bra jobba!",
@@ -80,7 +83,14 @@
     "mineNoRule": "Du åpnet en mine, men spillet fortsetter! Legg til regelen: hvis det er en mine, er spillet slutt.",
     "mineNoRuleYet": "Det var en mine, men ingenting skjedde. Det fikser vi i neste oppgave!",
     "wrongNumberLow": "Kolonne {x}, rad {y} viser {shown}, men riktig tall er {real}. Tellingen var for lav da ruten ble åpnet: står count = count + 1 inni if-en? Og står field.reveal under løkken, etter at tellingen er ferdig?",
-    "wrongNumberHigh": "Kolonne {x}, rad {y} viser {shown}, men riktig tall er {real}. Tellingen var for høy: starter count på 0, og legger du bare til 1 når det er en mine?"
+    "wrongNumberHigh": "Kolonne {x}, rad {y} viser {shown}, men riktig tall er {real}. Tellingen var for høy: starter count på 0, og legger du bare til 1 når det er en mine?",
+    "badEvery": "«{n}» er ikke et antall tikk. Bruk et helt tall, som 10 eller 20.",
+    "noSprinkler": "Det står ingen sprinkler i kolonne {x}, rad {y}, så det kan ikke komme vann derfra.",
+    "coinsNegative": "Myntene dine gikk under 0! Du kan bare bygge når du har råd: sjekk med hvis (mynter ≥ 10) først.",
+    "bugsWon": "Et insekt kom inn i huset! Spillet er slutt. Trykk Kjør for å prøve igjen.",
+    "bugInHouseNoRule": "Et insekt kom inn i huset til Bit, men spillet fortsetter! Legg til regelen: hvis et insekt nådde huset, er spillet slutt.",
+    "bugInHouseYet": "Et insekt kom inn i huset til Bit! Vi lager en regel for det i en senere oppgave.",
+    "buildingIsFree": "Du stoppet insektene, men det var gratis å bygge! Få det til å koste 10 mynter."
   },
   "diploma": {
     "title": "Diplom",
@@ -152,7 +162,20 @@
     "forNeighbours": "for hver rute rundt kolonne %1 rad %2",
     "countSet": "sett antall til 0",
     "countAdd": "legg 1 til antall",
-    "countGet": "antall"
+    "countGet": "antall",
+    "build": "bygg en sprinkler i kolonne %1 rad %2",
+    "buildFence": "bygg et gjerde i kolonne %1 rad %2",
+    "shoot": "sprut vann fra kolonne %1 rad %2",
+    "newBug": "send et nytt insekt",
+    "moveBugs": "flytt alle insektene",
+    "bugAtHouse": "et insekt nådde huset?",
+    "stopped": "insekter stoppet",
+    "every": "hvert %1. tikk?",
+    "forSprinklers": "for hver sprinkler",
+    "sprinklerX": "den sprinklerens kolonne",
+    "sprinklerY": "den sprinklerens rad",
+    "changeCoins": "endre mynter med %1",
+    "coins": "mynter"
   },
   "blockNames": {
     "controls_repeat_ext": "gjenta",
@@ -200,7 +223,15 @@
       "neighbours": "en løkke: besøk de 8 rutene rundt, én om gangen",
       "countSet": "lag en variabel som heter count, som starter på 0",
       "countAdd": "legg 1 til count",
-      "countZero": "spør: er count det samme som 0?"
+      "countZero": "spør: er count det samme som 0?",
+      "build": "bygg en sprinkler på ruten",
+      "buildFence": "bygg et gjerde på ruten",
+      "every": "en tidtaker: true én gang hvert 30. tikk (bytt tallet)",
+      "forSprinklers": "en løkke: gjør noe for hver sprinkler",
+      "shoot": "sprut en vanndråpe fra den sprinkleren",
+      "changeCoins": "endre myntene (minus for å bruke)",
+      "coinsEnough": "spør: har du minst 10 mynter?",
+      "stoppedEnough": "spør: har du stoppet minst 15 insekter?"
     },
     "err": {
       "string": "Denne teksten mangler en {q} på slutten. Tekst må starte og slutte med {q}.",
@@ -318,7 +349,10 @@
     "loopItem": "{name} er hver ting i listen, én om gangen: for hver runde i løkken er den den neste.",
     "of": "for (… of …) besøker hver ting i en liste, én om gangen.",
     "parenForOf": "( ) etter for sier hva som skal besøkes: for (const square of liste) besøker hver ting i listen og kaller den square.",
-    "field": "field er minefeltet. Skriv et punktum etter for å bruke en av kommandoene, som field.reveal."
+    "field": "field er minefeltet. Skriv et punktum etter for å bruke en av kommandoene, som field.reveal.",
+    "garden": "garden er hagen til Bit. Skriv et punktum etter for å bruke en av kommandoene, som garden.build.",
+    "item_x": "{name}.x er kolonnen til den {name} løkken besøker akkurat nå.",
+    "item_y": "{name}.y er raden til den {name} løkken besøker akkurat nå."
   },
   "glossary": {
     "braces": "holder en gruppe kode som hører sammen: koden til en funksjon, en løkke eller en if",

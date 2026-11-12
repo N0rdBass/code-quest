@@ -18,6 +18,7 @@ import { findHints } from './hints.js';
 import { RobotWorld } from './worlds/robot.js';
 import { SnakeWorld } from './worlds/snake.js';
 import { MinesWorld } from './worlds/mines.js';
+import { GardenWorld } from './worlds/garden.js';
 import { StopSignal, GameOverSignal, LoopError, KidError } from './errors.js';
 import { h, clear, confirmBox } from './dom.js';
 
@@ -107,10 +108,10 @@ class LessonController {
       ),
     );
 
-    const World = { snake: SnakeWorld, minesweeper: MinesWorld }[this.course.world] || RobotWorld;
+    const World = { snake: SnakeWorld, minesweeper: MinesWorld, garden: GardenWorld }[this.course.world] || RobotWorld;
     this.world = new World(this.canvas);
     this.world.onScore = (s) => this.showScore(s);
-    if (this.course.world === 'minesweeper') this.listenToBoard();
+    if (this.course.world === 'minesweeper' || this.course.world === 'garden') this.listenToBoard();
     // Test hook: only when opened with ?debug in a browser, never in the app.
     if (new URLSearchParams(location.search).has('debug')) window.cqLesson = this;
     this.reset();
@@ -406,11 +407,11 @@ class LessonController {
     const alert = (...a) => this.log(a);
     if (this.mode === 'code') {
       this.typed = compileTyped(this.editor.value, { world: this.course.world });
-      return (events, bit, snake, game, field) => this.typed.run(events, bit, snake, game, kidConsole, alert, field);
+      return (events, bit, snake, game, field, garden) => this.typed.run(events, bit, snake, game, kidConsole, alert, field, garden);
     }
     const code = workspaceCode(this.ws, { loopTrap: 'if (--__loopGuard < 0) throw new __LoopError();\n' });
-    const fn = new Function('__events', 'bit', 'snake', 'game', 'console', '__LoopError', 'field', `"use strict";\nlet __loopGuard = 100000;\n${code}`);
-    return (events, bit, snake, game, field) => fn(events, bit, snake, game, kidConsole, LoopError, field);
+    const fn = new Function('__events', 'bit', 'snake', 'game', 'console', '__LoopError', 'field', 'garden', `"use strict";\nlet __loopGuard = 100000;\n${code}`);
+    return (events, bit, snake, game, field, garden) => fn(events, bit, snake, game, kidConsole, LoopError, field, garden);
   }
 
   /** In code mode, more uses of a limited command than the lesson allows. */
@@ -459,6 +460,7 @@ class LessonController {
     }
     if (this.course.world === 'snake') this.runSnake(fn, id);
     else if (this.course.world === 'minesweeper') this.runMines(fn, id);
+    else if (this.course.world === 'garden') this.runGarden(fn, id);
     else this.runRobot(fn, id);
   }
 
@@ -630,6 +632,88 @@ class LessonController {
     if (s.minesOpened) this.say(t(goal.type === 'gameOver' ? 'msg.mineNoRule' : 'msg.mineNoRuleYet'), goal.type === 'gameOver' ? 'warn' : 'info');
   }
 
+  // ---- Garden defence ----
+
+  runGarden(fn, id) {
+    const w = this.world;
+    w.reset();
+    const { ev, api } = this.makeEvents();
+    const { garden, game } = w.api();
+    try {
+      fn(api, null, null, game, null, garden);
+      for (const handler of ev.start) handler();
+    } catch (e) {
+      if (!(e instanceof GameOverSignal)) return this.handleError(e, id);
+    }
+    w.draw();
+    if (!ev.click.length && !ev.tick.length) return this.fail(this.mode === 'code' ? 'msg.noClickCode' : 'msg.noClick');
+    this.say(t(ev.rightClick.length ? 'lesson.buildFences' : 'lesson.build'), 'info');
+    this.houseWarned = 0;
+
+    this.clickHandler = (x, y, button) => {
+      if (id !== this.runId || w.over) return;
+      const handlers = button === 'right' ? ev.rightClick : ev.click;
+      try {
+        for (const handler of handlers) handler(x, y);
+      } catch (e) {
+        if (!(e instanceof GameOverSignal)) return this.handleError(e, id);
+      }
+      w.draw();
+      this.gardenGoalCheck();
+    };
+
+    if (!ev.tick.length) return;
+    const step = () => {
+      if (id !== this.runId) return;
+      w.ticks++;
+      try {
+        for (const handler of ev.tick) handler();
+      } catch (e) {
+        if (!(e instanceof GameOverSignal)) return this.handleError(e, id);
+      }
+      if (!w.over) w.physics();
+      w.draw();
+      if (this.gardenGoalCheck()) return;
+      this.timer = setTimeout(step, w.tickMs());
+    };
+    this.timer = setTimeout(step, w.tickMs());
+  }
+
+  /** Returns true when the run has ended (won or lost). */
+  gardenGoalCheck() {
+    const goal = this.lesson.goal || {};
+    const w = this.world;
+    const s = w.stats;
+    if (s.coinsWentNegative) {
+      this.fail('msg.coinsNegative');
+      return true;
+    }
+    const won =
+      (goal.type === 'built' && s.sprinklers >= goal.n) ||
+      (goal.type === 'bugs' && s.spawned >= goal.n && w.bugs.some((b) => b.x < 8)) ||
+      (goal.type === 'stopped' && s.stopped >= goal.n) ||
+      (goal.type === 'paidFor' && s.stopped >= goal.n && s.spent >= 20) ||
+      (goal.type === 'gameOver' && w.over && w.overReason === goal.reason) ||
+      w.overReason === 'win';
+    if (won) {
+      this.succeed();
+      return true;
+    }
+    if (w.over) {
+      this.fail('msg.bugsWon');
+      return true;
+    }
+    if (s.reachedHouse > this.houseWarned) {
+      this.houseWarned = s.reachedHouse;
+      const noRule = goal.type === 'gameOver';
+      this.say(t(noRule ? 'msg.bugInHouseNoRule' : 'msg.bugInHouseYet'), noRule ? 'warn' : 'info');
+    }
+    if (goal.type === 'paidFor' && s.stopped >= goal.n && s.spent < 20) {
+      this.say(t('msg.buildingIsFree'), 'warn');
+    }
+    return false;
+  }
+
   runSnake(fn, id) {
     const w = this.world;
     w.reset();
@@ -742,7 +826,7 @@ class LessonController {
   // ---- feedback ----
 
   showScore(s) {
-    this.scoreEl.textContent = `⭐ ${t('lesson.score')}: ${s}`;
+    this.scoreEl.textContent = this.course.world === 'garden' ? `🪙 ${t('lesson.coins')}: ${s}` : `⭐ ${t('lesson.score')}: ${s}`;
   }
 
   say(text, kind = 'info') {

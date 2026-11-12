@@ -8,13 +8,13 @@ import { openLesson } from './lesson.js';
 import { h, clear, confirmBox } from './dom.js';
 
 const root = document.getElementById('app');
-const COURSE_FILES = ['basics', 'snake', 'minesweeper'];
+const COURSE_FILES = ['basics', 'snake', 'minesweeper', 'garden'];
 
-// Games shown on the map. Snake and Minesweeper are built so far.
+// Games shown on the map. Snake, Minesweeper and Garden defence are built so far.
 const GAMES = [
   { id: 'snake', stars: 1, course: 'snake' },
   { id: 'minesweeper', stars: 2, course: 'minesweeper' },
-  { id: 'garden', stars: 3 },
+  { id: 'garden', stars: 3, course: 'garden' },
   { id: 'tower', stars: 4 },
 ];
 

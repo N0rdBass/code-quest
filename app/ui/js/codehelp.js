@@ -37,6 +37,17 @@ const SNIPPETS = {
   field_all_open: { code: 'field.allSafeOpen()¦', help: 'blocks.allOpen' },
   game_win: { code: 'game.win();¦', help: 'blocks.win' },
   for_neighbours: { code: 'for (const square of field.neighbours(x, y)) {\n  ¦\n}', help: 'code.help.neighbours' },
+  garden_build: { code: 'garden.build(x, y);¦', help: 'code.help.build' },
+  garden_fence: { code: 'garden.buildFence(x, y);¦', help: 'code.help.buildFence' },
+  garden_new_bug: { code: 'garden.newBug();¦', help: 'blocks.newBug' },
+  garden_move_bugs: { code: 'garden.moveBugs();¦', help: 'blocks.moveBugs' },
+  game_every: { code: 'game.every(30)¦', help: 'code.help.every' },
+  for_sprinklers: { code: 'for (const sprinkler of garden.sprinklers()) {\n  ¦\n}', help: 'code.help.forSprinklers' },
+  garden_shoot: { code: 'garden.shoot(sprinkler.x, sprinkler.y);¦', help: 'code.help.shoot' },
+  coins_change: { code: 'game.changeCoins(-10);¦', help: 'code.help.changeCoins' },
+  coins_enough: { code: 'game.coins() >= 10¦', help: 'code.help.coinsEnough' },
+  garden_bug_home: { code: 'garden.bugAtHouse()¦', help: 'blocks.bugAtHouse' },
+  stopped_enough: { code: 'garden.stopped() >= 15¦', help: 'code.help.stoppedEnough' },
   count_set: { code: 'let count = 0;¦', help: 'code.help.countSet' },
   count_add: { code: 'count = count + 1;¦', help: 'code.help.countAdd' },
   count_is_zero: { code: 'count == 0¦', help: 'code.help.countZero' },
@@ -47,7 +58,8 @@ export function commandsFor(lesson, world) {
   const names = [];
   if (lesson.mode !== 'play') names.push('event_start');
   if (world === 'snake') names.push('event_tick');
-  if (world === 'minesweeper') names.push('event_click');
+  if (world === 'garden') names.push('event_tick');
+  if (world === 'minesweeper' || world === 'garden') names.push('event_click');
   for (const name of lesson.toolbox) if (!names.includes(name)) names.push(name);
   return names
     .filter((name) => SNIPPETS[name])
