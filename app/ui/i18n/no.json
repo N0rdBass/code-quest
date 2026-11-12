@@ -222,7 +222,9 @@
       "needParens": "{name} trenger ( ) etter seg, ellers kjører den ikke: {name}()",
       "badWord": "{name} kjenner ikke '{word}'. Bruk en av: {list}.",
       "unusedQuestion": "{name}(…) stiller et spørsmål, men ingen bruker svaret, så denne linjen gjør ingenting. Legg den inni if ( … ) { } og legg det som skal skje inni { }.",
-      "revealInLoop": "Denne åpner ruten mens løkken fortsatt teller, så tallet er ikke ferdig ennå. Flytt den under } på linje {line}, der løkken slutter."
+      "revealInLoop": "Denne åpner ruten mens løkken fortsatt teller, så tallet er ikke ferdig ennå. Flytt den under } på linje {line}, der løkken slutter.",
+      "commandInIf": "{name}(…) er en kommando, ikke et spørsmål, så den kan ikke stå inni ( ) til {kw}. Parentesene ( ) holder bare spørsmålet. Flytt kommandoen ut: inn i { } hvis den bare skal skje når svaret er ja, eller under }.",
+      "twoInIf": "Det står to ting ved siden av hverandre inni ( ) til {kw}. Parentesene ( ) holder ett spørsmål. Vil du spørre om to ting, sett && (og) eller || (eller) mellom dem."
     },
     "symbols": "Tegn",
     "symbolsTip": "Klikk på et tegn eller ord i koden din for å se hva det betyr der.",

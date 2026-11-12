@@ -325,6 +325,44 @@ function startsCommand(sig, u) {
 }
 
 /**
+ * The ( ) after if / while may only hold a question. Two common mix-ups:
+ *  - a command inside it: if (field.hasMine(x, y) field.reveal(x, y)) …
+ *  - two questions side by side without && (and) or || (or) between them
+ */
+function checkConditions(sig) {
+  const problems = [];
+  const uses = apiUses(sig);
+  for (let j = 0; j < sig.length; j++) {
+    if (!(isKeyword(sig, j, 'if') || isKeyword(sig, j, 'while')) || sig[j + 1]?.value !== '(') continue;
+    const kw = sig[j].value;
+    const open = j + 1;
+    const close = matching(sig, open);
+    if (close < 0) continue;
+    const command = uses.find((u) => u.j > open && u.j < close && !QUESTIONS.has(`${u.obj.value}.${u.member.value}`));
+    if (command) {
+      const name = `${command.obj.value}.${command.member.value}`;
+      problems.push(new CodeProblem('code.err.commandInIf', { name, kw }, command.obj.line, command.obj.start, command.end));
+      continue;
+    }
+    // Two things next to each other at the top level of the ( ): `a() b()`
+    let depth = 0;
+    for (let k = open + 1; k < close; k++) {
+      const v = sig[k].value;
+      if (PAIRS[v]) depth++;
+      else if (CLOSERS.has(v)) depth--;
+      const next = sig[k + 1];
+      const ends = sig[k].type === 'id' || sig[k].type === 'num' || sig[k].type === 'str' || v === ')';
+      const starts = next && k + 1 < close && (next.type === 'id' || next.type === 'num' || next.type === 'str');
+      if (depth === 0 && ends && starts && !KEYWORDS.has(next.value)) {
+        problems.push(new CodeProblem('code.err.twoInIf', { kw }, next.line, next.start, next.end));
+        break;
+      }
+    }
+  }
+  return problems;
+}
+
+/**
  * Mistakes that run without crashing but make the game wrong:
  *  - a question alone on a line: field.hasMine(x, y); (should be inside an if)
  *  - opening the square inside the counting loop, before counting is done
@@ -418,8 +456,11 @@ export function diagnose(code, { world } = {}) {
   }
   const apiProblems = checkApi(sig, world);
   problems.push(...apiProblems);
+  const conditionProblems = structureOk ? checkConditions(sig) : [];
+  problems.push(...conditionProblems);
   if (structureOk) problems.push(...checkLogic(sig));
-  if (structureOk && !apiProblems.length) {
+  // JavaScript's own syntax message only if nothing clearer was found.
+  if (structureOk && !apiProblems.length && !conditionProblems.length) {
     try {
       make(code);
     } catch (e) {

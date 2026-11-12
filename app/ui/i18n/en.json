@@ -222,7 +222,9 @@
       "needParens": "{name} needs ( ) after it, or it won't run: {name}()",
       "badWord": "{name} doesn't know '{word}'. Use one of: {list}.",
       "unusedQuestion": "{name}(…) asks a question, but nothing uses the answer, so this line does nothing. Put it inside if ( … ) { } and put what should happen inside the { }.",
-      "revealInLoop": "This opens the square while the loop is still counting, so the number is not finished yet. Move it below the } on line {line}, where the loop ends."
+      "revealInLoop": "This opens the square while the loop is still counting, so the number is not finished yet. Move it below the } on line {line}, where the loop ends.",
+      "commandInIf": "{name}(…) is a command, not a question, so it can't be inside the ( ) of {kw}. The ( ) only hold the question. Move the command out: into the { } if it should only happen when the answer is yes, or below the }.",
+      "twoInIf": "There are two things next to each other inside the ( ) of {kw}. The ( ) hold one question. To ask two at once, join them with && (and) or || (or)."
     },
     "symbols": "Symbols",
     "symbolsTip": "Click on any symbol or word in your code to see what it means there.",
